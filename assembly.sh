@@ -10,6 +10,7 @@ fi
 # 1 Genome assembly using minimap2-miniasm pipeline (gera unitigs sequences)
 
 if [ $1 -eq 1 ]; then
+	# Fonte: https://timkahlke.github.io/LongRead_tutorials/ASS_M.html
 	minimap2 -x ava-ont \
 	 ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq \
 	 ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq \
