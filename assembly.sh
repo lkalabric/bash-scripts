@@ -51,10 +51,18 @@ if [ $1 -eq 4 ]; then
 	exit 4
 fi
 
-# 5 Montagem da sequencia consensu usando um genoma referência
+# 5 Montagem da sequencia consenso usando um genoma referência
 if [ $1 -eq 5 ]; then
-	# Preprocessamento dos dados
-	nanopolish index -d ../data/DENV_FTA_1/ -s ../data/DENV_FTA_1/DENV_Run1_data/sequencing_summary/MT-110616_20190710_214507_FAK92171_minion_sequencing_run_DENV_FTA_1_sequencing_summary.txt albacore_output.fastq
+	# Fonte: https://github.com/jts/nanopolish
+	# Pré-processamento dos dados
+	nanopolish index -d ../data/DENV_FTA_1/DENV_Run1_data/fast5_pass -s ../data/DENV_FTA_1/DENV_Run1_data/sequencing_summary/MT-110616_20190710_214507_FAK92171_minion_sequencing_run_DENV_FTA_1_sequencing_summary.txt albacore_output.fastq
+	# Computa uma nova sequencia consenso
+	minimap2 -t 12 -ax map-ont ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.axligned.sam"
+	samtools sort "barcode01.$1.axligned.sam" -o "barcode01.$1.axligned.sorted.bam" -T reads.tmp -
+	samtools index "barcode01.$1.axligned.sorted.bam"
+	python3 nanopolish_makerange.py ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta | parallel --results nanopolish.results -P 8 \
+    nanopolish variants --consensus -o polished.{1}.vcf -w {1} -r ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -b "barcode01.$1.axligned.sorted.bam" -g ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta -t 4 --min-candidate-frequency 0.1
+
 #	nanopolish variantes --consensus  -d ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.axligned.sam"
 #	samtools sort "barcode01.$1.axligned.sam" -o "barcode01.$1.axligned.sorted.bam"
 	exit 4
