@@ -1,13 +1,24 @@
-RUNNAME=$1
-BARCODE=$2
-WF=2
+#!/bin/bash
 
+# script: blast_report.sh
+# autor: Luciano Kalabric <luciano.kalabric@fiocruz.br>
+# instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
+# objetivo: relatório dos resultados da calssificação taxonômica pelo blastn
+# criação: 25 AGO 2021
+# ultima atualização: 17 OUT 2021
+# atualização: revisão do script
+
+# Valiação da entrada de dados na linha de comando
 if [[ $# -ne 2 ]]; then
-	echo "Falta o nome da biblioteca_model e/ou do barcode!"
+	echo "Falta o nome da biblioteca_model e/ou do barcodeXX!"
 	echo "Sintáxe: ./blast_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
 	echo "Exemplo: ./blast_report.sh DENV_FTA_1_hac barcode01"
 	exit 0
 fi
+
+RUNNAME=$1
+BARCODE=$2
+WF=2
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}"
 BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
 echo "Lista de taxons no BLAST_DB"
