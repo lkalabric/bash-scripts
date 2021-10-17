@@ -8,8 +8,6 @@
 # ultima atualização: 17 OUT 2021
 # atualização: configuração de variáveis e teste do método 6
 
-# Montagem DENV
-
 OUTDIR=/home/brazil1/assembly
 #REFSEQ="../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta"
 REFSEQ="../data/REFSEQ/Togaviridae/NC_004162_CHIKV-S27.fasta"
