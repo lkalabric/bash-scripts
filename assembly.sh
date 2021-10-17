@@ -1,8 +1,25 @@
+#!/bin/bash
+
+# script: assembly.sh
+# autor: Luciano Kalabric <luciano.kalabric@fiocruz.br>
+# instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
+# objetivo: testar diferentes montadores
+# criação: 25 AGO 2021
+# ultima atualização: 17 OUT 2021
+# atualização: configuração de variáveis e teste do método 6
+
 # Montagem DENV
+
+OUTDIR=/home/brazil1/assembly
+#REFSEQ="../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta"
+REFSEQ="../data/REFSEQ/Togaviridae/NC_004162_CHIKV-S27.fasta"
+#RUNNAME=DENV_FTA_1_hac
+RUNNAME=NGS_LIBRARY02_hac
+BARCODE=barcode01
 
 # $1 Número da análise passado na linha de comando
 if [ $# -eq 0 ]; then
-	echo "Falta o método para mapeamento!"
+	echo "Falta o método para montagem!"
 	echo "Sintáxe: ./assembly.sh <METODO: 1,2,3,4>"
 	exit 0
 fi
@@ -10,7 +27,6 @@ fi
 # 1 Genome assembly using minimap2-miniasm pipeline (gera unitigs sequences)
 
 if [ $1 -eq 1 ]; then
-	# Fonte: https://timkahlke.github.io/LongRead_tutorials/ASS_M.html
 	minimap2 -x ava-ont \
 	 ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq \
 	 ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq \
@@ -56,15 +72,31 @@ fi
 if [ $1 -eq 5 ]; then
 	# Fonte: https://github.com/jts/nanopolish
 	# Pré-processamento dos dados
-	nanopolish index -d ../data/DENV_FTA_1/DENV_Run1_data/fast5_pass -s ../data/DENV_FTA_1/DENV_Run1_data/sequencing_summary/MT-110616_20190710_214507_FAK92171_minion_sequencing_run_DENV_FTA_1_sequencing_summary.txt albacore_output.fastq
+	nanopolish index -d ../data/DENV_FTA_1/DENV_Run1_data/fast5_pass/ -s ../data/DENV_FTA_1/DENV_Run1_data/sequencing_summary/MT-110616_20190710_214507_FAK92171_minion_sequencing_run_DENV_FTA_1_sequencing_summary.txt "${OUTDIR}/barcode01.fasta"
 	# Computa uma nova sequencia consenso
-	minimap2 -t 12 -ax map-ont ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.axligned.sam"
-	samtools sort "barcode01.$1.axligned.sam" -o "barcode01.$1.axligned.sorted.bam" -T reads.tmp -
-	samtools index "barcode01.$1.axligned.sorted.bam"
-	python3 nanopolish_makerange.py ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta | parallel --results nanopolish.results -P 8 \
-    nanopolish variants --consensus -o polished.{1}.vcf -w {1} -r ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -b "barcode01.$1.axligned.sorted.bam" -g ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta -t 4 --min-candidate-frequency 0.1
+	minimap2 -t 12 -ax map-ont ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "$OUTDIR/barcode01.$1.axligned.sam"
+	samtools sort "$OUTDIR/barcode01.$1.axligned.sam" -o "$OUTDIR/barcode01.$1.axligned.sorted.bam"
+	samtools index "$OUTDIR/barcode01.$1.axligned.sorted.bam"
+	# Quebra o genoma em pedações de 50Kb e monta em paralelo
+	#	python3 nanopolish_makerange.py ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta | parallel --results nanopolish.results -P 8 \
+	nanopolish variants -o "${OUTDIR}/polished.vcf" -r "$OUTDIR/barcode01.fasta" -b "$OUTDIR/barcode01.$1.axligned.sorted.bam" -g ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta -t 4 --min-candidate-frequency 0.1 -p 1
+#	nanopolish variants --consensus -o polished.{1}.vcf -w {1} -r ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -b "barcode01.$1.axligned.sorted.bam" -g ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta -t 4 --min-candidate-frequency 0.1
 
 #	nanopolish variantes --consensus  -d ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.axligned.sam"
 #	samtools sort "barcode01.$1.axligned.sam" -o "barcode01.$1.axligned.sorted.bam"
-	exit 4
+	exit 5
+fi
+
+# 6 Montagem da sequencia consenso usando um genoma referência
+if [ $1 -eq 6 ]; then
+	# Fonte: https://github.com/jts/nanopolish
+	# Indexando a sequencia referencia
+	bwa index $REFSEQ
+	bwa mem $REFSEQ "../ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq" > "$OUTDIR/$BARCODE.$1.bwa-mem.sam"
+	samtools sort "$OUTDIR/$BARCODE.$1.bwa-mem.sam" -o "$OUTDIR/$BARCODE.$1.bwa-mem.sorted.bam"
+	samtools index "$OUTDIR/$BARCODE.$1.bwa-mem.sorted.bam"
+	samtools coverage "$OUTDIR/$BARCODE.$1.bwa-mem.sorted.bam" -m -o "$OUTDIR/$BARCODE.$1.coverage"
+	cat "../assembly/$BARCODE.6.coverage"
+	fastcov.py "$OUTDIR/$BARCODE.$1.bwa-mem.sorted.bam" -o "../assembly/$BARCODE.6.fastcov.pdf"
+	exit 6
 fi
