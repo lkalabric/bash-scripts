@@ -8,19 +8,21 @@
 # ultima atualização: 17 OUT 2021
 # atualização: configuração de variáveis e teste do método 6
 
+# Valiação da entrada de dados na linha de comando
+# $1 Número da análise passado na linha de comando
+if [ $# -eq 0 ]; then
+	echo "Falta o método para montagem!"
+	echo "Sintáxe: ./assembly.sh <METODO: 1..6>"
+	echo "Exemplo: ./assembly.sh 6"
+	exit 0
+fi
+
 OUTDIR=/home/brazil1/assembly
 #REFSEQ="../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta"
 REFSEQ="../data/REFSEQ/Togaviridae/NC_004162_CHIKV-S27.fasta"
 #RUNNAME=DENV_FTA_1_hac
 RUNNAME=NGS_LIBRARY02_hac
 BARCODE=barcode01
-
-# $1 Número da análise passado na linha de comando
-if [ $# -eq 0 ]; then
-	echo "Falta o método para montagem!"
-	echo "Sintáxe: ./assembly.sh <METODO: 1,2,3,4>"
-	exit 0
-fi
 
 # 1 Genome assembly using minimap2-miniasm pipeline (gera unitigs sequences)
 
