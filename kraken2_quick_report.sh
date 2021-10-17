@@ -7,7 +7,7 @@
 # criação: 25 AGO 2021
 # ultima atualização: 17 OUT 2021
 # atualização: revisão do script
-# requisito: arquivo taxid que contém a lista de taxons de interesse
+# requisito: arquivo taxin que contém a lista de taxons de interesse
 
 # Valiação da entrada de dados na linha de comando
 if [[ $# -ne 2 ]]; then
