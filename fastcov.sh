@@ -1,42 +1,40 @@
 #!/bin/bash
 
-# script: metagenomics_v4_lk.sh
+# script: fastcov.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
-# última atualização: SET, 17 2021
-# versão 4: roda guppy_basecaller e guppy_barcoder apenas uma vez
+# última atualização: OUT, 07 2021
+# versão 1: roda fastcov.py
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
+WF=$3		#Worflow de bioinformatica
 
 if [[ $# -eq 0 ]]; then
-	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./metagenomic_v3_lk.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3>"
+	echo "Falta o nome da library,modelo Guppy Basecaller ou número do workflow!"
+	echo "Sintáxe: ./fastcov.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3>"
 	exit 0
 fi
 
 # Caminho INPUT dos bancos de dados
 REFSEQDIR="${HOME}/data/REFSEQ"
-HUMANREFDIR="${HOME}/data/GRCh38"
-BLASTDBDIR="${HOME}/data/BLAST_DB"
-KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
-TESTEDIR="${HOME}/data/teste"
+REFGENDIR="${HOME}/data/REFGEN"
 
 # Caminhos de OUTPUT das análises
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 BASECALLDIR="${RESULTSDIR}/BASECALL"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
 DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
-CUTADAPTDIR="${RESULTSDIR}/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/PRINSEQ"
-QUERYDIR="${RESULTSDIR}/QUERY"
-BLASTDIR="${RESULTSDIR}/BLAST"
-READSLEVELDIR="${RESULTSDIR}/READS_LEVEL"
-CONTIGSLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
-ASSEMBLYDIR="${RESULTSDIR}/ASSEMBLY"
-FASTCOVDIR="${RESULTSDIR}/FASTCOV"
+CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
+NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
+PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
+QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
+BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
+READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
+CONTIGSLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
+ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
+FASTCOVDIR="${RESULTSDIR}/wf${WF}/FASTCOV"
 
 # Parâmetro de otimização das análises por CPU
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
@@ -47,11 +45,10 @@ LENGTH=100
 
 # Parâmetros minimap2
 # Mapeamento contra genomas referência e plot de cobertura
-CHIKVREFSEQ="${TESTEDIR}/NC_004162_CHIKV-S27.fasta"
-CHIKVREFMMI="${TESTEDIR}/NC_004162_CHIKV-S27.mmi"
+CHIKVREFSEQ="${REFGENDIR}/NC_004162_CHIKV-S27.fasta"
+CHIKVREFMMI="${REFGENDIR}/NC_004162_CHIKV-S27.mmi"
 
 [ ! -f "${TESTEDIR}/NC_004162.2_CHIKV-S27.mmi" ] && minimap2 -d $CHIKVREFMMI $CHIKVREFSEQ
-
 
 
 DENV1REFSEQ="${REFSEQDIR}/Flaviviridae/NC_001477.1_DENV1.fasta"
@@ -62,7 +59,6 @@ ZIKVREFSEQ="${REFSEQDIR}/Flaviviridae/NC_012532.1_ZIKV.fasta"
 
 [ ! -d $ASSEMBLYDIR ] && mkdir -vp $ASSEMBLYDIR
 [ ! -d $FASTCOVDIR ] && mkdir -vp $FASTCOVDIR
-
 
 # Mapeamento CHIKV
 for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -117,16 +113,16 @@ done
 source activate ngs
 for i in $(find ${ASSEMBLYDIR} -type f -name "*.sorted.mapped.bam" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 	echo "Determinando a cobertura do assembly ${ASSEMBLYDIR}/${i}.chikv.sorted.mapped.bam..."
-	fastcov ${ASSEMBLYDIR}/${i}.chikv.sorted.mapped.bam -o ${FASTCOVDIR}/${i}.assembly_chikv.pdf
-	fastcov -l -o ${FASTCOVDIR}/${i}.assembly_chikv_log.png {ASSEMBLYDIR}/${i}.chikv.sorted.mapped.bam 
-#	fastcov ${ASSEMBLYDIR}/barcode*.denv1.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv1.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.denv1.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv1_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.denv2.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv2.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.denv2.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv2_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.denv3.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv3.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.denv3.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv3_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.denv4.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv4.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.denv4.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv4_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.zikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_zikv.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.zikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_zikv_log.pdf
+	fastcov.py ${ASSEMBLYDIR}/${i}.chikv.sorted.mapped.bam -o ${FASTCOVDIR}/${i}.assembly_chikv.pdf
+#	fastcov.py ${ASSEMBLYDIR}/barcode*.denv1.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv1.pdf
+#	fastcov.py -l ${ASSEMBLYDIR}/barcode*.denv1.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv2_log.pdf
+#	fastcov.py ${ASSEMBLYDIR}/barcode*.denv2.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv2.pdf
+#	fastcov.py -l ${ASSEMBLYDIR}/barcode*.denv2.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv2_log.pdf
+#	fastcov.py ${ASSEMBLYDIR}/barcode*.denv3.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv3.pdf
+#	fastcov.py -l ${ASSEMBLYDIR}/barcode*.denv3.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv3_log.pdf
+#	fastcov.py ${ASSEMBLYDIR}/barcode*.denv4.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv4.pdf
+#	fastcov.py -l ${ASSEMBLYDIR}/barcode*.denv4.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv4_log.pdf
+#	fastcov.py ${ASSEMBLYDIR}/barcode*.zikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_zikv.pdf
+#	fastcov.py -l ${ASSEMBLYDIR}/barcode*.zikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_zikv_log.pdf
 done
+fastcov.py -l ${ASSEMBLYDIR}/barcode*.chikv.sorted.mapped.bam -o ${FASTCOVDIR}/assembly_chikv_log.pdf
