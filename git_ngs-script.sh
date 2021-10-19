@@ -19,7 +19,7 @@
 #git config --global user.name "lkalabric"
 #git config --global user.email "luciano.kalabric@fiocruz.br"
 
-# Clone remote to local (apenas uma vez)
+# Clone remote to local (run only once)
 #git clone https://github.com/lkalabric/ngs-scripts.git /home/brazil1/repos/ngs-scripts
 
 # Commit local
@@ -29,9 +29,9 @@
 # Push changes to the server
 #git push -u origin main
 
+# Git auth
+# User: lkalabric
+# Password=personal token: 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
+
 # Pull changes from server
 #git pull
-
-# Conexão Git
-# User: lkalabric
-# Password: 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
