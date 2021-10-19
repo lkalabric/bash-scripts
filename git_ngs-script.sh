@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# script: git_commands.sh
+# script: git_ngs-scripts.sh
 # autor: Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # objetivo: uso do git para clonagem e controle de versão dos scripts
@@ -12,7 +12,10 @@
 # Links: https://docs.github.com/pt/github-cli/github-cli/quickstart
 # https://docs.github.com/pt/repositories/creating-and-managing-repositories/cloning-a-repository
 
-# Define nome de usuário do Git
+# Quick setup — if you’ve done this kind of thing before
+# https://github.com/lkalabric/ngs-scripts.git
+
+# Configure git local
 #git config --global user.name "lkalabric"
 #git config --global user.email "luciano.kalabric@fiocruz.br"
 
@@ -26,7 +29,7 @@
 # Push changes to the server
 #git push -u origin main
 
-# Poll changes from server
+# Pull changes from server
 #git pull
 
 # Conexão Git
