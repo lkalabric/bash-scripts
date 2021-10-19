@@ -27,7 +27,7 @@
 #git push -u origin main
 
 # Poll changes from server
-#git poll
+#git pull
 
 # Conexão Git
 # User: lkalabric
