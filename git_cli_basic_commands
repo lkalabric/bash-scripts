@@ -14,14 +14,14 @@
 # https://www.youtube.com/watch?v=HVsySz-h9r4&t=1402s
 
 # Check version
-#git --version
+# git --version
 
 # Set config values
-#git config --global user.name "lkalabric"
-#git config --global user.email "luciano.kalabric@fiocruz.br"
+# git config --global user.name "lkalabric"
+# git config --global user.email "luciano.kalabric@fiocruz.br"
 
 # Git Help
-#git config --help
+# git config --help
 
 #
 # Option 1 - Initialize a local repo from existing code
