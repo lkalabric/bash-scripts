@@ -33,4 +33,4 @@
 # Git auth
 # User: lkalabric
 # Scopes: repo; admin:org; user
-# Password=personal token: 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
+# Password=personal token: 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
