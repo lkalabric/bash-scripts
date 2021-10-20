@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# script: git_instaladores.sh
+# autor: Luciano Kalabric <luciano.kalabric@fiocruz.br>
+# instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
+# objetivo: uso do git para clonagem e controle de versão dos scripts
+# criação: 19 OUT 2021
+# ultima atualização: 19 OUT 2021
+# atualização: criação deste script para aprender e lembrar os comandos git
+
+# GitHub CLI
+# Links: https://docs.github.com/pt/github-cli/github-cli/quickstart
+# https://docs.github.com/pt/repositories/creating-and-managing-repositories/cloning-a-repository
+# https://www.youtube.com/watch?v=HVsySz-h9r4&t=1402s
+
+# Check version
+#git --version
+
+# Set config values
+#git config --global user.name "lkalabric"
+#git config --global user.email "luciano.kalabric@fiocruz.br"
+
+# Git Help
+#git config --help
+
+#
+# Option 1 - Initialize a local repo from existing code
+#
+# cd local-repo-dir
+# git init
+# ls -la (check .git dir)
+# git status (check git status)
+
+# Stop tracking, if desire
+# rm -rf .git
+
+# Before first commint
+# Ignore files
+# touch .gitignore
+# nano .gitignore (include files to ignore, one per line)
+# git status (check if files were ignored)_
+
+# Add files to staging area
+# git add -A or git add .gitignore
+# git status
+
+# Remove files from staging area
+# git reset file or git reset (remove all files)
+# git status
+
+# Our first commit
+# git commit -m "Initial commit"
+# git log (see commit)
+
+#
+# Option 2 - Cloning a remote repo
+#
+
+# Clone remote to local (apenas uma vez)
+# git clone https://github.com/lkalabric/instaladores.git /home/brazil1/repos/instaladores
+
+# Viewing information about the remote repo
+# git remote -v
+# git branch -a
+
+# Commit changes
+# git diff
+# git add -A
+# git commit -m "Initial commit"
+# git log (see commit)
+
+# Push changes
+# git pull origin main
+# git push origin main
+
+#
+# Option 3 - Branch for desire feature
+#
+# git branch feature
+# git branch
+# git checkout feature (change working branch)
+# git branch
+
+# Commit changes
+# git add -A
+# git commit -m "Feature added"
+
+# Push branch to remote
+# git push -u origin feature (-u prepare local and remote to merge branchs)
+# git branch -a
+
+# Merge a branch
+# git checkout main
+# git pull origin main
+# git branch --merged (see branch before merge)
+# git merge feature
+# git puch origin main
+
+# Delete a branch
+# git branch --merged
+# git branch -d feature
+# git branch -a
+# git push origin --delete feature
