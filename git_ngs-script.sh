@@ -32,7 +32,7 @@
 # Git auth
 # User: lkalabric
 # Scopes: repo; admin:org; user
-# Password=personal token: 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
+# Password=personal token: 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
 
 # Pull changes from server
 #git pull
