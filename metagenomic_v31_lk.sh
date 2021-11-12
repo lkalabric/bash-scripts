@@ -80,7 +80,7 @@ if [ ! -d $BASECALLDIR ]; then
 	# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 	echo Executando guppy_basecaller...
 	# Comando para guppy_basecaller usando GPU
-	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs --resume
+	guppy_basecaller -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs --resume
 	echo "Basecalling concluido com sucesso!"
 fi
 
