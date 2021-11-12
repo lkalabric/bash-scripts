@@ -9,7 +9,7 @@
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODELO=$2	# Modelo de basecalling fast hac sup
-WF=$3		# Workflow de bioinformatica 1, 2 ou 3.1
+WF=$3		# Workflow de bioinformatica 1, 2 ou 31
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
@@ -73,7 +73,7 @@ if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
-# Workflow 1 apenas
+# Todos os WFs
 if [ ! -d $BASECALLDIR ]; then
 	mkdir -vp $BASECALLDIR
 	# Step 1 - Basecalling (comum a todos workflows)
@@ -92,7 +92,7 @@ fi
 
 # if false; then # Descio para execução rápida
 
-# Workflow 2 & 3.1
+# Workflow 2 & 31
 # Step 2 - Demultiplex & adapter removal (comum a todos workflows)
 if [ ! -d $DEMUXDIR ]; then
 	mkdir -vp $DEMUXDIR
@@ -107,7 +107,7 @@ if [ ! -d $DEMUXDIR ]; then
 		#bm5 WF2 sem headcrop 18 (uso cutadapt)
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --detect_mid_strand_adapter --trim_barcodes  
 	else
-		#bm7 WF3 com headcrop 18
+		#bm7 WF31 com headcrop 18
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 	fi
 fi
