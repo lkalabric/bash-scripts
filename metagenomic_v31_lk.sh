@@ -30,6 +30,7 @@ ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 
 # Caminhos de output das análises
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODELO}"
+rm -r ${RESULTSDIR}
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
