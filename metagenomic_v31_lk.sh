@@ -75,6 +75,11 @@ if [ ! -f $HUMANREFMMI ]; then
 fi
 
 # Todos os WFs
+# Sumarios dos dados
+ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)/*.fast5" | wc -l
+h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec diname {} \;)/*.fast5" | wc -l
+
+# Basecalling
 if [ ! -d $BASECALLDIR ]; then
 	mkdir -vp $BASECALLDIR
 	# Step 1 - Basecalling (comum a todos workflows)
