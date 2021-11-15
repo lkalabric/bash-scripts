@@ -112,6 +112,8 @@ if [ ! -d $DEMUXDIR ]; then
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 	fi
 fi
+# Move a pasta contendo as reads unclassified para barcode00
+[ ! -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
 
 # fi # Fim do desvio para execução rápida
 
