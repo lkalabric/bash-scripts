@@ -29,6 +29,10 @@ rm -r ${SAVE_DIR}
 # Arquivo _fast para benckmark apenas e _hac para as análises
 CONFIG="dna_r9.4.1_450bps_hac.cfg" # "dna_r9.4.1_450bps_hac.cfg"
 
+# Parâmtros estimados por Laise
+GPUPERDEVICE="$(nvidia-settings -q TotalDedicatedGPUMemory -t | awk '{print $1/10/256}' | awk -F, '{print $1}')"
+THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
+
 # Parametros para otimização da CPU
 # --num_callers, --num_threads_per_caller
 
@@ -38,11 +42,11 @@ CONFIG="dna_r9.4.1_450bps_hac.cfg" # "dna_r9.4.1_450bps_hac.cfg"
 # Comando para guppy_basecaller usando GPU e parâmetros padrões do arquivo de configuração 
 guppy_basecaller -r -i ${INPUT_DIR} -s ${SAVE_DIR} -c ${CONFIG} -x auto --verbose_logs
 
-# Comando para guppy_basecaller usando GPU e parâmetros otimizados a partir do benchmark 
+# Comando para guppy_basecaller usando GPU e configuração do benchmark 
 #guppy_basecaller -r -i ${INPUT_DIR} -s ${SAVE_DIR} -c ${CONFIG} -x auto --gpu_runners_per_device 4 --chunk_size 1000 --chunks_per_runner 50 --verbose_logs
 
-# Comando para guppy_basecaller usando GPU e parâmetros otimizados a partir do benchmark 
-#guppy_basecaller -r -i ${INPUT_DIR} -s ${SAVE_DIR} -c ${CONFIG} -x auto --gpu_runners_per_device 4 --chunk_size 1000 --chunks_per_runner 50 --num_callers 12 --verbose_logs
+# Comando para guppy_basecaller usando GPU e parâmetros otimizados por Laise 
+#guppy_basecaller -r -i ${INPUT_DIR} -s ${SAVE_DIR} -c ${CONFIG} -x auto --gpu_runners_per_device ${GPUPERDEVICE} --num_callers ${THREADS} --verbose_logs
 
 
 
