@@ -11,15 +11,18 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 # Caminho de INPUT dos dados fast5
- INPUT_DIR="$HOME/data/$RUNNAME"
- 
- if [ ! -d $INPUT_DIR ]; then
- 	echo "Pasta de dados não encontrada!"
+INPUT_DIR="$HOME/data/$RUNNAME"
+if [ ! -d $INPUT_DIR ]; then
+	echo "Pasta de dados não encontrada!"
  	exit 0
- fi
+fi
+
 # Caminho de OUTPUT dos resultados da análise NGS
-mkdir -p "${HOME}/ngs-analysis/${RUNNAME}_bm"
+echo "Preparando as pastas para (re-)análise dos dados..."
 SAVE_DIR="${HOME}/ngs-analysis/${RUNNAME}_bm"
+rm -r ${SAVE_DIR}
+[ ! -d "${SAVE_DIR}" ] && mkdir -vp ${SAVE_DIR}
+
 # Flow cell and kit OR config file
 # FLOWCELL="FLO-MIN106"
 # KIT="SQK-LSK109"
