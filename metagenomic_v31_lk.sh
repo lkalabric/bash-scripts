@@ -77,8 +77,10 @@ fi
 # Todos os WFs
 # Sumarios dos dados
 echo "Sumário dos dados"
+echo "Número de arquivos:"
 ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
-h5ls $(find ${RAWDIR} -type f -name "*.fast5" -exec diname {} \;) | wc -l
+echo "Número de reads:"
+h5ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
 
 # Basecalling
 if [ ! -d $BASECALLDIR ]; then
