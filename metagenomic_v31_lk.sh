@@ -76,8 +76,8 @@ if [ ! -f $HUMANREFMMI ]; then
 fi
 
 # Todos os WFs
-# Sumarios dos dados
-echo "Sumário dos dados"
+# Sumarios dos dados brutos
+echo "Sumário dos dados brutos"
 echo "Número de arquivos:"
 ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
 echo "Número de reads:"
@@ -88,7 +88,7 @@ if [ ! -d $BASECALLDIR ]; then
 	mkdir -vp $BASECALLDIR
 	# Step 1 - Basecalling (comum a todos workflows)
 	# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
-	echo Executando guppy_basecaller...
+	echo -e "\nExecutando guppy_basecaller..."
 	# Comando para guppy_basecaller usando GPU
 	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 	echo "Basecalling concluido com sucesso!"
@@ -106,7 +106,7 @@ fi
 # Step 2 - Demultiplex & adapter removal (comum a todos workflows)
 if [ ! -d $DEMUXDIR ]; then
 	mkdir -vp $DEMUXDIR
-	echo "Executando guppy_barcoder..."
+	echo -e "\nExecutando guppy_barcoder..."
 	#bm1 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --trim_barcodes
 	#bm2 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --detect_mid_strand_adapter --trim_barcodes
 	#bm3 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends --trim_barcodes
@@ -127,7 +127,7 @@ fi
 # fi # Fim do desvio para execução rápida
 
 # Step 3 - QC
-#echo "Executando pycoQC..."
+echo -e "\nExecutando pycoQC..."
 source activate ngs
 if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 	# Comando para pycoQC version 2.5
@@ -143,14 +143,14 @@ done
 # Workflow 2 apenas
 if [[ $WF -eq 2 ]]; then 
 	# Step 4 - Remoção dos primers
-	echo "Executando cutadapt..."
+	echo -e "\nExecutando cutadapt..."
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 	done;
 
 	# Step 5 - Filtro por tamanho
-	echo "Executando NanoFilt..."
+	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \;); do
 		NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
@@ -158,7 +158,7 @@ if [[ $WF -eq 2 ]]; then
 
 	# Step 6 - Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
-	echo "Executando prinseq-lite.pl..."
+	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \;); do
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
@@ -181,7 +181,7 @@ if [[ $WF -eq 2 ]]; then
 	# Cria a partir do arquivo refser_acc.txt o arquivo refseq_map.txt que mapeia os taxid (números que identificam as espécies taxonômica)
 
 	# Busca as reads no BLASTDB local
-	echo "Executando blastn..."
+	echo -e "\nExecutando blastn..."
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
 			echo "Carregando os dados ${BLASTDIR}/${i}..."
@@ -196,7 +196,7 @@ fi
 if [[ $WF -eq 31 ]]; then 
 	source activate ngs
 	# Step 4 - Filtro por tamanho
-	echo "Executando NanoFilt..."
+	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
 		NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
@@ -204,14 +204,14 @@ if [[ $WF -eq 31 ]]; then
 
 	# Step 5 - Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
-	echo "Executando prinseq-lite.pl..."
+	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \;); do
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 	done;
 
 	# Step 6 - Remoção das reads do genoma humano
-	echo "Executando minimap2, samtools & racon..."
+	echo -e "\nExecutando minimap2, samtools & racon..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
 	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
@@ -234,7 +234,7 @@ if [[ $WF -eq 31 ]]; then
 	done
 
 	# Step 7 - Classificação taxonômica
-	echo "Executando o Kraken2..."
+	echo -e "\nExecutando o Kraken2..."
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo "Carregando os dados ${READSLEVELDIR}/${i}..."
