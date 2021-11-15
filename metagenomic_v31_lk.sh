@@ -29,6 +29,7 @@ CONFIG="dna_r9.4.1_450bps_${MODELO}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_
 ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 
 # Caminhos de output das análises
+echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODELO}"
 rm -r ${RESULTSDIR}
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
@@ -80,7 +81,7 @@ echo "Sumário dos dados"
 echo "Número de arquivos:"
 ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
 echo "Número de reads:"
-h5ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
+h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 
 # Basecalling
 if [ ! -d $BASECALLDIR ]; then
