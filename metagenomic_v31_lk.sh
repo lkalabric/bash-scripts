@@ -4,6 +4,7 @@
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 25 AGO 2021
+# última atualização: 25 NOV 2021
 # versão 3.1: corrigiu o wf 3
 
 # Validação da entrada de dados na linha de comando
@@ -13,25 +14,26 @@ WF=$3		# Workflow de bioinformatica 1, 2 ou 31
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./metagenomic_v3_lk.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
+	echo "Sintáxe: ./metagenomic_v31_lk.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
 	exit 0
 fi
 # Caminho de INPUT dos dados fast5
 RAWDIR="${HOME}/data/${RUNNAME}" # Se análise começar com o Barcoder
- 
 if [ ! -d $RAWDIR ]; then
 	echo "Pasta de dados não encontrada!"
 	exit 0
 fi
 
-# Parâmetros Guppy (ONT)
-CONFIG="dna_r9.4.1_450bps_${MODELO}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_sup.cfg
-ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
+# Caminho de INPUT dos bancos de dados
+REFSEQDIR=${HOME}/data/REFSEQ
+HUMANREFDIR=${HOME}/data/GRCh38
+BLASTDBDIR="${HOME}/data/BLAST_DB"
+KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 
-# Caminhos de output das análises
+# Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODELO}"
-rm -r ${RESULTSDIR}
+# rm -r ${RESULTSDIR}
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
@@ -45,37 +47,37 @@ READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
 ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
 
-# Caminho para os bancos de dados
-REFSEQDIR=${HOME}/data/REFSEQ
-HUMANREFDIR=${HOME}/data/GRCh38
-BLASTDBDIR="${HOME}/data/BLAST_DB"
-KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
+# Parâmetros Guppy basecaller (ONT)
+CONFIG="dna_r9.4.1_450bps_${MODELO}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
+ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
  
-# Parâmetros para otimização do Guppy basecaller para modelo fast (benckmark)
-GPUPERDEVICE=4		# Parâmetros otimizados a partir do benchmark GPU LAPTOP-Yale
-CHUNCKSIZE=1000		# Parâmetros otimizados a partir do benchmark GPU LAPTOP-Yale
-CHUNKPERRUNNER=50	# Parâmetros otimizados a partir do benchmark GPU LAPTOP-Yale
+# Parâmetros para otimização do Guppy basecaller para modelo fast utilizadando o LAPTOP-Yale (benckmark)
+GPUPERDEVICE=4		
+CHUNCKSIZE=1000		
+CHUNKPERRUNNER=50	
 
 # Parâmetro de otimização minimap2, samtools, racon e kraken2
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
-
-# Parâmetros Barcoder ou Cutadapt para remoção do primer
-TRIMADAPTER=18
-PRIMER="GTTTCCCACTGGAGGATA"
 
 # Parâmetros de qualidade mínima
 QSCORE=9
 LENGTH=100
 
+# Parâmetros Barcoder ou Cutadapt para remoção do primer
+TRIMADAPTER=18
+PRIMER="GTTTCCCACTGGAGGATA"
+
 # Parâmetros minimap2 
 # wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
-HUMANREFSEQ="${HOME}/data/GRCh38/GRCh38.p13.genome.fa.gz"
-HUMANREFMMI="${HOME}/data/GRCh38/GRCh38.p13.genome.mmi"
+HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
+HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
+# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
 if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
 # Todos os WFs
+
 # Sumarios dos dados brutos
 echo "Sumário dos dados brutos"
 echo "Número de arquivos:"
@@ -83,15 +85,15 @@ ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
 echo "Número de reads:"
 h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 
-# Basecalling
+# Step 1 - Basecalling
+# Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 if [ ! -d $BASECALLDIR ]; then
+	echo -e "\nExecutando guppy_basecaller..."
 	mkdir -vp $BASECALLDIR
 	# Step 1 - Basecalling (comum a todos workflows)
 	# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
-	echo -e "\nExecutando guppy_basecaller..."
 	# Comando para guppy_basecaller usando GPU
 	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
-	echo "Basecalling concluido com sucesso!"
 fi
 
 # WF 1 - Classificação Taxonômica pelo Epi2ME
@@ -100,13 +102,13 @@ if [[ $WF -eq 1 ]]; then
 	exit 1
 fi
 
-# if false; then # Descio para execução rápida
+# if false; then # Desvio para execução rápida
 
-# Workflow 2 & 31
-# Step 2 - Demultiplex & adapter removal (comum a todos workflows)
+# WF 2 & 31
+# Step 2 - Demultiplex & adapter removal
 if [ ! -d $DEMUXDIR ]; then
-	mkdir -vp $DEMUXDIR
 	echo -e "\nExecutando guppy_barcoder..."
+	mkdir -vp $DEMUXDIR
 	#bm1 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --trim_barcodes
 	#bm2 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --detect_mid_strand_adapter --trim_barcodes
 	#bm3 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends --trim_barcodes
@@ -126,7 +128,7 @@ fi
 
 # fi # Fim do desvio para execução rápida
 
-# Step 3 - QC
+# Step 3 - Quality control QC
 echo -e "\nExecutando pycoQC..."
 source activate ngs
 if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
@@ -140,7 +142,7 @@ for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename 
     [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 done
 
-# Workflow 2 apenas
+# WF 2 - Classificação Taxonômica através de busca no BLASTDB local
 if [[ $WF -eq 2 ]]; then 
 	# Step 4 - Remoção dos primers
 	echo -e "\nExecutando cutadapt..."
@@ -170,7 +172,8 @@ if [[ $WF -eq 2 ]]; then
 		sed -n '1~4s/^@/>/p;2~4p' "${PRINSEQDIR}/${i}.good.fastq" > "${QUERYDIR}/${i}.fasta"
 	done;
 		
-	# Step 7 - Classificação taxonômica
+	# Step 7 - Classificação taxonômica utilizando blastn
+	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
 	# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
 
@@ -180,7 +183,7 @@ if [[ $WF -eq 2 ]]; then
 	# Script: acc2taxid.sh 
 	# Cria a partir do arquivo refser_acc.txt o arquivo refseq_map.txt que mapeia os taxid (números que identificam as espécies taxonômica)
 
-	# Busca as reads no BLASTDB local
+	# Busca as QUERIES no BLASTDB local
 	echo -e "\nExecutando blastn..."
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
@@ -192,7 +195,7 @@ if [[ $WF -eq 2 ]]; then
 	exit 2
 fi
 
-# Workflow 3.1 apenas
+# WF 3 - Classificação Taxonômica pelo Kraken2
 if [[ $WF -eq 31 ]]; then 
 	source activate ngs
 	# Step 4 - Filtro por tamanho
