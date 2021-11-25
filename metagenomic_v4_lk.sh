@@ -1,10 +1,14 @@
 #!/bin/bash
 
+echo "Necessita revisão do WF31"
+exit 0
+
 # script: metagenomics_v4_lk.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
-# última atualização: SET, 17 2021
-# versão 4: roda os wf 1, 2 e 3 e salva todos os resultados numa mesma pasta, além de executar guppy_basecaller e guppy_barcoder apenas uma vez
+# criação: 25 AGO 2021
+# última atualização: 25 NOV 2021
+# versão 4: roda os wf 1, 2 e 3 e salva todos os resultados numa mesma pasta
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
@@ -13,7 +17,7 @@ WF=$3		# Workflow de bioinformatica 1, 2 ou 3
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./metagenomic_v3_lk.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3>"
+	echo "Sintáxe: ./metagenomic_v4_lk.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
 	exit 0
 fi
 
@@ -31,6 +35,7 @@ BLASTDBDIR="${HOME}/data/BLAST_DB"
 KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 
 # Caminhos de OUTPUT das análises
+echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 [ ! -d $RESULTSDIR ] && mkdir -vp $RESULTSDIR
 BASECALLDIR="${RESULTSDIR}/BASECALL"
@@ -45,18 +50,17 @@ READLEVELDIR="${RESULTSDIR}/READS_LEVEL"
 CONTIGLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
 ASSEMBLYDIR="${RESULTSDIR}/ASSEMBLY"
 
-# Parâmetros Guppy (ONT)
-CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_sup.cfg
+# Parâmetros Guppy basecaller (ONT)
+CONFIG="dna_r9.4.1_450bps_${MODELO}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
 ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 
-# Parâmetros para otimização Guppy Basecaller por GPU
-# Benckmark para o modelo fast utilizadando o LAPTOP-Yale
+# Parâmetros para otimização do Guppy basecaller para modelo fast utilizadando o LAPTOP-Yale (benckmark)
 GPUPERDEVICE=4
 CHUNCKSIZE=1000
 CHUNKPERRUNNER=50
 # Benckmark para o modelo hac necessita ser realizado utilizando o LAPTOP-Yale
 
-# Parâmetro de otimização das análises por CPU
+# Parâmetro de otimização das análises por CPU e GPU (Laise)
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 
 # Parâmetros para controle da qualidade mínima
@@ -69,25 +73,33 @@ PRIMER="GTTTCCCACTGGAGGATA"
 
 # Parâmetros minimap2
 # wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
-HUMANREFSEQ="${HOME}/data/GRCh38/GRCh38.p13.genome.fa.gz"
-HUMANREFMMI="${HOME}/data/GRCh38/GRCh38.p13.genome.mmi"
+HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
+HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
 # Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
 if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
-# if false; then # Descio para execução rápida
+# if false; then # Desvio para execução rápida
 
-# Step 1 - Basecalling (usado em todos workflows wf)
-# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
+# Todos os WFs
+
+# Sumarios dos dados brutos
+echo "Sumário dos dados brutos"
+echo "Número de arquivos:"
+ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
+echo "Número de reads:"
+h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
+
+# Step 1 - Basecalling
+# Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 if [ ! -d $BASECALLDIR ]; then
+	echo -e "\nExecutando guppy_basecaller..."
 	mkdir -p $BASECALLDIR
-	echo Executando guppy_basecaller...
 	# Comando para guppy_basecaller usando GPU
 	guppy_basecaller -r -i $RAWDIR -s $BASECALLDIR -c $CONFIG -x auto  --gpu_runners_per_device $GPUPERDEVICE --chunk_size $CHUNCKSIZE --chunks_per_runner $CHUNKPERRUNNER --verbose_logs --resume
 	# Comando para guppy_basecaller usando CPU
 	# guppy_basecaller -r -i ${RAWDIR} -s $BASECALLDIR -c $CONFIG --num_callers $THREADS --verbose_logs
-	echo "Basecalling concluido com sucesso!"
 fi
 
 # WF 1 - Classificação Taxonômica pelo Epi2ME
@@ -96,9 +108,10 @@ if [[ $WF -eq 1 ]]; then
 	exit 1
 fi
 
-# Step 2 - Demultiplex & adapter removal (comum aos WF 2 e 3)
+# WF 2 & 31
+# Step 2 - Demultiplex & adapter removal
 if [ ! -d $DEMUXDIR ]; then
-	echo "Executando guppy_barcoder..."
+	echo -e "\nExecutando guppy_barcoder..."
 	mkdir -p "${DEMUXDIR}"
 	#bm1 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --trim_barcodes
 	#bm2 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --detect_mid_strand_adapter --trim_barcodes
@@ -113,11 +126,13 @@ if [ ! -d $DEMUXDIR ]; then
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 	fi
 fi
+# Move a pasta contendo as reads unclassified para barcode00
+[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
 
 # fi # Fim do desvio para execução rápida
 
-# Step 3 - Quality control QC (comum aos WF 2 e 3)
-#echo "Executando pycoQC..."
+# Step 3 - Quality control QC
+echo -e "\nExecutando pycoQC..."
 source activate ngs
 if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 	# Comando para pycoQC version 2.5
@@ -133,14 +148,14 @@ done
 # WF 2 - Classificação Taxonômica através de busca no BLASTDB local
 if [[ $WF -eq 2 ]]; then
 	# Step 4 - Remoção dos primers
-	echo "Executando cutadapt..."
+	echo -e "\nExecutando cutadapt..."
 	[ ! -d $CUTADAPTDIR ] && mkdir -vp $CUTADAPTDIR
 	for i in $(find $DEMUXCATDIR -type f -exec basename {} .fastq \;); do
 		cutadapt -g $PRIMER -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 	done;
 
 	# Step 5 - Filtro por tamanho
-	echo "Executando NanoFilt..."
+	echo -e "\nExecutando NanoFilt..."
 	[ ! -d $NANOFILTDIR ] && mkdir -vp $NANOFILTDIR
 	for i in $(find $CUTADAPTDIR -type f -exec basename {} .fastq \;); do
 		NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq"
@@ -148,7 +163,7 @@ if [[ $WF -eq 2 ]]; then
 
 	# Step 6 - Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
-	echo "Executando prinseq-lite.pl..."
+	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d $PRINSEQDIR ] && mkdir -vp $PRINSEQDIR
 	for i in $(find $NANOFILTDIR -type f -exec basename {} .fastq \;); do
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
@@ -182,6 +197,10 @@ if [[ $WF -eq 2 ]]; then
 	done;
 	exit 2
 fi
+
+#
+# Necessita revisão
+#
 
 # WF 3 - Classificação Taxonômica pelo Kraken2
 if [[ $WF -eq 3 ]]; then
