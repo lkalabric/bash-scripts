@@ -40,6 +40,7 @@ printf "	%s      		%s\n" "SLEV	" "$(grep -c -f ${WIMPDIR}/slev.wimp ${FILENAME})
 printf "	%s      		%s\n" "JEV	" "$(grep -c -f ${WIMPDIR}/jev.wimp ${FILENAME})"
 printf "	%s      		%s\n" "ILHV	" "$(grep -c -f ${WIMPDIR}/ilhv.wimp ${FILENAME})"
 printf "	%s      		%s\n" "ROCV	" "$(grep -c -f ${WIMPDIR}/rocv.wimp ${FILENAME})"
+printf "	%s      		%s\n" "HCV	" "$(grep -c -f ${WIMPDIR}/hcv.wimp ${FILENAME})"
 echo "Picornaviridae"
 printf "	%s     	 	%s\n" "CV	" "$(grep -c -f ${WIMPDIR}/cv.wimp ${FILENAME})"
 printf "	%s      		%s\n" "EV-A	" "$(grep -c -f ${WIMPDIR}/ev-a.wimp ${FILENAME})"
