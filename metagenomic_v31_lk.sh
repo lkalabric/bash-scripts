@@ -126,6 +126,12 @@ fi
 # Move a pasta contendo as reads unclassified para barcode00
 [ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
 
+# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
+[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
+for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+    [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
+done
+
 # fi # Fim do desvio para execução rápida
 
 # Step 3 - Quality control QC
@@ -135,12 +141,6 @@ if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 	# Comando para pycoQC version 2.5
 	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 fi
-
-# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
-[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
-for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
-    [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
-done
 
 # WF 2 - Classificação Taxonômica através de busca no BLASTDB local
 if [[ $WF -eq 2 ]]; then 
