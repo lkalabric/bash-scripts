@@ -176,12 +176,8 @@ if [[ $WF -eq 2 ]]; then
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
 	# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
-
-	# Script: fasta2acc.sh 
-	# Extrai do arquvio refseq.fasta a lista acesso refseq_acc.txt
-
-	# Script: acc2taxid.sh 
-	# Cria a partir do arquivo refser_acc.txt o arquivo refseq_map.txt que mapeia os taxid (números que identificam as espécies taxonômica)
+	# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
+	# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
 
 	# Busca as QUERIES no BLASTDB local
 	echo -e "\nExecutando blastn..."
