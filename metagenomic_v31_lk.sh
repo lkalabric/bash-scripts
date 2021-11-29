@@ -196,7 +196,7 @@ if [[ $WF -eq 2 ]]; then
 		# Busca remota
 		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		echo -e "\nResultados ${i}"
-		~/scripts/blast_report "${RUNNAME}_${MODEL}" "${i}"
+		~/scripts/blast_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done
 	exit 2
 fi
@@ -258,7 +258,7 @@ if [[ $WF -eq 31 ]]; then
 		echo -e "\nCarregando os dados ${i}..."
 		kraken2 --db ${KRAKENDB} --quick --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo -e "\nResultados ${i}"
-		~/scripts/kraken2_quick_report "${RUNNAME}_${MODEL}" "${i}"
+		~/scripts/kraken2_quick_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done
 	exit 31
 fi
