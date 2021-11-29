@@ -78,12 +78,13 @@ fi
 
 # Todos os WFs
 
-# Sumarios dos dados brutos
-echo "Sumário dos dados brutos"
-echo "Número de arquivos:"
+# Sumario da corrida
+# Dados disponíveis no report*.pdf
+echo "Sumário da corrida"
+echo "Total files:"
 ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
-echo "Número de reads:"
-h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
+echo "Total reads:"
+# h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 
 # Step 1 - Basecalling
 # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
