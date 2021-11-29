@@ -142,6 +142,10 @@ if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 fi
 
+#
+# Read-level taxid
+#
+
 # WF 2 - Classificação Taxonômica através de busca no BLASTDB local
 if [[ $WF -eq 2 ]]; then 
 	# Step 4 - Remoção dos primers
@@ -149,6 +153,7 @@ if [[ $WF -eq 2 ]]; then
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
+		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 	done
 
 	# Step 5 - Filtro por tamanho
@@ -156,7 +161,7 @@ if [[ $WF -eq 2 ]]; then
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \;); do
 		NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-		echo "   ${i} - $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
 
 	# Step 6 - Filtro de complexidade
@@ -164,8 +169,9 @@ if [[ $WF -eq 2 ]]; then
 	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \;); do
-		echo -e "   ${i}\n"
+		echo -e "\nResultados ${i}..."
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
+		# Resultados disponíveis no report do Prinseq (Good sequences)
 	done
 
 	# Converte arquivos .fastq em .fasta para query no blastn
@@ -177,18 +183,19 @@ if [[ $WF -eq 2 ]]; then
 	# Step 7 - Classificação taxonômica utilizando blastn
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
-	# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
-	# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
-	# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
-
+		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
+		# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
+		# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
 	# Busca as QUERIES no BLASTDB local
 	echo -e "\nExecutando blastn..."
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
-			echo "Carregando os dados ${BLASTDIR}/${i}..."
-			blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-			# Busca remota
-			# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+		echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
+		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+		# Busca remota
+		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+		echo -e "\nResultados ${i}"
+		~/scripts/blast_report "${RUNNAME}_${MODEL}" "${i}"
 	done
 	exit 2
 fi
@@ -201,7 +208,7 @@ if [[ $WF -eq 31 ]]; then
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
 		NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-		echo "   ${i} - $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
 
 	# Step 5 - Filtro de complexidade
@@ -209,19 +216,20 @@ if [[ $WF -eq 31 ]]; then
 	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \;); do
-		echo -e "   ${i}\n"
+		echo -e "\nCarregando os dados ${i}..."
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
+		# Resultados disponíveis no report do Prinseq (Good sequences)
 	done
 
 	# Step 6 - Remoção das reads do genoma humano
-	echo -e "\nExecutando minimap2, samtools & racon..."
+	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
 	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
 	minimap2 -d ${HUMANREFMMI} ${HUMANREFSEQ}
-
 	# Loop para analisar todos barcodes, um de cada vez
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+		echo -e "\nCarregando os dados ${i}..."
 	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
 	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${PRINSEQDIR}/${i}.good.fastq | samtools sort -@ 12 -o ${READSLEVELDIR}/${i}.sorted.bam -
 	    	# Indexa o arquivo para acesso mais rápido
@@ -233,7 +241,9 @@ if [[ $WF -eq 31 ]]; then
 	done
 
 	# Step 7 - Autocorreção das reads
+	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+		echo -e "\nCarregando os dados ${i}..."
 		# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
 		minimap2 -ax ava-ont -t ${THREADS} ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.overlap.sam
 		# Correção de erros a partir das sequencias consenso
@@ -244,9 +254,10 @@ if [[ $WF -eq 31 ]]; then
 	echo -e "\nExecutando o Kraken2..."
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
-		echo "Carregando os dados ${READSLEVELDIR}/${i}..."
+		echo -e "\nCarregando os dados ${i}..."
 		kraken2 --db ${KRAKENDB} --quick --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
-		~/script/kraken2_quick_report "${RUNNAME}_${MODEL}" ${i}
+		echo -e "\nResultados ${i}"
+		~/scripts/kraken2_quick_report "${RUNNAME}_${MODEL}" "${i}"
 	done
 	exit 31
 fi
@@ -254,14 +265,15 @@ fi
 echo "Workflow $WF concluido com sucesso!"
 exit 0
 
-# Pós-análise
-# Mapeamento contra genomas referência e plot de cobertura
+# Análise de cobertura do sequenciamento
+# Genomas referência e plot de cobertura
 CHIKVREFSEQ="${REFSEQ}/Togaviridae/NC_004162.2_CHIKV-S27.fasta"
-DENV1REFSEQ="${REFSEQ}/Flaviviridae/NC_001477.1_DENV1"
-DENV2REFSEQ="${REFSEQ}/Flaviviridae/NC_001474.2_DENV2"
-DENV3REFSEQ="${REFSEQ}/Flaviviridae/NC_001475.2_DENV3"
-DENV4REFSEQ="${REFSEQ}/Flaviviridae/NC_002640.1_DENV4"
-ZIKVREFSEQ="${REFSEQ}/Flaviviridae/NC_012532.1_ZIKV"
+DENV1REFSEQ="${REFSEQ}/Flaviviridae/NC_001477.1_DENV1.fasta"
+DENV2REFSEQ="${REFSEQ}/Flaviviridae/NC_001474.2_DENV2.fasta"
+DENV3REFSEQ="${REFSEQ}/Flaviviridae/NC_001475.2_DENV3.fasta"
+DENV4REFSEQ="${REFSEQ}/Flaviviridae/NC_002640.1_DENV4.fasta"
+ZIKVREFSEQ="${REFSEQ}/Flaviviridae/NC_012532.1_ZIKV.fasta"
+HIV1REFSEQ="${REFSEQ}/Retroviridae/NC_001802.1_HIV1.fasta"
 
 # Mapeamento CHIKV
 #for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -326,3 +338,8 @@ ZIKVREFSEQ="${REFSEQ}/Flaviviridae/NC_012532.1_ZIKV"
 #	fastcov ${ASSEMBLYDIR}/barcode*.zikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_zikv.pdf
 #	fastcov -l ${ASSEMBLYDIR}/barcode*.zikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_zikv_log.pdf
 #done
+
+#
+# Contig-level taxid
+#
+
