@@ -199,7 +199,8 @@ if [[ $WF -eq 31 ]]; then
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
 		NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-	done;
+		echo "   ${i} - $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+	done
 
 	# Step 5 - Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
@@ -207,7 +208,7 @@ if [[ $WF -eq 31 ]]; then
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \;); do
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
-	done;
+	done
 
 	# Step 6 - Remoção das reads do genoma humano
 	echo -e "\nExecutando minimap2, samtools & racon..."
