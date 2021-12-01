@@ -9,7 +9,7 @@
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
-MODELO=$2	# Modelo de basecalling fast hac sup
+MODEL=$2	# Modelo de basecalling fast hac sup
 WF=$3		# Workflow de bioinformatica 1, 2 ou 31
 
 if [[ $# -eq 0 ]]; then
@@ -32,7 +32,7 @@ KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se nec
 
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
-RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODELO}"
+RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 # rm -r ${RESULTSDIR}
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
@@ -48,7 +48,7 @@ CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
 ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
 
 # Parâmetros Guppy basecaller (ONT)
-CONFIG="dna_r9.4.1_450bps_${MODELO}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
+CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
 ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
  
 # Parâmetros para otimização do Guppy basecaller para modelo fast utilizadando o LAPTOP-Yale (benckmark)
