@@ -26,8 +26,7 @@ echo "Pass reads:"
 echo "All Demux:"
 
 echo "Resultados ${BARCODE} no WF2"
-  echo "Cutadapt:"
-  fastq_summary_v2.sh ${RESULTSDIR}/wf2/CUTADAPT/${BARCODE}.fastq 
+  echo "Cutadapt:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf2/CUTADAPT/${BARCODE}.fastq)
   echo "Nanofilt:"
   fastq_summary_v2.sh ${RESULTSDIR}/wf2/NANOFILT/${BARCODE}.fastq 
   echo "Prinseq:"
