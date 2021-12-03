@@ -23,9 +23,9 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}"
 DEMUX_CATDIR="${RESULTSDIR}/DEMUX_CAT"
 
 echo "=== reads_report output ==="
-echo "All reads:" 
-echo "Pass reads:"
-echo "All Demux:"
+echo "All reads:" $(grep -o "runid" $(find -H  ngs-analysis/NGS_LIBRARY13_fast/BASECALL -name *.fastq) | wc -l)
+echo "Pass reads:$(grep -o "runid" $(find -H  ngs-analysis/NGS_LIBRARY13_fast/BASECALL/pass -name *.fastq) | wc -l)
+echo "Demux:"
 for i in $(find ${DEMUX_CATDIR} -mindepth 1 -type f -name "barcode*" -exec basename {} \; | sort); do
     echo "$i:" $(fastq_summary_v2.sh "${DEMUX_CATDIR}/${i}")
 done
