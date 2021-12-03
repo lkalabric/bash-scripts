@@ -26,9 +26,8 @@ echo "=== reads_report output ==="
 echo "All reads:" 
 echo "Pass reads:"
 echo "All Demux:"
-for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
-    [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
-    echo "$i:" $(fastq_summary_v2.sh "${DEMUXCATDIR}/${i}.fastq")
+for i in $(find ${DEMUX_CATDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+    echo "$i:" $(fastq_summary_v2.sh "${DEMUX_CATDIR}/${i}.fastq")
 done
 
 echo "Resultados ${BARCODE} no WF2"
