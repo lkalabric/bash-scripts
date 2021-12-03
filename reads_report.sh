@@ -27,16 +27,16 @@ echo "All reads:"
 echo "Pass reads:"
 echo "All Demux:"
 for i in $(find ${DEMUX_CATDIR} -mindepth 1 -type f -name "barcode*" -exec basename {} \; | sort); do
-    echo "$i:" $(fastq_summary_v2.sh "${DEMUX_CATDIR}/${i}.fastq")
+    echo "$i:" $(fastq_summary_v2.sh "${DEMUX_CATDIR}/${i}")
 done
 
-echo "Resultados ${BARCODE} no WF2"
+echo -e "\nResultados ${BARCODE} no WF2"
   echo "Cutadapt:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf2/CUTADAPT/${BARCODE}.fastq)
   echo "Nanofilt:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf2/NANOFILT/${BARCODE}.fastq)
   echo "Prinseq:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf2/PRINSEQ/${BARCODE}.good.fastq)
   echo "Blast:" $(wc -l ${RESULTSDIR}/wf2/BLAST/${BARCODE}.blastn)
 
-echo "Resultados ${BARCODE} no WF31"
+echo -e "\nResultados ${BARCODE} no WF31"
   echo "Nanofilt:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf31/NANOFILT/${BARCODE}.fastq)
   echo "Prinseq:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf31/PRINSEQ/${BARCODE}.good.fastq)
   echo "Kraken2:"
