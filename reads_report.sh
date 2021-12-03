@@ -40,5 +40,5 @@ echo -e "\nResultados ${BARCODE} no WF31"
   echo "Nanofilt:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf31/NANOFILT/${BARCODE}.fastq)
   echo "Prinseq:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf31/PRINSEQ/${BARCODE}.good.fastq)
   echo "Kraken2:"
-  echo "root - " $(grep "root" ${RESULTSDIR}/wf31/READS_LEVEL/${BARCODE}_report.txt | cut -f 3)
-  echo "Viruses - " $(grep "Viruses" ${RESULTSDIR}/wf31/READS_LEVEL/${BARCODE}_report.txt | cut -f 3)
+  echo "root - " $(grep "root" ${RESULTSDIR}/wf31/READS_LEVEL/${BARCODE}_report.txt | cut -f 2)
+  echo "Viruses - " $(grep "Viruses" ${RESULTSDIR}/wf31/READS_LEVEL/${BARCODE}_report.txt | cut -f 2)
