@@ -26,7 +26,7 @@ echo "=== reads_report output ==="
 echo "All reads:" 
 echo "Pass reads:"
 echo "All Demux:"
-for i in $(find ${DEMUX_CATDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+for i in $(find ${DEMUX_CATDIR} -mindepth 1 -type f -name "barcode*" -exec basename {} \; | sort); do
     echo "$i:" $(fastq_summary_v2.sh "${DEMUX_CATDIR}/${i}.fastq")
 done
 
