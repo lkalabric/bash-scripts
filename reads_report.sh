@@ -20,31 +20,26 @@ RUNNAME=$1
 BARCODE=$2
 
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}"
+DEMUX_CATDIR="${RESULTSDIR}/DEMUX_CAT"
 
+echo "=== reads_report output ==="
 echo "All reads:" 
 echo "Pass reads:"
 echo "All Demux:"
+for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+    [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
+    echo "$i:" $(fastq_summary_v2.sh "${DEMUXCATDIR}/${i}.fastq")
+done
 
 echo "Resultados ${BARCODE} no WF2"
   echo "Cutadapt:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf2/CUTADAPT/${BARCODE}.fastq)
-  echo "Nanofilt:"
-  fastq_summary_v2.sh ${RESULTSDIR}/wf2/NANOFILT/${BARCODE}.fastq 
-  echo "Prinseq:"
-  fastq_summary_v2.sh ${RESULTSDIR}/wf2/PRINSEQ/${BARCODE}.good.fastq 
-  echo "Blast:"
-  wc -l ${RESULTSDIR}/wf2/BLAST/${BARCODE}.blastn 
+  echo "Nanofilt:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf2/NANOFILT/${BARCODE}.fastq)
+  echo "Prinseq:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf2/PRINSEQ/${BARCODE}.good.fastq)
+  echo "Blast:" $(wc -l ${RESULTSDIR}/wf2/BLAST/${BARCODE}.blastn)
 
 echo "Resultados ${BARCODE} no WF31"
-  echo "Nanofilt:"
-  fastq_summary_v2.sh ${RESULTSDIR}/wf31/NANOFILT/${BARCODE}.fastq 
-  echo "Prinseq:"
-  fastq_summary_v2.sh ${RESULTSDIR}/wf31/PRINSEQ/${BARCODE}.good.fastq 
+  echo "Nanofilt:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf31/NANOFILT/${BARCODE}.fastq)
+  echo "Prinseq:" $(fastq_summary_v2.sh ${RESULTSDIR}/wf31/PRINSEQ/${BARCODE}.good.fastq)
   echo "Kraken2:"
-  echo "root - "
-  grep "root" ${RESULTSDIR}/wf31/READS_LEVEL/${BARCODE}_report.txt | cut -f 3
-  echo "Viruses - "
-  grep "Viruses" ${RESULTSDIR}/wf31/READS_LEVEL/${BARCODE}_report.txt | cut -f 3
-  
-  
-  
-  
+  echo "root - " $(grep "root" ${RESULTSDIR}/wf31/READS_LEVEL/${BARCODE}_report.txt | cut -f 3)
+  echo "Viruses - " $(grep "Viruses" ${RESULTSDIR}/wf31/READS_LEVEL/${BARCODE}_report.txt | cut -f 3)
