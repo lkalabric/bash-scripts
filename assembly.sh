@@ -110,7 +110,7 @@ if [ $1 -eq 7 ]; then
 	# Fonte: https://github.com/ruanjue/wtdbg2
 	
 	# Ativar o ambiente Conda
-	soruce activate ngs
+	source activate ngs
 	
 	# assemble long reads
 	wtdbg2 -x ont -g 4.6m -i $SAMPLE -t 12 -fo dbg
