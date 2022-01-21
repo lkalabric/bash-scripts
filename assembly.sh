@@ -8,6 +8,16 @@
 # ultima atualização: 17 OUT 2021
 # atualização: configuração de variáveis e teste do método 6
 
+OUTDIR=/home/brazil1/assembly
+#REFSEQ="../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta"
+REFSEQ="../data/REFSEQ/Togaviridae/NC_004162_CHIKV-S27.fasta"
+#RUNNAME=DENV_FTA_1_hac
+RUNNAME="NGS_LIBRARY13_fast"
+BARCODE="barcode01"
+SAMPLE="$HOME/ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq"
+
+
+
 # Valiação da entrada de dados na linha de comando
 # $1 Número da análise passado na linha de comando
 if [ $# -eq 0 ]; then
@@ -17,12 +27,6 @@ if [ $# -eq 0 ]; then
 	exit 0
 fi
 
-OUTDIR=/home/brazil1/assembly
-#REFSEQ="../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta"
-REFSEQ="../data/REFSEQ/Togaviridae/NC_004162_CHIKV-S27.fasta"
-#RUNNAME=DENV_FTA_1_hac
-RUNNAME=NGS_LIBRARY02_hac
-BARCODE=barcode01
 
 # 1 Genome assembly using minimap2-miniasm pipeline (gera unitigs sequences)
 
@@ -99,4 +103,27 @@ if [ $1 -eq 6 ]; then
 	cat "../assembly/$BARCODE.6.coverage"
 	fastcov.py "$OUTDIR/$BARCODE.$1.bwa-mem.sorted.bam" -o "../assembly/$BARCODE.6.fastcov.pdf"
 	exit 6
+fi
+
+# 7 Montagem utilizando wtdbg2
+if [ $1 -eq 7 ]; then
+	# Fonte: https://github.com/ruanjue/wtdbg2
+	
+	# Ativar o ambiente Conda
+	soruce activate ngs
+	
+	# assemble long reads
+	wtdbg2 -x ont -g 4.6m -i $SAMPLE -t 12 -fo dbg
+
+	# derive consensus
+	wtpoa-cns -t 16 -i dbg.ctg.lay.gz -fo dbg.raw.fa
+
+	# polish consensus, not necessary if you want to polish the assemblies using other tools
+	#minimap2 -t16 -ax map-pb -r2k dbg.raw.fa reads.fa.gz | samtools sort -@4 >dbg.bam
+	#samtools view -F0x900 dbg.bam | ./wtpoa-cns -t 16 -d dbg.raw.fa -i - -fo dbg.cns.fa
+
+	# Addtional polishment using short reads
+	#bwa index dbg.cns.fa
+	#bwa mem -t 16 dbg.cns.fa sr.1.fa sr.2.fa | samtools sort -O SAM | ./wtpoa-cns -t 16 -x sam-sr -d dbg.cns.fa -i - -fo dbg.srp.fa
+	exit 7
 fi
