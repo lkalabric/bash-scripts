@@ -14,9 +14,8 @@ REFSEQ="../data/REFSEQ/Togaviridae/NC_004162_CHIKV-S27.fasta"
 #RUNNAME=DENV_FTA_1_hac
 RUNNAME="NGS_LIBRARY13_fast"
 BARCODE="barcode01"
-SAMPLE="$HOME/ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq"
-
-
+#SAMPLE="$HOME/ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq"
+SAMPLE="$HOME/ngs-analysis/$RUNNAME/wf31/READS_LEVEL/$BARCODE.corrected.fasta"
 
 # Valiação da entrada de dados na linha de comando
 # $1 Número da análise passado na linha de comando
