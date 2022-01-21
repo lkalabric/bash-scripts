@@ -113,10 +113,10 @@ if [ $1 -eq 7 ]; then
 	source activate ngs
 	
 	# assemble long reads
-	wtdbg2 -x ont -g 4.6m -i $SAMPLE -t 12 -fo dbg
+	wtdbg2 -x ont -i $SAMPLE -t 12 -fo $HOME/assembly/dbg
 
 	# derive consensus
-	wtpoa-cns -t 16 -i dbg.ctg.lay.gz -fo dbg.raw.fa
+	wtpoa-cns -t 16 -i $HOME/assembly/dbg.ctg.lay.gz -fo $HOME/assembly/dbg.raw.fa
 
 	# polish consensus, not necessary if you want to polish the assemblies using other tools
 	#minimap2 -t16 -ax map-pb -r2k dbg.raw.fa reads.fa.gz | samtools sort -@4 >dbg.bam
