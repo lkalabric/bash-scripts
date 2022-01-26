@@ -33,12 +33,12 @@ SAMPLE="${NGSDIR}/PRINSEQ/${BARCODE}.good.fastq"
 ASSEMBLYDIR="${NGSDIR}/ASSEMBLY"
 
 # 1 Genome assembly using minimap2-miniasm pipeline (gera unitigs sequences)
-
+# Link: https://www.internacionaltravessias.com.br/
 if [ $MONTADOR -eq 1 ]; then
 	minimap2 -x ava-ont \
 	 ${SAMPLE} \
 	 ${SAMPLE} \
-	| gzip -1 > "${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz"
+	| gzip -1 > "${ASSEMBLYDIR}/1.minimap.${BARCODE}.paf.gz"
 
 	miniasm -f \
 	 ${SAMPLE} \
@@ -47,14 +47,15 @@ if [ $MONTADOR -eq 1 ]; then
 	exit 1
 fi
 
+REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001436.1_HTLV1.fasta"
 # 2 Mapea as reads usando um genoma referência
 if [ $MONTADOR -eq 2 ]; then
 	source activate ngs
 	# long sequences against a reference genome
-	minimap2 -t 12 -a ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.mapped.sam"
-	samtools sort "barcode01.$1.mapped.sam" -o "barcode01.$1.mapped.sorted.bam"
-	fastcov -s "barcode01.$1.mapped.sorted.bam" -o "barcode01.$1.fastcov.pdf"
-	exit 3
+	minimap2 -t 12 -a ${REFESEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
+	samtools sort "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
+	fastcov -s "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.fastcov.pdf"
+	exit 2
 fi
 
 
