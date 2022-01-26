@@ -8,41 +8,47 @@
 # ultima atualização: 17 OUT 2021
 # atualização: configuração de variáveis e teste do método 6
 
-# Valiação da entrada de dados na linha de comando
-# $1 Número da análise passado na linha de comando
-if [ $# -eq 0 ]; then
-	echo "Falta o método para montagem!"
-	echo "Sintáxe: ./assembly.sh <NGS_LIBRARYXX_fast> <barcodeXX> <METODO: 1..7>"
-	echo "Exemplo: ./assembly.sh NGS_LIBRARY13_fast barcode01 7"
+# Validação da entrada de dados na linha de comando
+RUNNAME=$1 	# Nome do dado passado na linha de comando
+MODEL=$2	# Modelo de basecalling fast hac sup
+WF=31		# Workflow de bioinformatica 1, 2 ou 31
+BARCODE=$3	# Barcode
+MONTADOR=$4	# Montador
+
+if [[ $# -eq 0 ]]; then
+	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
+	echo "Sintáxe: assembly.sh <LIBRARY> <MODELO: fast,hac,sup> <BARCODE: barcode01,barcode02...> <MONTADOR: 1,2,3...>"
 	exit 0
 fi
+# Caminho de INPUT dos dados fastq
+NGSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/wf${WF}" # Se análise começar com o Barcoder
+if [ ! -d $NGSDIR ]; then
+	echo "Pasta de dados não encontrada!"
+	exit 0
+fi
+# Dados a partir do resultado PRINSEQ
+SAMPLE="${NGSDIR}/PRINSEQ/${BARCODE}.good.fastq"
 
-RUNNAME=$1
-BARCODE=$2
-OUTDIR=/home/brazil1/assembly
-#REFSEQ="../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta"
-REFSEQ="../data/REFSEQ/Togaviridae/NC_004162_CHIKV-S27.fasta"
-#RUNNAME=DENV_FTA_1_hac
-#SAMPLE="$HOME/ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq"
-SAMPLE="$HOME/ngs-analysis/$RUNNAME/wf31/READS_LEVEL/$BARCODE.corrected.fasta"
+# Caminhos de OUTPUT das análises
+ASSEMBLYDIR="${NGSDIR}/ASSEMBLY"
 
 # 1 Genome assembly using minimap2-miniasm pipeline (gera unitigs sequences)
 
-if [ $3 -eq 1 ]; then
+if [ $MONTADOR -eq 1 ]; then
 	minimap2 -x ava-ont \
-	 ../ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
-	 ../ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
-	| gzip -1 > "$OUTDIR/minimap.$BARCODE.paf.gz"
+	 ../${SAMPLE} \
+	 ../${SAMPLE} \
+	| gzip -1 > "${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz"
 
 	miniasm -f \
-	 ../ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
-	"$OUTDIR/minimap.$BARCODE.paf.gz" > "$OUTDIR/miniasm.$BARCODE.gfa"
-	awk '/^S/{print ">"$2"\n"$3}' "$OUTDIR/miniasm.$BARCODE.gfa" > "$OUTDIR/miniasm.$BARCODE.fasta"
+	 ../${SAMPLE} \
+	"${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz" > "${ASSEMBLYDIR}/1.miniasm.$BARCODE.gfa"
+	awk '/^S/{print ">"$2"\n"$3}' "${ASSEMBLYDIR}/1.miniasm.$BARCODE.gfa" > "${ASSEMBLYDIR}/1.miniasm.$BARCODE.fasta"
 	exit 1
 fi
 
 # 2 Mapea as reads usando um genoma referência
-if [ $3 -eq 2 ]; then
+if [ $MONTADOR -eq 2 ]; then
 	source activate ngs
 	# long sequences against a reference genome
 	minimap2 -t 12 -a ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.mapped.sam"
@@ -53,7 +59,7 @@ fi
 
 
 # 3 Mapea as reads usando um genoma referência
-if [ $3 -eq 3 ]; then
+if [ $MONTADOR -eq 3 ]; then
 	source activate ngs
 	# Cria um indice antes de mapear
 	minimap2 -t 12 -a ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.mapped.sam"
@@ -62,7 +68,7 @@ if [ $3 -eq 3 ]; then
 fi
 
 # 4 Mapea as reads usando um genoma referência
-if [ $3 -eq 4 ]; then
+if [ $MONTADOR -eq 4 ]; then
 	source activate ngs
 	# use presets (no test data) # Oxford Nanopore genomic reads
 	minimap2 -t 12 -ax map-ont ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.axligned.sam"
@@ -71,7 +77,7 @@ if [ $3 -eq 4 ]; then
 fi
 
 # 5 Montagem da sequencia consenso usando um genoma referência
-if [ $3 -eq 5 ]; then
+if [ $MONTADOR -eq 5 ]; then
 	# Fonte: https://github.com/jts/nanopolish
 	# Pré-processamento dos dados
 	nanopolish index -d ../data/DENV_FTA_1/DENV_Run1_data/fast5_pass/ -s ../data/DENV_FTA_1/DENV_Run1_data/sequencing_summary/MT-110616_20190710_214507_FAK92171_minion_sequencing_run_DENV_FTA_1_sequencing_summary.txt "${OUTDIR}/barcode01.fasta"
@@ -90,7 +96,7 @@ if [ $3 -eq 5 ]; then
 fi
 
 # 6 Montagem da sequencia consenso usando um genoma referência
-if [ $3 -eq 6 ]; then
+if [ $MONTADOR -eq 6 ]; then
 	# Fonte: https://github.com/jts/nanopolish
 	# Indexando a sequencia referencia
 	bwa index $REFSEQ
@@ -104,7 +110,7 @@ if [ $3 -eq 6 ]; then
 fi
 
 # 7 Montagem utilizando wtdbg2
-if [ $3 -eq 7 ]; then
+if [ $MONTADOR -eq 7 ]; then
 	# Fonte: https://github.com/ruanjue/wtdbg2
 	
 	# Ativar o ambiente Conda
