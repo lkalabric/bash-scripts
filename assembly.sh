@@ -32,7 +32,7 @@ SAMPLE="${NGSDIR}/PRINSEQ/${BARCODE}.good.fastq"
 # Caminhos de OUTPUT das análises
 ASSEMBLYDIR="${NGSDIR}/ASSEMBLY"
 
-# 1 Genome assembly using minimap2-miniasm pipeline (gera unitigs sequences)
+# 1 De Novo assembly using minimap2-miniasm pipeline (gera unitigs sequences)
 # Link: https://www.internacionaltravessias.com.br/
 if [ $MONTADOR -eq 1 ]; then
 	minimap2 -x ava-ont \
@@ -52,19 +52,30 @@ REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
 if [ $MONTADOR -eq 2 ]; then
 	source activate ngs
 	# long sequences against a reference genome
-	minimap2 -t 12 -a ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
+	minimap2 -t 12 -ax map-ont ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
 	samtools sort "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
 	fastcov.py "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.fastcov.pdf"
 	exit 2
 fi
 
-
-# 3 Mapea as reads usando um genoma referência
+# 3 Montagem por referência usando minimap-2-samtools
+# Link: https://www.biostars.org/p/472927/
 if [ $MONTADOR -eq 3 ]; then
 	source activate ngs
 	# Cria um indice antes de mapear
-	minimap2 -t 12 -a ../data/REFSEQ/Flaviviridae/NC_001477.1_DENV1.fasta ../ngs-analysis/DENV_FTA_1_hac/wf31/PRINSEQ/barcode01.good.fastq -o "barcode01.$1.mapped.sam"
-	samtools sort "barcode01.$1.mapped.sam" -o "barcode01.$1.mapped.sorted.bam"
+	minimap2 -t 12 -ax map-ont  ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.sam"
+
+	# Convert sam to bam
+	samtools view -S -b "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.sam" > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.bam"
+
+	# Sort the alignment
+	samtools sort "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
+	
+	# Get consensus fastq file
+	samtools mpileup -uf ${REFSEQ} "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" | bcftools call -c | vcfutils.pl vcf2fq > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fastq"
+
+	# Convert .fastq to .fasta
+	seqtk seq -aQ64 -q13 -n N "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fastq" > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fasta"
 	exit 3
 fi
 
