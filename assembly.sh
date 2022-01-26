@@ -47,12 +47,12 @@ if [ $MONTADOR -eq 1 ]; then
 	exit 1
 fi
 
-REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001436.1_HTLV1.fasta"
+REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
 # 2 Mapea as reads usando um genoma referência
 if [ $MONTADOR -eq 2 ]; then
 	source activate ngs
 	# long sequences against a reference genome
-	minimap2 -t 12 -a ${REFESEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
+	minimap2 -t 12 -a ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
 	samtools sort "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
 	fastcov -s "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.fastcov.pdf"
 	exit 2
