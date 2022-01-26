@@ -36,12 +36,12 @@ ASSEMBLYDIR="${NGSDIR}/ASSEMBLY"
 
 if [ $MONTADOR -eq 1 ]; then
 	minimap2 -x ava-ont \
-	 ../${SAMPLE} \
-	 ../${SAMPLE} \
+	 ${SAMPLE} \
+	 ${SAMPLE} \
 	| gzip -1 > "${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz"
 
 	miniasm -f \
-	 ../${SAMPLE} \
+	 ${SAMPLE} \
 	"${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz" > "${ASSEMBLYDIR}/1.miniasm.$BARCODE.gfa"
 	awk '/^S/{print ">"$2"\n"$3}' "${ASSEMBLYDIR}/1.miniasm.$BARCODE.gfa" > "${ASSEMBLYDIR}/1.miniasm.$BARCODE.fasta"
 	exit 1
