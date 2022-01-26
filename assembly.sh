@@ -47,7 +47,8 @@ if [ $MONTADOR -eq 1 ]; then
 	exit 1
 fi
 
-REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
+#REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
+REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/M62321.1_HCV1a.fasta"
 # 2 Mapea as reads usando um genoma referência
 if [ $MONTADOR -eq 2 ]; then
 	source activate ngs
@@ -72,7 +73,7 @@ if [ $MONTADOR -eq 3 ]; then
 	samtools sort "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
 	
 	# Get consensus fastq file
-	samtools mpileup -uf ${REFSEQ} "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" | bcftools call -c | vcfutils.pl vcf2fq > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fastq"
+	samtools mpileup -f ${REFSEQ} "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" | bcftools call -c | vcfutils.pl vcf2fq > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fastq"
 
 	# Convert .fastq to .fasta
 	seqtk seq -aQ64 -q13 -n N "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fastq" > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fasta"
