@@ -5,7 +5,7 @@
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # objetivo: testar diferentes montadores
 # criação: 25 AGO 2021
-# ultima atualização: 17 OUT 2021
+# ultima atualização: 26 JAN 2022
 # atualização: configuração de variáveis e teste do método 6
 
 # Validação da entrada de dados na linha de comando
