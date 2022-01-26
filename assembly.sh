@@ -54,7 +54,7 @@ if [ $MONTADOR -eq 2 ]; then
 	# long sequences against a reference genome
 	minimap2 -t 12 -a ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
 	samtools sort "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
-	fastcov -s "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.fastcov.pdf"
+	fastcov.py -s "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.fastcov.pdf"
 	exit 2
 fi
 
