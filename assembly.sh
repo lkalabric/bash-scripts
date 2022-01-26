@@ -30,12 +30,12 @@ SAMPLE="$HOME/ngs-analysis/$RUNNAME/wf31/READS_LEVEL/$BARCODE.corrected.fasta"
 
 if [ $3 -eq 1 ]; then
 	minimap2 -x ava-ont \
-	 ../ngs-analysis/$RUNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
-	 ../ngs-analysis/$RUNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
+	 ../ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
+	 ../ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
 	| gzip -1 > "$OUTDIR/minimap.$BARCODE.paf.gz"
 
 	miniasm -f \
-	 ../ngs-analysis/$RUNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
+	 ../ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq \
 	"$OUTDIR/minimap.$BARCODE.paf.gz" > "$OUTDIR/miniasm.$BARCODE.gfa"
 	awk '/^S/{print ">"$2"\n"$3}' "$OUTDIR/miniasm.$BARCODE.gfa" > "$OUTDIR/miniasm.$BARCODE.fasta"
 	exit 1
