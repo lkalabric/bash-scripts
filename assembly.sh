@@ -32,9 +32,24 @@ SAMPLE="${NGSDIR}/PRINSEQ/${BARCODE}.good.fastq"
 # Caminhos de OUTPUT das análises
 ASSEMBLYDIR="${NGSDIR}/ASSEMBLY"
 
-# 1 De Novo assembly using minimap2-miniasm pipeline (gera unitigs sequences)
-# Link: https://www.internacionaltravessias.com.br/
+
+REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
+#REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/M62321.1_HCV1a.fasta"
+#REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/D90208.1_HCV1b.fasta"
+#REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/D17763.1_HCV3a.fasta"
+# 1 Mapea as reads usando um genoma referência
 if [ $MONTADOR -eq 1 ]; then
+	source activate ngs
+	# long sequences against a reference genome
+	minimap2 -t 12 -ax map-ont ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
+	samtools sort "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
+	fastcov.py "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.fastcov.pdf"
+	exit 2
+fi
+
+# 2 De Novo assembly using minimap2-miniasm pipeline (gera unitigs sequences)
+# Link: https://www.internacionaltravessias.com.br/
+if [ $MONTADOR -eq 2 ]; then
 	minimap2 -x ava-ont \
 	 ${SAMPLE} \
 	 ${SAMPLE} \
@@ -45,20 +60,6 @@ if [ $MONTADOR -eq 1 ]; then
 	"${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz" > "${ASSEMBLYDIR}/1.miniasm.$BARCODE.gfa"
 	awk '/^S/{print ">"$2"\n"$3}' "${ASSEMBLYDIR}/1.miniasm.$BARCODE.gfa" > "${ASSEMBLYDIR}/1.miniasm.$BARCODE.fasta"
 	exit 1
-fi
-
-#REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
-#REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/M62321.1_HCV1a.fasta"
-REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/D90208.1_HCV1b.fasta"
-#REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/D17763.1_HCV3a.fasta"
-# 2 Mapea as reads usando um genoma referência
-if [ $MONTADOR -eq 2 ]; then
-	source activate ngs
-	# long sequences against a reference genome
-	minimap2 -t 12 -ax map-ont ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
-	samtools sort "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
-	fastcov.py "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.fastcov.pdf"
-	exit 2
 fi
 
 # 3 Montagem por referência usando minimap-2-samtools
