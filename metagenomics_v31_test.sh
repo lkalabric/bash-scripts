@@ -35,16 +35,16 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 # rm -r ${RESULTSDIR}
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/DEMUX"
-DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
+DEMUXDIR="${RESULTSDIR}/test${WF}/DEMUX"
+DEMUXCATDIR="${RESULTSDIR}/test${WF}/DEMUX_CAT"
 CUTADAPTDIR="CUTADAPT"
-#NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
-#PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
-#QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
-#BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
-#READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
-#CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
-#ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
+NANOFILTDIR="${RESULTSDIR}/test${WF}/NANOFILT"
+PRINSEQDIR="${RESULTSDIR}/test${WF}/PRINSEQ"
+QUERYDIR="${RESULTSDIR}/test${WF}/QUERY"
+BLASTDIR="${RESULTSDIR}/test${WF}/BLAST"
+READSLEVELDIR="${RESULTSDIR}/test${WF}/READS_LEVEL"
+CONTIGLEVELDIR="${RESULTSDIR}/test${WF}/CONTIGS_LEVEL"
+ASSEMBLYDIR="${RESULTSDIR}/test${WF}/ASSEMBLY"
 
 # Parâmetros Guppy basecaller (ONT)
 CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
@@ -96,118 +96,53 @@ fi
 #
 # Test 1
 #
+if [[ $WF -eq 1 ]]; then 
+	# Step 2 - Demultiplex & adapter removal
+	echo -e "\nExecutando guppy_barcoder.1..."
+	# Sem headcrop 18 (uso cutadapt)
+	mkdir -vp $DEMUXDIR.1
+	guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
 
-# Step 2 - Demultiplex & adapter removal
-echo -e "\nExecutando guppy_barcoder.1..."
-# Sem headcrop 18 (uso cutadapt)
-mkdir -vp $DEMUXDIR.1
-guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.1 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
+	# Move a pasta contendo as reads unclassified para barcode00
+	[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
 
-# Move a pasta contendo as reads unclassified para barcode00
-[ -d "${DEMUXDIR}.1/unclassified" ] && mv "${DEMUXDIR}.1/unclassified" "${DEMUXDIR}.1/barcode00"
+	# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
+	[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
+	for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+	    [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
+	done
 
-# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
-[ ! -d ${DEMUXCATDIR}.1 ] && mkdir -vp ${DEMUXCATDIR}.1
-for i in $(find ${DEMUXDIR}.1 -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
-    [ -d "${DEMUXDIR}.1/${i}" ] && cat ${DEMUXDIR}.1/${i}/*.fastq > "${DEMUXCATDIR}.1/${i}.fastq"
-done
-
-# Step 2.1 - Remoção dos primers
-echo -e "\nExecutando cutadapt..."
-[ ! -d ${DEMUXCATDIR}.1/${CUTADAPTDIR} ] && mkdir -vp ${DEMUXCATDIR}.1/${CUTADAPTDIR}
-for i in $(find ${DEMUXCATDIR}.1 -type f -exec basename {} .fastq \;); do
-	cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${DEMUXCATDIR}.1/${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}.1/${i}.fastq"
-	echo -e "\nResultados ${i} $(grep -c "runid" ${DEMUXCATDIR}.1/${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
-done
-
-# Step 3 - Quality control QC
-echo -e "\nExecutando pycoQC.1..."
-source activate ngs
-if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.1.html" ]; then
-	# Comando para pycoQC version 2.5
-	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}.1/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.1.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
+	# Step 2.1 - Remoção dos primers
+	echo -e "\nExecutando cutadapt..."
+	[ ! -d ${DEMUXCATDIR}/${CUTADAPTDIR} ] && mkdir -vp ${DEMUXCATDIR}/${CUTADAPTDIR}
+	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
+		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${DEMUXCATDIR}/${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
+		echo -e "\nResultados ${i} $(grep -c "runid" ${DEMUXCATDIR}/${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+	done
+	mv ${DEMUXCATDIR}/${CUTADAPTDIR}/*.fastq ${DEMUXCATDIR}
 fi
 
 #
 # Test 2
 #
-# Step 2 - Demultiplex & adapter removal
-echo -e "\nExecutando guppy_barcoder.2..."
-# Com headcrop 18
-mkdir -vp $DEMUXDIR.2
-guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.2 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
-
-# Move a pasta contendo as reads unclassified para barcode00
-[ -d "${DEMUXDIR}.2/unclassified" ] && mv "${DEMUXDIR}.2/unclassified" "${DEMUXDIR}.2/barcode00"
-
-[ ! -d ${DEMUXCATDIR}.2 ] && mkdir -vp ${DEMUXCATDIR}.2
-for i in $(find ${DEMUXDIR}.2 -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
-    [ -d "${DEMUXDIR}.2/${i}" ] && cat ${DEMUXDIR}.2/${i}/*.fastq > "${DEMUXCATDIR}.2/${i}.fastq"
-done
-
-exit 0
-
-
-#
-# Análise em nível de reads (reads_level)
-#
-
-# WF 2 - Classificação Taxonômica através de busca no BLASTDB local
 if [[ $WF -eq 2 ]]; then 
-	# Step 4 - Remoção dos primers
-	echo -e "\nExecutando cutadapt..."
-	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
-	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
-		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
-		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
-	done
+	# Step 2 - Demultiplex & adapter removal
+	echo -e "\nExecutando guppy_barcoder.2..."
+	# Com headcrop 18
+	mkdir -vp $DEMUXDIR
+	guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 
-	# Step 5 - Filtro por tamanho
-	echo -e "\nExecutando NanoFilt..."
-	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
-	for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \;); do
-		NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-		# Resultados disponíveis no report do Prinseq (Input sequences) 
-	done
+	# Move a pasta contendo as reads unclassified para barcode00
+	[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}.2/barcode00"
 
-	# Step 6 - Filtro de complexidade
-	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
-	echo -e "\nExecutando prinseq-lite.pl..."
-	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
-	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \;); do
-		echo -e "\nResultados ${i}..."
-		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
-		# Resultados disponíveis no report do Prinseq (Good sequences)
+	[ ! -d ${DEMUXCATDIR}.2 ] && mkdir -vp ${DEMUXCATDIR}.2
+	for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+	    [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 	done
-
-	# Converte arquivos .fastq em .fasta para query no blastn
-	[ ! -d "${QUERYDIR}" ] && mkdir -vp ${QUERYDIR}
-	for i in $(find "${PRINSEQDIR}"/*.good.fastq -type f -exec basename {} .good.fastq \;); do
-		sed -n '1~4s/^@/>/p;2~4p' "${PRINSEQDIR}/${i}.good.fastq" > "${QUERYDIR}/${i}.fasta"
-	done
-		
-	# Step 7 - Classificação taxonômica utilizando blastn
-	# Preparação do BLASTDB local
-	# Script: makeblastdb_refseq.sh
-		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
-		# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
-		# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
-	# Busca as QUERIES no BLASTDB local
-	echo -e "\nExecutando blastn..."
-	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
-	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
-		echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
-		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-		# Busca remota
-		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-		echo -e "\nResultados ${i}"
-		~/scripts/blast_report.sh "${RUNNAME}_${MODEL}" "${i}"
-	done
-	exit 2
 fi
 
 # WF 3 - Classificação Taxonômica pelo Kraken2
-if [[ $WF -eq 31 ]]; then 
+
 	source activate ngs
 	# Step 4 - Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
@@ -265,86 +200,7 @@ if [[ $WF -eq 31 ]]; then
 		echo -e "\nResultados ${i}"
 		~/scripts/kraken2_quick_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done
-	exit 31
-fi
 
 echo "Workflow $WF concluido com sucesso!"
 exit 0
 
-# Análise de cobertura do sequenciamento
-# Genomas referência e plot de cobertura
-CHIKVREFSEQ="${REFSEQ}/Togaviridae/NC_004162.2_CHIKV-S27.fasta"
-DENV1REFSEQ="${REFSEQ}/Flaviviridae/NC_001477.1_DENV1.fasta"
-DENV2REFSEQ="${REFSEQ}/Flaviviridae/NC_001474.2_DENV2.fasta"
-DENV3REFSEQ="${REFSEQ}/Flaviviridae/NC_001475.2_DENV3.fasta"
-DENV4REFSEQ="${REFSEQ}/Flaviviridae/NC_002640.1_DENV4.fasta"
-ZIKVREFSEQ="${REFSEQ}/Flaviviridae/NC_012532.1_ZIKV.fasta"
-HIV1REFSEQ="${REFSEQ}/Retroviridae/NC_001802.1_HIV1.fasta"
-
-# Mapeamento CHIKV
-#for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-#	minimap2 -t ${THREADS} -ax map-ont ${CHIKVREFSEQ} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.chikv.sorted.bam -
-#	samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.chikv.sorted.bam > ${ASSEMBLYDIR}/${i}.chikv.sorted.mapped.bam
-#	samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.chikv.sorted.mapped.bam
-#	samtools mpileup -A -B -Q 0 --reference ${CHIKVREFSEQ} ${ASSEMBLYDIR}/${i}.chikv.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.chikv -n N -i ${i}
-#done
-
-# Mapeamento DENV1
-#for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-#	minimap2 -t ${THREADS} -ax map-ont ${DENV1REFSEQ} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.denv1.sorted.bam -
-#	samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.denv1.sorted.bam > ${ASSEMBLYDIR}/${i}.denv1.sorted.mapped.bam
-#	samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.denv1.sorted.mapped.bam
-#	samtools mpileup -A -B -Q 0 --reference ${DENV1REFSEQ} ${ASSEMBLYDIR}/${i}.denv1.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.denv1 -n N -i ${i}
-#done
-
-# Mapeamento DENV2
-#for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-#	minimap2 -t ${THREADS} -ax map-ont ${DENV2REFSEQ} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.denv2.sorted.bam -
-#	samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.denv2.sorted.bam > ${ASSEMBLYDIR}/${i}.denv2.sorted.mapped.bam
-#	samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.denv2.sorted.mapped.bam
-#	samtools mpileup -A -B -Q 0 --reference ${DENV2REFSEQ} ${ASSEMBLYDIR}/${i}.denv2.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.denv2 -n N -i ${i}
-#done
-
-# Mapeamento DENV3
-#for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-#	minimap2 -t ${THREADS} -ax map-ont ${DENV3REFSEQ} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.denv3.sorted.bam -
-#	samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.denv3.sorted.bam > ${ASSEMBLYDIR}/${i}.denv3.sorted.mapped.bam
-#	samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.denv3.sorted.mapped.bam
-#	samtools mpileup -A -B -Q 0 --reference ${DENV3REFSEQ} ${ASSEMBLYDIR}/${i}.denv3.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.denv3 -n N -i ${i}
-#done
-
-# Mapeamento DENV4
-#for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-#	minimap2 -t ${THREADS} -ax map-ont ${DENV4REFSEQ} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.denv4.sorted.bam -
-#	samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.denv4.sorted.bam > ${ASSEMBLYDIR}/${i}.denv4.sorted.mapped.bam
-#	samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.denv4.sorted.mapped.bam
-#	samtools mpileup -A -B -Q 0 --reference ${DENV4REFSEQ} ${ASSEMBLYDIR}/${i}.denv4.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.denv4 -n N -i ${i}
-#done
-
-# Mapeamento ZIKV
-#for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-#	minimap2 -t ${THREADS} -ax map-ont ${ZIKVREFSEQ} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.zikv.sorted.bam -
-#	samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.zikv.sorted.bam > ${ASSEMBLYDIR}/${i}.zikv.sorted.mapped.bam
-#	samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.zikv.sorted.mapped.bam
-#	samtools mpileup -A -B -Q 0 --reference ${ZIKVREFSEQ} ${ASSEMBLYDIR}/${i}.zikv.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.zikv -n N -i ${i}
-#done
-
-#source activate plot
-#for i in $(find ${ASSEMBLYDIR} -type f -name "*.sorted.mapped.bam" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-#	fastcov ${ASSEMBLYDIR}/barcode*.chikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_chikv.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.chikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_chikv_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.denv1.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv1.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.denv1.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv1_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.denv2.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv2.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.denv2.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv2_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.denv3.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv3.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.denv3.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv3_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.denv4.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv4.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.denv4.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_denv4_log.pdf
-#	fastcov ${ASSEMBLYDIR}/barcode*.zikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_zikv.pdf
-#	fastcov -l ${ASSEMBLYDIR}/barcode*.zikv.sorted.mapped.bam -o ${ASSEMBLYDIR}/assembly_zikv_log.pdf
-#done
-
-#
-# Contig-level taxid
-#
