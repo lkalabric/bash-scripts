@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# script: metagenomics_wf3_v1_lk.sh
+# script: metagenomics_v31_lk.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 25 AGO 2021
@@ -76,16 +76,14 @@ if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
-# Todos os WFs
-
-# Sumario da corrida
-# Dados disponíveis no report*.pdf
+# Sumario da corrida (dados disponíveis no arquivo report*.pdf)
 echo "Sumário da corrida"
 echo "Total files:"
 ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
 echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 
+# Todos os WFs
 # Step 1 - Basecalling
 # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 if [ ! -d $BASECALLDIR ]; then
@@ -105,7 +103,7 @@ fi
 
 # if false; then # Desvio para execução rápida
 
-# WF 2 & 31
+# WF 2 & 31 - Classificação Taxonômica por BLAST e KRAKEN2
 # Step 2 - Demultiplex & adapter removal
 if [ ! -d $DEMUXDIR ]; then
 	echo -e "\nExecutando guppy_barcoder..."
@@ -144,7 +142,7 @@ if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 fi
 
 #
-# Read-level taxid
+# Análise em nível de reads (reads_level)
 #
 
 # WF 2 - Classificação Taxonômica através de busca no BLASTDB local
