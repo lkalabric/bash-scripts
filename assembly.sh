@@ -76,7 +76,7 @@ if [ $MONTADOR -eq 3 ]; then
 	samtools sort "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.bam" -o "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.sorted.bam"
 	
 	# Get consensus fastq file
-	samtools mpileup -f ${REFSEQ} "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.sorted.bam" | bcftools call -c | vcfutils.pl vcf2fq > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fastq"
+	bcftools mpileup -f ${REFSEQ} "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.sorted.bam" | bcftools call -c | vcfutils.pl vcf2fq > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fastq"
 
 	# Convert .fastq to .fasta
 	seqtk seq -aQ64 -q13 -n N "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fastq" > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.consensus.fasta"
