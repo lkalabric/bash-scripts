@@ -84,11 +84,12 @@ echo "Total reads:"
 
 # Step 1 - Basecalling
 # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
-if [ ! -d $BASECALLDIR ]; then
-	echo -e "\nExecutando guppy_basecaller..."
-	mkdir -vp $BASECALLDIR
-	# Step 1 - Basecalling (comum a todos workflows)
-	# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
+i test1 ! -d $BASECALLDIR ]; then
+
+o -e "\nExecutando guppy_basecaller..."
+m test2r -vp $BASECALLDIR
+# Step 1 - Basecalling (comum a todos workflows)
+# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 	# Comando para guppy_basecaller usando GPU
 	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 fi
@@ -96,20 +97,13 @@ fi
 # Step 2 - Demultiplex & adapter removal
 if [ ! -d $DEMUXDIR ]; then
 	echo -e "\nExecutando guppy_barcoder..."
-	mkdir -vp $DEMUXDIR
-	#bm1 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --trim_barcodes
-	#bm2 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --detect_mid_strand_adapter --trim_barcodes
-	#bm3 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends --trim_barcodes
-	#bm4 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends --detect_mid_strand_barcodes --trim_barcodes  
-	#bm6 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --barcode_kits EXP-NBD104 --require_barcodes_both_ends --detect_mid_strand_barcodes --trim_barcodes  
-	if [[ $WF -eq 2 ]];
-	then
-		#bm5 WF2 sem headcrop 18 (uso cutadapt)
-		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.1 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
-	else
-		#bm7 WF31 com headcrop 18
-		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.2 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
-	fi
+	# test1 WF2 sem headcrop 18 (uso cutadapt)
+	mkdir -vp $DEMUXDIR.1
+	guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.1 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
+	# test2 WF31 com headcrop 18
+	mkdir -vp $DEMUXDIR.2
+	guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.2 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
+
 fi
 # Move a pasta contendo as reads unclassified para barcode00
 [ -d "${DEMUXDIR}.1/unclassified" ] && mv "${DEMUXDIR}.1/unclassified" "${DEMUXDIR}.1/barcode00"
