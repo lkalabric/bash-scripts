@@ -84,7 +84,7 @@ echo "Total reads:"
 
 # Step 1 - Basecalling
 # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
-if [! -d $BASECALLDIR ]; then
+if [ ! -d $BASECALLDIR ]; then
 	echo -e "\nExecutando guppy_basecaller..."
 	mkdir -vp $BASECALLDIR
 	# Step 1 - Basecalling (comum a todos workflows)
@@ -94,16 +94,14 @@ if [! -d $BASECALLDIR ]; then
 fi
 
 # Step 2 - Demultiplex & adapter removal
-if [ ! -d $DEMUXDIR ]; then
-	echo -e "\nExecutando guppy_barcoder..."
-	# test1 WF2 sem headcrop 18 (uso cutadapt)
-	mkdir -vp $DEMUXDIR.1
-	guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.1 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
-	# test2 WF31 com headcrop 18
-	mkdir -vp $DEMUXDIR.2
-	guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.2 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
+echo -e "\nExecutando guppy_barcoder..."
+# test1 WF2 sem headcrop 18 (uso cutadapt)
+mkdir -vp $DEMUXDIR.1
+guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.1 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
+# test2 WF31 com headcrop 18
+mkdir -vp $DEMUXDIR.2
+guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.2 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 
-fi
 # Move a pasta contendo as reads unclassified para barcode00
 [ -d "${DEMUXDIR}.1/unclassified" ] && mv "${DEMUXDIR}.1/unclassified" "${DEMUXDIR}.1/barcode00"
 [ -d "${DEMUXDIR}.2/unclassified" ] && mv "${DEMUXDIR}.2/unclassified" "${DEMUXDIR}.2/barcode00"
@@ -121,11 +119,11 @@ done
 # Step 3 - Quality control QC
 echo -e "\nExecutando pycoQC..."
 source activate ngs
-if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
+if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.1.html" ]; then
 	# Comando para pycoQC version 2.5
 	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}.1/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.1.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 fi
-if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
+if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.2.html" ]; then
 	# Comando para pycoQC version 2.5
 	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}.2/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.2.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 fi
