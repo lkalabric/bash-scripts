@@ -94,8 +94,8 @@ if [ $MONTADOR -eq 4 ]; then
 fi
 
 # 5 Montagem da sequencia consenso usando um genoma referência
+# Link: https://github.com/jts/nanopolish
 if [ $MONTADOR -eq 5 ]; then
-	# Fonte: https://github.com/jts/nanopolish
 	# Pré-processamento dos dados
 	nanopolish index -d ../data/DENV_FTA_1/DENV_Run1_data/fast5_pass/ -s ../data/DENV_FTA_1/DENV_Run1_data/sequencing_summary/MT-110616_20190710_214507_FAK92171_minion_sequencing_run_DENV_FTA_1_sequencing_summary.txt "${OUTDIR}/barcode01.fasta"
 	# Computa uma nova sequencia consenso
@@ -113,8 +113,8 @@ if [ $MONTADOR -eq 5 ]; then
 fi
 
 # 6 Montagem da sequencia consenso usando um genoma referência
+# Link: https://github.com/jts/nanopolish
 if [ $MONTADOR -eq 6 ]; then
-	# Fonte: https://github.com/jts/nanopolish
 	# Indexando a sequencia referencia
 	bwa index $REFSEQ
 	bwa mem $REFSEQ "../ngs-analysis/$RUNNAME/wf31/PRINSEQ/$BARCODE.good.fastq" > "$OUTDIR/$BARCODE.$1.bwa-mem.sam"
@@ -127,9 +127,8 @@ if [ $MONTADOR -eq 6 ]; then
 fi
 
 # 7 Montagem utilizando wtdbg2
+# Link: https://github.com/ruanjue/wtdbg2
 if [ $MONTADOR -eq 7 ]; then
-	# Fonte: https://github.com/ruanjue/wtdbg2
-	
 	# Ativar o ambiente Conda
 	source activate ngs
 	
