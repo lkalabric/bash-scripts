@@ -62,12 +62,12 @@ if [ $MONTADOR -eq 2 ]; then
 	exit 2
 fi
 
-# 3 Montagem por referência usando minimap-2-samtools
+# 3 Montagem por referência usando minimap2-samtools
 # Link: https://www.biostars.org/p/472927/
 if [ $MONTADOR -eq 3 ]; then
 	source activate ngs
 	# Cria um indice antes de mapear
-	minimap2 -t 12 -ax map-ont  ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.sam"
+	minimap2 -t 12 -ax map-ont ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.sam"
 
 	# Convert sam to bam
 	samtools view -S -b "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.sam" > "${ASSEMBLYDIR}/3.minimap.${BARCODE}.mapped.bam"
