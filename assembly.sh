@@ -82,7 +82,8 @@ if [ $MONTADOR -eq 3 ]; then
 	exit 3
 fi
 
-# 4 Mapea as reads usando um genoma referência
+# 4 Montar as reads usando minimap2-miniasm-racon pipeline
+# Link: https://gist.github.com/mjoppich/18b7a07074b59bd34056df6fe7b08d05
 if [ $MONTADOR -eq 4 ]; then
 	source activate ngs
 	# use presets (no test data) # Oxford Nanopore genomic reads
