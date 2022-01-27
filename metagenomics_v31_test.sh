@@ -84,12 +84,11 @@ echo "Total reads:"
 
 # Step 1 - Basecalling
 # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
-i test1 ! -d $BASECALLDIR ]; then
-
-o -e "\nExecutando guppy_basecaller..."
-m test2r -vp $BASECALLDIR
-# Step 1 - Basecalling (comum a todos workflows)
-# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
+if [! -d $BASECALLDIR ]; then
+	echo -e "\nExecutando guppy_basecaller..."
+	mkdir -vp $BASECALLDIR
+	# Step 1 - Basecalling (comum a todos workflows)
+	# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 	# Comando para guppy_basecaller usando GPU
 	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 fi
