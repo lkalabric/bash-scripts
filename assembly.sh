@@ -41,10 +41,10 @@ REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
 if [ $MONTADOR -eq 1 ]; then
 	source activate ngs
 	# long sequences against a reference genome
-	minimap2 -t 12 -ax map-ont ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam"
-	samtools sort "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam"
-	fastcov.py "${ASSEMBLYDIR}/2.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/2.minimap.${BARCODE}.fastcov.pdf"
-	exit 2
+	minimap2 -t 12 -ax map-ont ${REFSEQ} ${SAMPLE} -o "${ASSEMBLYDIR}/1.minimap.${BARCODE}.mapped.sam"
+	samtools sort "${ASSEMBLYDIR}/1.minimap.${BARCODE}.mapped.sam" -o "${ASSEMBLYDIR}/1.minimap.${BARCODE}.mapped.sorted.bam"
+	fastcov.py "${ASSEMBLYDIR}/1.minimap.${BARCODE}.mapped.sorted.bam" -o "${ASSEMBLYDIR}/1.minimap.${BARCODE}.fastcov.pdf"
+	exit 1
 fi
 
 # 2 De Novo assembly using minimap2-miniasm pipeline (gera unitigs sequences)
@@ -53,13 +53,13 @@ if [ $MONTADOR -eq 2 ]; then
 	minimap2 -x ava-ont \
 	 ${SAMPLE} \
 	 ${SAMPLE} \
-	| gzip -1 > "${ASSEMBLYDIR}/1.minimap.${BARCODE}.paf.gz"
+	| gzip -1 > "${ASSEMBLYDIR}/2.minimap.${BARCODE}.paf.gz"
 
 	miniasm -f \
 	 ${SAMPLE} \
-	"${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz" > "${ASSEMBLYDIR}/1.miniasm.$BARCODE.gfa"
-	awk '/^S/{print ">"$2"\n"$3}' "${ASSEMBLYDIR}/1.miniasm.$BARCODE.gfa" > "${ASSEMBLYDIR}/1.miniasm.$BARCODE.fasta"
-	exit 1
+	"${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz" > "${ASSEMBLYDIR}/2.miniasm.$BARCODE.gfa"
+	awk '/^S/{print ">"$2"\n"$3}' "${ASSEMBLYDIR}/2.miniasm.$BARCODE.gfa" > "${ASSEMBLYDIR}/2.miniasm.$BARCODE.fasta"
+	exit 2
 fi
 
 # 3 Montagem por referência usando minimap-2-samtools
