@@ -37,14 +37,14 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 BASECALLDIR="${RESULTSDIR}/BASECALL"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
 DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
-CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
-QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
-BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
-READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
-CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
-ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
+CUTADAPTDIR="CUTADAPT"
+#NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
+#PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
+#QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
+#BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
+#READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
+#CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
+#ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
 
 # Parâmetros Guppy basecaller (ONT)
 CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
@@ -93,40 +93,57 @@ if [ ! -d $BASECALLDIR ]; then
 	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 fi
 
+#
+# Test 1
+#
+
 # Step 2 - Demultiplex & adapter removal
-echo -e "\nExecutando guppy_barcoder..."
-# test1 WF2 sem headcrop 18 (uso cutadapt)
+echo -e "\nExecutando guppy_barcoder.1..."
+# Sem headcrop 18 (uso cutadapt)
 mkdir -vp $DEMUXDIR.1
 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.1 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
-# test2 WF31 com headcrop 18
-mkdir -vp $DEMUXDIR.2
-guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.2 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 
 # Move a pasta contendo as reads unclassified para barcode00
 [ -d "${DEMUXDIR}.1/unclassified" ] && mv "${DEMUXDIR}.1/unclassified" "${DEMUXDIR}.1/barcode00"
-[ -d "${DEMUXDIR}.2/unclassified" ] && mv "${DEMUXDIR}.2/unclassified" "${DEMUXDIR}.2/barcode00"
 
 # Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
 [ ! -d ${DEMUXCATDIR}.1 ] && mkdir -vp ${DEMUXCATDIR}.1
 for i in $(find ${DEMUXDIR}.1 -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
     [ -d "${DEMUXDIR}.1/${i}" ] && cat ${DEMUXDIR}.1/${i}/*.fastq > "${DEMUXCATDIR}.1/${i}.fastq"
 done
-[ ! -d ${DEMUXCATDIR}.2 ] && mkdir -vp ${DEMUXCATDIR}.2
-for i in $(find ${DEMUXDIR}.2 -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
-    [ -d "${DEMUXDIR}.2/${i}" ] && cat ${DEMUXDIR}.2/${i}/*.fastq > "${DEMUXCATDIR}.2/${i}.fastq"
+
+# Step 2.1 - Remoção dos primers
+echo -e "\nExecutando cutadapt..."
+[ ! -d ${DEMUXCATDIR}.1/${CUTADAPTDIR} ] && mkdir -vp ${DEMUXCATDIR}.1/${CUTADAPTDIR}
+for i in $(find ${DEMUXCATDIR}.1 -type f -exec basename {} .fastq \;); do
+	cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${DEMUXCATDIR}.1/${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}.1/${i}.fastq"
+	echo -e "\nResultados ${i} $(grep -c "runid" ${DEMUXCATDIR}.1/${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 done
 
 # Step 3 - Quality control QC
-echo -e "\nExecutando pycoQC..."
+echo -e "\nExecutando pycoQC.1..."
 source activate ngs
 if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.1.html" ]; then
 	# Comando para pycoQC version 2.5
 	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}.1/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.1.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 fi
-if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.2.html" ]; then
-	# Comando para pycoQC version 2.5
-	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}.2/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.2.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
-fi
+
+#
+# Test 2
+#
+# Step 2 - Demultiplex & adapter removal
+echo -e "\nExecutando guppy_barcoder.2..."
+# Com headcrop 18
+mkdir -vp $DEMUXDIR.2
+guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR}.2 --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
+
+# Move a pasta contendo as reads unclassified para barcode00
+[ -d "${DEMUXDIR}.2/unclassified" ] && mv "${DEMUXDIR}.2/unclassified" "${DEMUXDIR}.2/barcode00"
+
+[ ! -d ${DEMUXCATDIR}.2 ] && mkdir -vp ${DEMUXCATDIR}.2
+for i in $(find ${DEMUXDIR}.2 -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+    [ -d "${DEMUXDIR}.2/${i}" ] && cat ${DEMUXDIR}.2/${i}/*.fastq > "${DEMUXCATDIR}.2/${i}.fastq"
+done
 
 exit 0
 
