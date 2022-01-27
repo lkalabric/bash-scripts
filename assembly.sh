@@ -48,7 +48,7 @@ if [ $MONTADOR -eq 1 ]; then
 fi
 
 # 2 De Novo assembly using minimap2-miniasm pipeline (gera unitigs sequences)
-# Link: https://www.internacionaltravessias.com.br/
+# Link: https://timkahlke.github.io/LongRead_tutorials/ASS_M.html
 if [ $MONTADOR -eq 2 ]; then
 	minimap2 -x ava-ont \
 	 ${SAMPLE} \
