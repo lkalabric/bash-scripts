@@ -57,7 +57,7 @@ if [ $MONTADOR -eq 2 ]; then
 
 	miniasm -f \
 	 ${SAMPLE} \
-	"${ASSEMBLYDIR}/1.minimap.$BARCODE.paf.gz" > "${ASSEMBLYDIR}/2.miniasm.$BARCODE.gfa"
+	"${ASSEMBLYDIR}/2.minimap.$BARCODE.paf.gz" > "${ASSEMBLYDIR}/2.miniasm.$BARCODE.gfa"
 	awk '/^S/{print ">"$2"\n"$3}' "${ASSEMBLYDIR}/2.miniasm.$BARCODE.gfa" > "${ASSEMBLYDIR}/2.miniasm.$BARCODE.fasta"
 	exit 2
 fi
