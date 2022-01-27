@@ -27,7 +27,10 @@ if [ ! -d $NGSDIR ]; then
 	exit 0
 fi
 # Dados a partir do resultado PRINSEQ
-SAMPLE="${NGSDIR}/PRINSEQ/${BARCODE}.good.fastq"
+#SAMPLE="${NGSDIR}/PRINSEQ/${BARCODE}.good.fastq"
+
+# Dados a partir do resultado RACON
+SAMPLE="${NGSDIR}/READS_LEVEL/${BARCODE}.corrected.fasta"
 
 # Caminhos de OUTPUT das análises
 ASSEMBLYDIR="${NGSDIR}/ASSEMBLY"
