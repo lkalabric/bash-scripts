@@ -127,13 +127,13 @@ fi
 #
 if [[ $WF -eq 2 ]]; then 
 	# Step 2 - Demultiplex & adapter removal
-	echo -e "\nExecutando guppy_barcoder.2..."
+	echo -e "\nExecutando guppy_barcoder..."
 	# Com headcrop 18
 	mkdir -vp $DEMUXDIR
 	guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 
 	# Move a pasta contendo as reads unclassified para barcode00
-	[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}.2/barcode00"
+	[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
 
 	[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}.2
 	for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
