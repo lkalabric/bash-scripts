@@ -100,7 +100,7 @@ if [[ $WF -eq 1 ]]; then
 	# Step 2 - Demultiplex & adapter removal
 	echo -e "\nExecutando guppy_barcoder.1..."
 	# Sem headcrop 18 (uso cutadapt)
-	mkdir -vp $DEMUXDIR.1
+	mkdir -vp $DEMUXDIR
 	guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
 
 	# Move a pasta contendo as reads unclassified para barcode00
@@ -135,16 +135,16 @@ if [[ $WF -eq 2 ]]; then
 	# Move a pasta contendo as reads unclassified para barcode00
 	[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}.2/barcode00"
 
-	[ ! -d ${DEMUXCATDIR}.2 ] && mkdir -vp ${DEMUXCATDIR}.2
+	[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}.2
 	for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 	    [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 	done
 fi
 
-# WF 3 - Classificação Taxonômica pelo Kraken2
+# Classificação Taxonômica pelo Kraken2
 
 	source activate ngs
-	# Step 4 - Filtro por tamanho
+	# Step 3 - Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
@@ -152,7 +152,7 @@ fi
 		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
 
-	# Step 5 - Filtro de complexidade
+	# Step 4 - Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
@@ -162,7 +162,7 @@ fi
 		# Resultados disponíveis no report do Prinseq (Good sequences)
 	done
 
-	# Step 6 - Remoção das reads do genoma humano
+	# Step 5 - Remoção das reads do genoma humano
 	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
@@ -181,7 +181,7 @@ fi
 		samtools fastq -f 4 ${READSLEVELDIR}/${i}.unmapped.sam > ${READSLEVELDIR}/${i}.unmapped.fastq -@ 12
 	done
 
-	# Step 7 - Autocorreção das reads
+	# Step 6 - Autocorreção das reads
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
@@ -191,7 +191,7 @@ fi
 	 	racon -t ${THREADS} -f -u ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.overlap.sam ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.corrected.fasta
 	done
 
-	# Step 8 - Classificação taxonômica
+	# Step 7 - Classificação taxonômica
 	echo -e "\nExecutando o Kraken2..."
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
