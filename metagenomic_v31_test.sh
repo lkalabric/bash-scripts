@@ -135,7 +135,7 @@ if [[ $WF -eq 2 ]]; then
 	# Move a pasta contendo as reads unclassified para barcode00
 	[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
 
-	[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}.2
+	[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
 	for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 	    [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 	done
