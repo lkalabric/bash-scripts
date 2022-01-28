@@ -36,8 +36,8 @@ SAMPLE="${NGSDIR}/READS_LEVEL/${BARCODE}.corrected.fasta"
 ASSEMBLYDIR="${NGSDIR}/ASSEMBLY"
 
 
-#REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
-REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/M62321.1_HCV1a.fasta"
+REFSEQ="${HOME}/data/REFSEQ/Retroviridae/NC_001802.1_HIV1.fasta"
+#REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/M62321.1_HCV1a.fasta"
 #REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/D90208.1_HCV1b.fasta"
 #REFSEQ="${HOME}/data/REFSEQ/Hepacivirus/D17763.1_HCV3a.fasta"
 # 1 Mapea as reads usando um genoma referência
