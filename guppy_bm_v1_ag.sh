@@ -6,7 +6,7 @@
 
 # Nome dos dados passado pelo teclado
 RUNNAME=$1
-[ ! f "${RUNNAME}" ] && RUNNAME="DENV_FTA_1" 
+[ ! -f "${RUNNAME}" ] && RUNNAME="DENV_FTA_1" 
 echo "Análise da biblioteca ${RUNNAME}!"
 
 # Caminho de INPUT dos dados fast5
