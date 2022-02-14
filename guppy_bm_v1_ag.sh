@@ -19,6 +19,8 @@ fi
 # Caminho de OUTPUT dos resultados da análise NGS
 echo "Preparando as pastas para (re-)análise dos dados..."
 SAVE_DIR="${HOME}/ngs-analysis/${RUNNAME}_bm"
+
+# Remove os dados da última análise
 rm -r ${SAVE_DIR}
 [ ! -d "${SAVE_DIR}" ] && mkdir -vp ${SAVE_DIR}
 
