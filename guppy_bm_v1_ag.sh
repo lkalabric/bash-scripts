@@ -47,7 +47,7 @@ CONFIG="dna_r9.4.1_450bps_hac.cfg" #"dna_r9.4.1_450bps_fast.cfg"
 #guppy_basecaller -r -i ${INPUT_DIR} -s ${SAVE_DIR} -c ${CONFIG} -x auto --gpu_runners_per_device ${GPUPERDEVICE} --num_callers ${THREADS} --verbose_logs
 
 # Parametros para benchmark (bm)
-GPUPERDEVICE=4
+GPUPERDEVICE=8
 CHUNKSIZE=2000
 CHUNKPERRUNNER=256
 THREADS=4
