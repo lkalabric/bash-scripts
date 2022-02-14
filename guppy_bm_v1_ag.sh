@@ -5,11 +5,10 @@
 # date: 18 AGO 2021
 
 # Nome dos dados passado pelo teclado
-RUNNAME=$1 
-if [[ $# -eq 0 ]]; then
-	echo "Falta o nome dos dados!"
-	exit 0
-fi
+RUNNAME=$1
+[ ! f "${RUNNAME}" ] && RUNNAME="DENV_FTA_1" 
+echo "Análise da biblioteca ${RUNNAME}!"
+
 # Caminho de INPUT dos dados fast5
 INPUT_DIR="$HOME/data/$RUNNAME"
 if [ ! -d $INPUT_DIR ]; then
