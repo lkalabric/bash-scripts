@@ -53,21 +53,22 @@ for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename
   [ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
 done  
 
-exit
-
 # Mapeamento${j}ntra genomas referência e plot de ${j}ertura
-for${j} j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o${j}o basename $o | cut -d. -f1; done | sort ${j}niq); do
+for${j} j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort uniq); do
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo "Mapeando ${READSLEVELDIR}/${i}.corrected.fasta..."
-		minimap2 -t ${THREADS} -ax map-ont ${HCVREFMMI} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.hcv.sorted.bam -	
+		minimap2 -t ${THREADS} -ax map-ont ${j} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.{j}.sorted.bam -	
 		samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.${j}.sorted.bam > ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
 		samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
 		samtools mpileup -A -d 0 -Q 0 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.${j}
 		samtools coverage ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
 		samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
 		samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
+		fastcov.py ${ASSEMBLYDIR}/${i}.{j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.{j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.{j}.fastcov.txt
 	done
 done
+
+exit
 
 # Mapeamento CHIKV
 #CHIKVREFGEN="${REFGENDIR}/NC_004162_CHIKV-S27.fasta"
