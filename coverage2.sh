@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# script: coverage.sh
+# script: coverage2.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # última atualização: MAR, 17 2022
-# versão 2: roda fastcov.py & samtools coverage
+# versão 2: roda samtools coverage & fastcov.py
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
@@ -13,7 +13,7 @@ WF=$3		#Worflow de bioinformatica
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome da library,modelo Guppy Basecaller ou número do workflow!"
-	echo "Sintáxe: ./fastcov.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3>"
+	echo "Sintáxe: ./coverage2.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
 	exit 0
 fi
 
@@ -47,7 +47,7 @@ LENGTH=100
 
 # Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
 for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-  echo "Gerando ídice para o genoma referencia ${j}..."
+  echo "Gerando arquivos índices para os genomas referencia ${j}..."
   REFGENFASTA="${REFGENDIR}/${j}.fasta"
   REFGENMMI="${REFGENDIR}/${j}.mmi"
   [ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
@@ -57,11 +57,7 @@ done
 source activate ngs
 for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-		echo "Mapeando ${READSLEVELDIR}/${i}.corrected.fasta..."
-		minimap2 -t ${THREADS} -ax map-ont ${REFGENDIR}/${j}.mmi ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.{j}.sorted.bam -	
-		samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.${j}.sorted.bam > ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
-		samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
-		samtools mpileup -A -d 0 -Q 0 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.${j}
+		echo "Analisando a cobertura ${READSLEVELDIR}/${i}.corrected.fasta..."
 		samtools coverage ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
 		samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
 		samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
