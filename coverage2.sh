@@ -53,11 +53,11 @@ for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename
   [ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
 done  
 
-# Mapeamento${j}ntra genomas referência e plot de ${j}ertura
-for${j} j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort uniq); do
+# Mapeamento das sequencias em genomas referência e análise de cobertura
+for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo "Mapeando ${READSLEVELDIR}/${i}.corrected.fasta..."
-		minimap2 -t ${THREADS} -ax map-ont ${j} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.{j}.sorted.bam -	
+		minimap2 -t ${THREADS} -ax map-ont "${j}.mmi" ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.{j}.sorted.bam -	
 		samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.${j}.sorted.bam > ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
 		samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
 		samtools mpileup -A -d 0 -Q 0 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.${j}
