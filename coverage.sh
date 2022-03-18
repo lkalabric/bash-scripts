@@ -18,7 +18,6 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Caminho INPUT dos bancos de dados
-REFSEQDIR="${HOME}/data/REFSEQ"
 REFGENDIR="${HOME}/data/REFGEN"
 
 # Caminhos de OUTPUT das análises
@@ -50,12 +49,8 @@ LENGTH=100
 # Mapeamento contra genomas referência e plot de cobertura
 
 # Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
-for i in $(find ${COVERAGEDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-  REFGEN=${i}
-  declare "${REFGEN}"="${i}"
-  echo "REFGEN=${REFGEN}"
-  echo "${i}=${REFGEN}"
-  echo "Gerando ídice para o genoma referencia ${REFGEN}..."
+for i in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+  echo "Gerando ídice para o genoma referencia ${i}..."
   REFGENFASTA="${REFGENDIR}/${i}.fasta"
   REFGENMMI="${REFGENDIR}/${i}.mmi"
   [ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
