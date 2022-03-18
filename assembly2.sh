@@ -43,8 +43,8 @@ QSCORE=9
 LENGTH=100
 
 # Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
+echo "Criando arquivos índices para os genomas referencia..."
 for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-  echo "Gerando arquivos índices para os genomas referencia..."
   REFGENFASTA="${REFGENDIR}/${j}.fasta"
   REFGENMMI="${REFGENDIR}/${j}.mmi"
   [ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
