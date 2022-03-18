@@ -50,7 +50,7 @@ for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $
 		samtools coverage ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
 		samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
 		samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
-		fastcov.py ${ASSEMBLYDIR}/${i}.{j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.{j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.{j}.fastcov.txt
+		fastcov.py ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.{j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.${j}.fastcov.txt
 	done
 done
 
