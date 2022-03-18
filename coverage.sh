@@ -45,29 +45,28 @@ THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 QSCORE=9
 LENGTH=100
 
-# Parâmetros minimap2
-# Mapeamento contra genomas referência e plot de cobertura
-
 # Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
-for i in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-  echo "Gerando ídice para o genoma referencia ${i}..."
-  REFGENFASTA="${REFGENDIR}/${i}.fasta"
-  REFGENMMI="${REFGENDIR}/${i}.mmi"
+for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+  echo "Gerando ídice para o genoma referencia ${j}..."
+  REFGENFASTA="${REFGENDIR}/${j}.fasta"
+  REFGENMMI="${REFGENDIR}/${j}.mmi"
   [ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
 done  
 
 exit
 
-
-for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-	echo "Mapeando ${READSLEVELDIR}/${i}.corrected.fasta..."
-	minimap2 -t ${THREADS} -ax map-ont ${HCVREFMMI} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.hcv.sorted.bam -	
-	samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.hcv.sorted.bam > ${ASSEMBLYDIR}/${i}.hcv.sorted.mapped.bam
-	samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.hcv.sorted.mapped.bam
-	samtools mpileup -A -d 0 -Q 0 ${ASSEMBLYDIR}/${i}.hcv.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.hcv
-	samtools coverage ${ASSEMBLYDIR}/${i}.hcv.sorted.mapped.bam > ${COVERAGEDIR}/${i}.hcv.coverage.txt
-	samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.hcv.sorted.mapped.bam > ${COVERAGEDIR}/${i}.hcv.histogram.txt
-	samtools depth ${ASSEMBLYDIR}/${i}.hcv.sorted.mapped.bam > ${COVERAGEDIR}/${i}.hcv.depth.txt
+# Mapeamento${j}ntra genomas referência e plot de ${j}ertura
+for${j} j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o${j}o basename $o | cut -d. -f1; done | sort ${j}niq); do
+	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+		echo "Mapeando ${READSLEVELDIR}/${i}.corrected.fasta..."
+		minimap2 -t ${THREADS} -ax map-ont ${HCVREFMMI} ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.hcv.sorted.bam -	
+		samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.${j}.sorted.bam > ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
+		samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
+		samtools mpileup -A -d 0 -Q 0 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.${j}
+		samtools coverage ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
+		samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
+		samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
+	done
 done
 
 # Mapeamento CHIKV
