@@ -54,6 +54,7 @@ for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename
 done  
 
 # Mapeamento das sequencias em genomas referência e análise de cobertura
+source activate ngs
 for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo "Mapeando ${READSLEVELDIR}/${i}.corrected.fasta..."
