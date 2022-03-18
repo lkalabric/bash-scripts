@@ -9,7 +9,8 @@
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
-WF=$3		#Worflow de bioinformatica
+WF=$3		# Worflow de bioinformatica
+TAXON=$4	# Análisa cobertura por taxon
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome da library,modelo Guppy Basecaller ou número do workflow!"
@@ -42,7 +43,7 @@ for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename
   [ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
 done  
 
-# Mapeamento das sequencias em genomas referência e análise de cobertura
+# Análise de cobertura
 source activate ngs
 for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -52,6 +53,13 @@ for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $
 		samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
 		fastcov.py ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.${j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.${j}.fastcov.txt
 	done
+done
+
+# Análise de cobertura da biblioteca por taxon
+for j in $(find ${REFGENDIR} -type f -name "*.sorted.mapped.bam" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+	echo "Determinando a cobertura da biblioteca para o taxon ${j}..."
+	fastcov.py ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov.pdf
+	fastcov.py -l ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov_log.pdf
 done
 
 exit
