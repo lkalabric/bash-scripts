@@ -22,18 +22,9 @@ REFGENDIR="${HOME}/data/REFGEN"
 
 # Caminhos de OUTPUT das análises
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/DEMUX"
-DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
-CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
-QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
-BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
 READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 CONTIGSLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
-ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
-[ ! -d $ASSEMBLYDIR ] && mkdir -vp $ASSEMBLYDIR
+[ ! -d $CONTIGSLEVELDIR ] && mkdir -vp $CONTIGSLEVELDIR
 
 # Parâmetro de otimização das análises por CPU
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
@@ -55,10 +46,10 @@ source activate ngs
 for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo "Mapeando ${READSLEVELDIR}/${i}.corrected.fasta..."
-		minimap2 -t ${THREADS} -ax map-ont ${REFGENDIR}/${j}.mmi ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.${j}.sorted.bam -	
-		samtools view -@ ${THREADS} -h -F 4 -b ${ASSEMBLYDIR}/${i}.${j}.sorted.bam > ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
-		samtools index -@ ${THREADS} ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
-		samtools mpileup -A -d 0 -Q 0 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${ASSEMBLYDIR}/${i}.${j}
+		minimap2 -t ${THREADS} -ax map-ont ${REFGENDIR}/${j}.mmi ${READSLEVELDIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${CONTIGSLEVELDIR}/${i}.${j}.sorted.bam -	
+		samtools view -@ ${THREADS} -h -F 4 -b ${CONTIGSLEVELDIR}/${i}.${j}.sorted.bam > ${CONTIGSLEVELDIR}/${i}.${j}.sorted.mapped.bam
+		samtools index -@ ${THREADS} ${CONTIGSLEVELDIR}/${i}.${j}.sorted.mapped.bam
+		samtools mpileup -A -d 0 -Q 0 ${CONTIGSLEVELDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${CONTIGSLEVELDIR}/${i}.${j}
 	done
 done
 
