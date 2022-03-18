@@ -17,12 +17,12 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-# Caminho INPUT dos genomas referencia
-REFGENDIR="${HOME}/data/REFGEN"
-
-# Caminhos de OUTPUT das análises
+# Caminhos de INPUT dos dados
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
+REFGENDIR="${HOME}/data/REFGEN"
+
+# Caminho de OUTPUT das análises
 ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
 [ ! -d $ASSEMBLYDIR ] && mkdir -vp $ASSEMBLYDIR
 
