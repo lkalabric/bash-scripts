@@ -56,7 +56,7 @@ for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $
 done
 
 # Análise de cobertura da biblioteca por taxon
-for j in $(find ${REFGENDIR} -type f -name "*.sorted.mapped.bam" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+for j in $(find ${REFGENDIR} -type f -name "$TAXON*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 	echo "Determinando a cobertura da biblioteca para o taxon ${j}..."
 	fastcov.py ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov.pdf
 	fastcov.py -l ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov_log.pdf
