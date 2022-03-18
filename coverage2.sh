@@ -17,13 +17,13 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-# Caminho INPUT dos bancos de dados
+# Caminhos INPUT dos dados
+RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
+READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
+ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
 REFGENDIR="${HOME}/data/REFGEN"
 
 # Caminhos de OUTPUT das análises
-RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
-CONTIGSLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
 COVERAGEDIR="${RESULTSDIR}/wf${WF}/COVERAGE"
 [ ! -d $COVERAGEDIR ] && mkdir -vp $COVERAGEDIR
 
@@ -47,10 +47,10 @@ source activate ngs
 for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo "Analisando a cobertura ${READSLEVELDIR}/${i}.corrected.fasta..."
-		samtools coverage ${CONTIGSLEVELDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
-		samtools coverage -A -w 32 ${CONTIGSLEVELDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
-		samtools depth ${CONTIGSLEVELDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
-		fastcov.py ${CONTIGSLEVELDIR}/${i}.{j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.{j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.{j}.fastcov.txt
+		samtools coverage ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
+		samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
+		samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
+		fastcov.py ${ASSEMBLYDIR}/${i}.{j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.{j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.{j}.fastcov.txt
 	done
 done
 
