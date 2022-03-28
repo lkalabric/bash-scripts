@@ -22,7 +22,7 @@ WF=2
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}"
 BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
 echo "Lista de taxons no BLAST_DB"
-WIMPDIR="${HOME}/data/REFSEQ/WIMP"
+WIMPDIR="${HOME}/data/WIMP"
 ls ${WIMPDIR}
 FILENAME="${BLASTDIR}/${BARCODE}.blastn"
 
