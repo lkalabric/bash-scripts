@@ -69,3 +69,4 @@ printf "	%s	%s\n" "SARS-CoV-2	" "$(grep -c -F -f ${WIMPDIR}/sars-cov-2.wimp ${FI
 echo "Retroviridade"
 printf "	%s      		%s\n" "HIV	" "$(grep -c -F -f ${WIMPDIR}/hiv.wimp ${FILENAME})"
 printf "	%s		%s\n" "HTLV	" "$(grep -c -F -f ${WIMPDIR}/htlv.wimp ${FILENAME})"
+printf "	%s		%s\n" "HBV	" "$(grep -c -F -f ${WIMPDIR}/hbv.wimp ${FILENAME})"
