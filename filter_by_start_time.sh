@@ -29,7 +29,7 @@ declare -a START_TIME=(01 02 04 12 24 72)
 echo -e "\nExecutando filter_by_start_time..."
 for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
 	wc -l "${DEMUXCATDIR}/${i}.fastq"
-	for j in (${START_TIME[@]}); do
+	for j in "${START_TIME[@]}"; do
 		echo -e "${START_DATE}T${j}"
 		echo -e "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
