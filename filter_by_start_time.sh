@@ -6,6 +6,7 @@
 # criação: 13 ABR 2022
 # última atualização: 13 ABR 2022
 # versão 0: 
+# link: https://www.biostars.org/p/389679/
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
