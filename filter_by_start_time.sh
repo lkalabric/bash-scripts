@@ -36,9 +36,9 @@ for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 		echo -e "${START_DATE}T${j}"
 		echo -e "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
-		read -p "Pressione qualquer tecla para continuar..."
 		grep -A3 "${START_DATE}T${j}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
 		wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
+		read -p "Pressione qualquer tecla para continuar..."
 	done
 done
 
