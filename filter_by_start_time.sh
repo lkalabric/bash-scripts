@@ -27,12 +27,8 @@ declare -a START_TIME=(1 2 4 12 24 72)
 echo -e "\nExecutando filter_by_start_time..."
 for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
   wc -l "${DEMUXCATDIR}/${i}.fastq"
-  for j in $({START_TIME[@]}) do
+  for j in "${START_TIME[@]}" do
     grep -A3 "2021-06-02T${j}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
     wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
   done
  done
-
-
-
-grep -A3 "2019-03-11T16" x.fastq > test.fastq
