@@ -28,7 +28,7 @@ FILTER_BY_START_TIMEDIR="${RESULTSDIR}/FILTER_BY_START_TIME"
 # Filter_by_start_time
 # Tempos para análise
 declare -a START_TIME=(01 02 04 12 24 72)
-for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
+for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 	echo -e "\nContando as reads do arquivo ${DEMUXCATDIR}/${i}.fastq..."
 	wc -l "${DEMUXCATDIR}/${i}.fastq"
 	for j in "${START_TIME[@]}"; do
