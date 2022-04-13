@@ -26,14 +26,15 @@ FILTER_BY_START_TIMEDIR="${RESULTSDIR}/FILTER_BY_START_TIME"
 # Filter_by_start_time
 # Tempos para análise
 declare -a START_TIME=(01 02 04 12 24 72)
-echo -e "\nExecutando filter_by_start_time..."
 for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
+	echo -e "\nContando reads em ${DEMUXCATDIR}/${i}.fastq..."
 	wc -l "${DEMUXCATDIR}/${i}.fastq"
 	for j in "${START_TIME[@]}"; do
+		echo -e "\nExecutando filter_by_start_time ${j}..."
 		echo -e "${START_DATE}T${j}"
 		echo -e "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
-		# grep -A3 "${START_DATE}T${j}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
-		# wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
+		grep -A3 "${START_DATE}T${j}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
+		wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
 	done
 done
