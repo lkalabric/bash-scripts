@@ -31,14 +31,15 @@ declare -a START_TIME=(01 02 04 12 24 72)
 for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 	echo -e "\nContando as reads do arquivo ${DEMUXCATDIR}/${i}.fastq..."
 	wc -l "${DEMUXCATDIR}/${i}.fastq"
+	read -p "Pressione qualquer tecla para continuar..."
 	for j in "${START_TIME[@]}"; do
 		echo -e "\nExecutando filter_by_start_time ${j}..."
 		echo -e "${START_DATE}T${j}"
 		echo -e "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
 		grep -A3 "${START_DATE}T${j}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
+		echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"..."
 		wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
-		read -p "Pressione qualquer tecla para continuar..."
 	done
 done
 
