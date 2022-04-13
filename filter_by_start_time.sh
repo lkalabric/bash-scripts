@@ -32,7 +32,7 @@ for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
   	echo "${START_DATE}T${j}"
 	echo "${DEMUXCATDIR}/${i}.fastq"
 	echo "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
-    grep -A3 "${START_DATE}T${j}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
-    wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
+    # grep -A3 "${START_DATE}T${j}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
+    #wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
   done
  done
