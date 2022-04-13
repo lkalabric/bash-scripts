@@ -19,6 +19,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Caminhos de OUTPUT das análises
+RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 FILTER_BY_START_TIMEDIR="${RESULTSDIR}/FILTER_BY_START_TIME"
 [ ! -d "${FILTER_BY_START_TIMEDIR}" ] && mkdir -vp "${FILTER_BY_START_TIMEDIR}"
 
