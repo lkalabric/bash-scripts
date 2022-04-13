@@ -29,6 +29,9 @@ echo -e "\nExecutando filter_by_start_time..."
 for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
   wc -l "${DEMUXCATDIR}/${i}.fastq"
   for j in "${START_TIME[@]}" do
+  	echo "${START_DATE}T${j}"
+	echo "${DEMUXCATDIR}/${i}.fastq"
+	echo "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
     grep -A3 "${START_DATE}T${j}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
     wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${j}.fastq"
   done
