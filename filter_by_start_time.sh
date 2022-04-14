@@ -32,7 +32,6 @@ declare -a REGEXP=("0[0-1]" "0[0-2]" "0[0-4]" "0[0-8]" "0[0-9]|1[0-6]" "0[0-9]|1
 for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 	echo -e "\nContando as reads do arquivo ${DEMUXCATDIR}/${i}.fastq..."
 	wc -l "${DEMUXCATDIR}/${i}.fastq"
-	read -p "Pressione qualquer tecla para continuar..."
 	for ((j=0; j<=6; j++)); do
 		echo -e "\nExecutando filter_by_start_time ${START_TIME[${j}]}..."
 		egrep -A3 "${START_DATE}T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${START_TIME[${j}]}.fastq"
