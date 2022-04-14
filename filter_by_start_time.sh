@@ -34,8 +34,8 @@ for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 	wc -l "${DEMUXCATDIR}/${i}.fastq"
 	for ((j=0; j<=6; j++)); do
 		echo -e "\nExecutando filter_by_start_time ${START_TIME[${j}]}..."
-		egrep -A3 "${START_DATE}T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}.${START_TIME[${j}]}.fastq"
-		echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}.${START_TIME[${j}]}.fastq"..."
+		egrep -A3 "${START_DATE}T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
+		echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"..."
 		wc -l "${FILTER_BY_START_TIMEDIR}/${i}.${START_TIME[${j}]}.fastq"
 	done
 done
