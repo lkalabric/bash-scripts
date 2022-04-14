@@ -34,8 +34,6 @@ PRINSEQDIR="${RESULTSDIR}/wf${WF}_filter/PRINSEQ"
 QUERYDIR="${RESULTSDIR}/wf${WF}_filter/QUERY"
 BLASTDIR="${RESULTSDIR}/wf${WF}_filter/BLAST"
 READSLEVELDIR="${RESULTSDIR}/wf${WF}_filter/READS_LEVEL"
-CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}_filter/CONTIGS_LEVEL"
-ASSEMBLYDIR="${RESULTSDIR}/wf${WF}_filter/ASSEMBLY"
 
 # Parâmetro de otimização minimap2, samtools, racon e kraken2
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
@@ -148,7 +146,6 @@ if [[ $WF -eq 31 ]]; then
 	# Step 6 - Remoção das reads do genoma humano
 	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
-	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
 	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
 	minimap2 -d ${HUMANREFMMI} ${HUMANREFSEQ}
 	# Loop para analisar todos barcodes, um de cada vez
