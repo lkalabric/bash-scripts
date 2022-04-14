@@ -16,12 +16,6 @@ if [[ $# -eq 0 ]]; then
 	echo "Sintáxe: ./reads_level.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
 	exit 0
 fi
-# Caminho de INPUT dos dados fast5
-RAWDIR="${HOME}/data/${RUNNAME}" # Se análise começar com o Barcoder
-if [ ! -d $RAWDIR ]; then
-	echo "Pasta de dados não encontrada!"
-	exit 0
-fi
 
 # Caminho de INPUT dos bancos de dados
 REFSEQDIR=${HOME}/data/REFSEQ
@@ -30,10 +24,6 @@ BLASTDBDIR="${HOME}/data/BLAST_DB"
 KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-# rm -r ${RESULTSDIR}
-[ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
-BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/DEMUX"
 DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 FILTER_BY_START_TIMEDIR="${RESULTSDIR}/FILTER_BY_START_TIME"
 
@@ -46,15 +36,6 @@ BLASTDIR="${RESULTSDIR}/wf${WF}_filter/BLAST"
 READSLEVELDIR="${RESULTSDIR}/wf${WF}_filter/READS_LEVEL"
 CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}_filter/CONTIGS_LEVEL"
 ASSEMBLYDIR="${RESULTSDIR}/wf${WF}_filter/ASSEMBLY"
-
-# Parâmetros Guppy basecaller (ONT)
-CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
-ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
- 
-# Parâmetros para otimização do Guppy basecaller para modelo fast utilizadando o LAPTOP-Yale (benckmark)
-GPUPERDEVICE=4		
-CHUNCKSIZE=1000		
-CHUNKPERRUNNER=50	
 
 # Parâmetro de otimização minimap2, samtools, racon e kraken2
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
@@ -75,16 +56,6 @@ HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
 if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
-
-# Todos os WFs
-
-# Sumario da corrida
-# Dados disponíveis no report*.pdf
-echo "Sumário da corrida"
-echo "Total files:"
-ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
-echo "Total reads:"
-# h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 
 # WF 1 - Classificação Taxonômica pelo Epi2ME
 # Copiar a pasta /pass para o Epi2ME
