@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# script: read_level.sh
+# script: reads_level.sh
 # autores: Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 14 ABR 2022
@@ -13,7 +13,7 @@ WF=$3		# Workflow de bioinformatica 1, 2 ou 31
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./read_level.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
+	echo "Sintáxe: ./reads_level.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
 	exit 0
 fi
 # Caminho de INPUT dos dados fast5
