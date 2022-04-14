@@ -130,7 +130,7 @@ if [[ $WF -eq 31 ]]; then
 	# Step 4 - Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
-	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
+	for i in $(find ${FILTER_BY_START_TIMEDIR} -type f -exec basename {} .fastq \;); do
 		NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
