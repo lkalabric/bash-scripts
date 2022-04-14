@@ -14,8 +14,8 @@ MODEL=$2	# Modelo de basecalling fast hac sup
 STAR_DATE=#3	# Data da corrida
 
 if [[ $# -eq 0 ]]; then
-	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./filter_by_start_time.sh <LIBRARY> <MODELO:fast,hac,sup>"
+	echo "Falta o nome dos dados, número do worflow ou data da corrida!"
+	echo "Sintáxe: ./filter_by_start_time.sh <LIBRARY> <MODELO:fast,hac,sup> <DATA:YYYY-MM-DD>"
 	exit 0
 fi
 
