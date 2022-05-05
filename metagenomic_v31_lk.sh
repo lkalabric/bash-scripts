@@ -52,9 +52,37 @@ CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_4
 ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
  
 # Parâmetros para otimização do Guppy basecaller para modelo fast utilizadando o LAPTOP-Yale (benckmark)
-GPUPERDEVICE=4		
-CHUNCKSIZE=1000		
-CHUNKPERRUNNER=50	
+case $MODEL in
+	fast)
+		GPUPERDEVICE=4		
+		CHUNCKSIZE=1000		
+		CHUNKPERRUNNER=50
+	;;
+	hac)
+		GPUPERDEVICE=12		
+		CHUNCKSIZE=2000		
+		CHUNKPERRUNNER=256
+	;;
+	sup)
+		GPUPERDEVICE=12		
+		CHUNCKSIZE=1000		
+		CHUNKPERRUNNER=256
+	;;
+	*)
+		GPUPERDEVICE=4		
+		CHUNCKSIZE=1000		
+		CHUNKPERRUNNER=50
+	;;
+esac
+
+echo "Modelo selecionado $MODEL"
+echo $GPUPERDEVICE
+echo $CHUNCKSIZE
+echo $CHUNKPERRUNNER
+
+exit;
+
+
 
 # Parâmetro de otimização minimap2, samtools, racon e kraken2
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
