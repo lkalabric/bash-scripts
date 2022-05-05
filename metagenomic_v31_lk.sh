@@ -124,7 +124,9 @@ if [[ $WF -eq 1 ]]; then
 	exit 1
 fi
 
+# Para debug
 # if false; then # Desvio para execução rápida
+# fi # Fim do desvio para execução rápida
 
 # WF 2 & 31 - Classificação Taxonômica por BLAST e KRAKEN2
 # Step 2 - Demultiplex & adapter removal
@@ -154,8 +156,6 @@ for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename 
     [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 done
 
-# fi # Fim do desvio para execução rápida
-
 # Step 3 - Quality control QC
 echo -e "\nExecutando pycoQC..."
 # source activate ngs
@@ -167,6 +167,9 @@ if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 	# Comando para pycoQC version 2.5
 	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 fi
+
+# Para debug
+exit;
 
 #
 # Análise em nível de reads (reads_level)
