@@ -158,7 +158,11 @@ done
 
 # Step 3 - Quality control QC
 echo -e "\nExecutando pycoQC..."
-source activate ngs
+# source activate ngs
+if [ ! -f "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" ]; then
+	# Comando para pycoQC version 2.5
+	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" --report_title $RUNNAME
+fi
 if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 	# Comando para pycoQC version 2.5
 	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
