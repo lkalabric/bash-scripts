@@ -74,15 +74,10 @@ case $MODEL in
 		CHUNKPERRUNNER=50
 	;;
 esac
-
-echo "Modelo selecionado $MODEL"
-echo $GPUPERDEVICE
-echo $CHUNCKSIZE
-echo $CHUNKPERRUNNER
-
-exit;
-
-
+echo "Parâmetros otimizados para guppy_basecaller no modelo selecionado: $MODEL"
+echo "GPUPERDEVICE: $GPUPERDEVICE"
+echo "CHUNCKSIZE: $CHUNCKSIZE"
+echo "CHUNKPERRUNNER: $CHUNKPERRUNNER"
 
 # Parâmetro de otimização minimap2, samtools, racon e kraken2
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
