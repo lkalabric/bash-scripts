@@ -159,9 +159,10 @@ done
 # Step 3 - Quality control QC
 echo -e "\nExecutando pycoQC..."
 # source activate ngs
+# Default do guppybasecaller para min_pass_qual 8 (isso não está escrito em nenhum lugar)
 if [ ! -f "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" ]; then
 	# Comando para pycoQC version 2.5
-	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" --report_title $RUNNAME
+	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" --report_title $RUNNAME --min_pass_qual 8
 fi
 if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 	# Comando para pycoQC version 2.5
@@ -169,7 +170,7 @@ if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 fi
 
 # Para debug
-exit;
+# exit;
 
 #
 # Análise em nível de reads (reads_level)
