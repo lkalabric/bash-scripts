@@ -171,6 +171,7 @@ fi
 
 # Para debug
 # exit;
+read -p "Press [Enter] key to start backup..."
 
 #
 # Análise em nível de reads (reads_level)
