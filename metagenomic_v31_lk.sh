@@ -111,13 +111,11 @@ time summary
 read -p "Press [Enter] key to continue..."
 
 basecalling () {
-# Todos os WFs
-# Step 1 - Basecalling
+# Step 1 - Basecalling (comum a todos workflows)
 # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 if [ ! -d $BASECALLDIR ]; then
 	echo -e "\nExecutando guppy_basecaller..."
 	mkdir -vp $BASECALLDIR
-	# Step 1 - Basecalling (comum a todos workflows)
 	# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 	# Comando para guppy_basecaller usando GPU
 	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
@@ -125,8 +123,6 @@ fi
 }
 time basecalling
 read -p "Press [Enter] key to continue..."
-
-
 
 # WF 1 - Classificação Taxonômica pelo Epi2ME
 # Copiar a pasta /pass para o Epi2ME
@@ -138,6 +134,7 @@ fi
 # if false; then # Desvio para execução rápida
 # fi # Fim do desvio para execução rápida
 
+demux () {
 # WF 2 & 31 - Classificação Taxonômica por BLAST e KRAKEN2
 # Step 2 - Demultiplex & adapter removal
 if [ ! -d $DEMUXDIR ]; then
@@ -165,6 +162,9 @@ fi
 for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
     [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 done
+}
+time demux ()
+read -p "Press [Enter] key to continue..."
 
 # Step 3 - Quality control QC
 echo -e "\nExecutando pycoQC..."
