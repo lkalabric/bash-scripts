@@ -110,6 +110,8 @@ echo "Total reads:"
 # Estima o tempo da execução
 /usr/bin/time -o ${HOME}/performance-analysis/summary1.time summary1
 
+exit 0
+
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
 
