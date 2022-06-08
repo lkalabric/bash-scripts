@@ -100,7 +100,7 @@ if [ ! -f $HUMANREFMMI ]; then
 fi
 
 summary () {
-# Sumario da corrida (dados disponíveis no arquivo report*.pdf)
+# Step 0 - Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
 echo "Sumário da corrida"
 echo "Total files:"
 ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
@@ -109,8 +109,6 @@ echo "Total reads:"
 }
 time summary
 read -p "Press [Enter] key to continue..."
-
-exit 0
 
 basecalling () {
 # Todos os WFs
