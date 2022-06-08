@@ -108,7 +108,7 @@ echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/summary1.time summary1
+/usr/bin/time -o ${HOME}/performance-analysis/summary1.time summary1
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -125,7 +125,7 @@ if [ ! -d $BASECALLDIR ]; then
 fi
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/basecalling.time basecalling
+/usr/bin/time -o ${HOME}/performance-analysis/basecalling.time basecalling
 
 # WF 1 - Classificação Taxonômica pelo Epi2ME
 # Copiar a pasta /pass para o Epi2ME
@@ -167,7 +167,7 @@ for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename 
 done
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/demux_cat.time demux_cat
+/usr/bin/time -o ${HOME}/performance-analysis/demux_cat.time demux_cat
 
 #
 # Análise em nível de reads (reads_level)
@@ -188,7 +188,7 @@ if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 fi
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/summary2.time summary2
+/usr/bin/time -o ${HOME}/performance-analysis/summary2.time summary2
 
 
 # WF 2 - Classificação Taxonômica através de busca no BLASTDB local
@@ -227,7 +227,7 @@ wf2_qc () {
 	done
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/wf2_qc.time wf2_qc
+/usr/bin/time -o ${HOME}/performance-analysis/wf2_qc.time wf2_qc
 
 blast () {
 	# Step 7 - Classificação taxonômica utilizando blastn
@@ -249,7 +249,7 @@ blast () {
 	done
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/blast.time blast
+/usr/bin/time -o ${HOME}/performance-analysis/blast.time blast
 
 	exit 2
 fi
@@ -277,7 +277,7 @@ wf3_qc () {
 	done
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/wf3_qc.time wf3_qc
+/usr/bin/time -o ${HOME}/performance-analysis/wf3_qc.time wf3_qc
 
 human_filter () {
 	# Step 6 - Remoção das reads do genoma humano
@@ -300,7 +300,7 @@ human_filter () {
 	done
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/human_filter.time human_filter
+/usr/bin/time -o ${HOME}/performance-analysis/human_filter.time human_filter
 
 autocorrection () {
 	# Step 7 - Autocorreção das reads
@@ -314,7 +314,7 @@ autocorrection () {
 	done
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/autocorrection.time autocorrection
+/usr/bin/time -o ${HOME}/performance-analysis/autocorrection.time autocorrection
 
 
 kraken () {
@@ -330,7 +330,7 @@ kraken () {
 	exit 31
 }
 # Estima o tempo da execução
-/usr/bin/time -o /performance-analysis/kraken.time kraken
+/usr/bin/time -o ${HOME}/performance-analysis/kraken.time kraken
 fi
 
 echo "Workflow $WF concluido com sucesso!"
