@@ -99,13 +99,20 @@ if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
+summary () {
 # Sumario da corrida (dados disponíveis no arquivo report*.pdf)
 echo "Sumário da corrida"
 echo "Total files:"
 ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
 echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
+}
+time summary
+read -p "Press [Enter] key to continue..."
 
+exit 0
+
+basecalling () {
 # Todos os WFs
 # Step 1 - Basecalling
 # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
@@ -117,6 +124,11 @@ if [ ! -d $BASECALLDIR ]; then
 	# Comando para guppy_basecaller usando GPU
 	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 fi
+}
+time basecalling
+read -p "Press [Enter] key to continue..."
+
+
 
 # WF 1 - Classificação Taxonômica pelo Epi2ME
 # Copiar a pasta /pass para o Epi2ME
@@ -171,7 +183,7 @@ fi
 
 # Para debug
 # exit;
-read -p "Press [Enter] key to start backup..."
+
 
 #
 # Análise em nível de reads (reads_level)
