@@ -99,7 +99,7 @@ if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
-summary () {
+summary1 () {
 # Step 0 - Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
 echo "Sumário da corrida"
 echo "Total files:"
@@ -107,8 +107,11 @@ ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
 echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 }
-time summary
-read -p "Press [Enter] key to continue..."
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/summary1.time summary1
+
+# Pausa a execução para debug
+# read -p "Press [Enter] key to continue..."
 
 basecalling () {
 # Step 1 - Basecalling (comum a todos workflows)
@@ -121,8 +124,8 @@ if [ ! -d $BASECALLDIR ]; then
 	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 fi
 }
-time basecalling
-read -p "Press [Enter] key to continue..."
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/basecalling.time basecalling
 
 # WF 1 - Classificação Taxonômica pelo Epi2ME
 # Copiar a pasta /pass para o Epi2ME
@@ -134,7 +137,7 @@ fi
 # if false; then # Desvio para execução rápida
 # fi # Fim do desvio para execução rápida
 
-demux () {
+demux_cat () {
 # WF 2 & 31 - Classificação Taxonômica por BLAST e KRAKEN2
 # Step 2 - Demultiplex & adapter removal
 if [ ! -d $DEMUXDIR ]; then
@@ -163,9 +166,14 @@ for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename 
     [ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 done
 }
-time demux ()
-read -p "Press [Enter] key to continue..."
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/demux_cat.time demux_cat
 
+#
+# Análise em nível de reads (reads_level)
+#
+
+summary2 () {
 # Step 3 - Quality control QC
 echo -e "\nExecutando pycoQC..."
 # source activate ngs
@@ -178,17 +186,14 @@ if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
 	# Comando para pycoQC version 2.5
 	pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 fi
+}
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/summary2.time summary2
 
-# Para debug
-# exit;
-
-
-#
-# Análise em nível de reads (reads_level)
-#
 
 # WF 2 - Classificação Taxonômica através de busca no BLASTDB local
 if [[ $WF -eq 2 ]]; then 
+wf2_qc () {
 	# Step 4 - Remoção dos primers
 	echo -e "\nExecutando cutadapt..."
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
@@ -220,7 +225,11 @@ if [[ $WF -eq 2 ]]; then
 	for i in $(find "${PRINSEQDIR}"/*.good.fastq -type f -exec basename {} .good.fastq \;); do
 		sed -n '1~4s/^@/>/p;2~4p' "${PRINSEQDIR}/${i}.good.fastq" > "${QUERYDIR}/${i}.fasta"
 	done
-		
+}
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/wf2_qc.time wf2_qc
+
+blast () {
 	# Step 7 - Classificação taxonômica utilizando blastn
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
@@ -238,11 +247,16 @@ if [[ $WF -eq 2 ]]; then
 		echo -e "\nResultados ${i}"
 		~/scripts/blast_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done
+}
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/blast.time blast
+
 	exit 2
 fi
 
 # WF 3 - Classificação Taxonômica pelo Kraken2
 if [[ $WF -eq 31 ]]; then 
+wf3_qc () {
 	source activate ngs
 	# Step 4 - Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
@@ -261,7 +275,11 @@ if [[ $WF -eq 31 ]]; then
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 		# Resultados disponíveis no report do Prinseq (Good sequences)
 	done
+}
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/wf3_qc.time wf3_qc
 
+human_filter () {
 	# Step 6 - Remoção das reads do genoma humano
 	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
@@ -280,7 +298,11 @@ if [[ $WF -eq 31 ]]; then
 		# Salva os dados no formato .fastq
 		samtools fastq ${READSLEVELDIR}/${i}.unmapped.bam > ${READSLEVELDIR}/${i}.unmapped.fastq -@ ${THREADS}
 	done
+}
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/human_filter.time human_filter
 
+autocorrection () {
 	# Step 7 - Autocorreção das reads
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -290,7 +312,12 @@ if [[ $WF -eq 31 ]]; then
 		# Correção de erros a partir das sequencias consenso
 	 	racon -t ${THREADS} -f -u ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.overlap.sam ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.corrected.fasta
 	done
+}
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/autocorrection.time autocorrection
 
+
+kraken () {
 	# Step 8 - Classificação taxonômica
 	echo -e "\nExecutando o Kraken2..."
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -301,6 +328,9 @@ if [[ $WF -eq 31 ]]; then
 		~/scripts/kraken2_quick_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done
 	exit 31
+}
+# Estima o tempo da execução
+/usr/bin/time -o /performance-analysis/kraken.time kraken
 fi
 
 echo "Workflow $WF concluido com sucesso!"
