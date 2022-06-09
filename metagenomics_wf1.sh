@@ -109,7 +109,7 @@ echo "Total reads:"
 }
 # Estima o tempo da execução
 export -f summary1
-echo 'summary1' | /usr/bin/time -o summary1.time
+echo 'summary1' | /usr/bin/time -o summary1.time /bin/bash
 
 exit 0
 
@@ -129,4 +129,4 @@ fi
 }
 # Estima o tempo da execução
 export -f basecalling
-echo 'basecalling' | /usr/bin/time -o basecalling.time
+echo 'basecalling' | /usr/bin/time -o basecalling.time /bin/bash
