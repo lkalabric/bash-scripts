@@ -108,7 +108,7 @@ echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 }
 # Estima o tempo da execução
-/usr/bin/time -o summary1.time summary1
+time -o summary1.time summary1
 
 exit 0
 
