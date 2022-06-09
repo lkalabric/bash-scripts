@@ -3,11 +3,11 @@
 # script: metagenomics4.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
-# criação: 25 AGO 2021
-# última atualização: 25 NOV 2021
-# versão 4: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
+# criação: 09 JUN 2022
+# última atualização: 09 JUN 2022
+# versão 1: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
 
-# Lista de etapas implementadas neste script
+# Descrição de cada etapa disponível para construção dos workflows
 # sequencing_summary1
 # sequencing_summary2
 # basecaller
