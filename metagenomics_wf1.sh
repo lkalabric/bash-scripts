@@ -99,7 +99,7 @@ if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
-function summary1 () {
+function my_function () {
 # Step 0 - Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
 echo "Sumário da corrida"
 echo "Total files:"
@@ -108,7 +108,7 @@ echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 }
 # Estima o tempo da execução
-/usr/bin/time -o ${HOME}/performance-analysis/summary1.time summary1
+/usr/bin/time -o ${HOME}/performance-analysis/my_function.time my_function
 
 exit 0
 
