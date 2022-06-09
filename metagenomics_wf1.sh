@@ -111,8 +111,6 @@ echo "Total reads:"
 export -f summary1
 echo 'summary1' | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_summary1.time /bin/bash
 
-exit 0
-
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
 
