@@ -108,6 +108,8 @@ echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 }
 # Estima o tempo da execução
+time my_function
+time -o time.out my_function
 /usr/bin/time -o ${HOME}/performance-analysis/my_function.time my_function
 
 exit 0
