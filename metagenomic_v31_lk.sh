@@ -281,8 +281,9 @@ function wf3_qc () {
 		# Resultados disponíveis no report do Prinseq (Good sequences)
 	done
 }
-# Estima o tempo da execução
-/usr/bin/time -o ${HOME}/performance-analysis/wf3_qc.time wf3_qc
+# Executa o código e estima o tempo de execução
+export -f wf3_qc
+echo 'wf3_qc' | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_wf3_qc.time /bin/bash
 
 function human_filter () {
 	# Step 6 - Remoção das reads do genoma humano
