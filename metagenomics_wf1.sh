@@ -108,7 +108,7 @@ echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 }
 # Estima o tempo da execução
-echo 'summary1'| time -o summary1.time
+echo 'summary1' | time -o summary1.time
 
 exit 0
 
@@ -127,4 +127,4 @@ if [ ! -d $BASECALLDIR ]; then
 fi
 }
 # Estima o tempo da execução
-echo 'basecalling'| /usr/bin/time -o basecalling.time
+echo 'basecalling' | /usr/bin/time -o basecalling.time
