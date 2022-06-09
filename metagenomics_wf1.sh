@@ -110,7 +110,7 @@ echo "Total reads:"
 # Estima o tempo da execução
 time my_function
 time -o time.out my_function
-/usr/bin/time -o ${HOME}/performance-analysis/my_function.time my_function
+/usr/bin/time -o "${HOME}/performance-analysis/my_function.time" my_function
 
 exit 0
 
