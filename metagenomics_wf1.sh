@@ -5,7 +5,7 @@
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 25 AGO 2021
 # última atualização: 25 NOV 2021
-# versão 3.1: corrigiu o wf 3
+# versão wf1: definição de variáveis, criação dos diretórios de I/O e basecalling
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
@@ -99,7 +99,7 @@ if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
-function my_function () {
+function summary1 () {
 # Step 0 - Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
 echo "Sumário da corrida"
 echo "Total files:"
@@ -110,7 +110,7 @@ echo "Total reads:"
 # Estima o tempo da execução
 time my_function
 time -o time.out my_function
-/usr/bin/time -o "${HOME}/performance-analysis/my_function.time" my_function
+/usr/bin/time -o ~/performance-analysis/summary1.time summary1
 
 exit 0
 
@@ -129,4 +129,4 @@ if [ ! -d $BASECALLDIR ]; then
 fi
 }
 # Estima o tempo da execução
-/usr/bin/time -o ${HOME}/performance-analysis/basecalling.time basecalling
+/usr/bin/time -o ~/performance-analysis/basecalling.time basecalling
