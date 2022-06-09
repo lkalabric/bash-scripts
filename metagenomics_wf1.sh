@@ -99,7 +99,7 @@ if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
 fi
 
-summary1 () {
+function summary1 () {
 # Step 0 - Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
 echo "Sumário da corrida"
 echo "Total files:"
@@ -108,14 +108,14 @@ echo "Total reads:"
 # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
 }
 # Estima o tempo da execução
-/usr/bin/time --output=${HOME}/performance-analysis/summary1.time summary1
+/usr/bin/time -o ${HOME}/performance-analysis/summary1.time summary1
 
 exit 0
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
 
-basecalling () {
+function basecalling () {
 # Step 1 - Basecalling (comum a todos workflows)
 # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
 if [ ! -d $BASECALLDIR ]; then
