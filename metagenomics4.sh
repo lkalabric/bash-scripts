@@ -10,7 +10,7 @@
 # Descrição de cada etapa disponível para construção dos workflows
 # sequencing_summary1
 # sequencing_summary2
-# basecaller
+# basecalling
 # demux_cat1
 # demux_cat2
 # qc_filter1
@@ -337,9 +337,9 @@ done
 exit 0
 
 # Define a etapas de cada workflow
-WF1_steps=("sequencing_summary1" "basecaller")
-WF2_steps=("sequencing_summary1" "basecaller" "demux_cat1" "sequencing_summary2" "qc_filter1" "blast")
-WF3_steps=("sequencing_summary1" "basecaller" "demux_cat2" "sequencing_summary2" "qc_filter2" "human_filter" "autocorrection" "kraken")
+WF1_steps=("sequencing_summary1" "basecalling")
+WF2_steps=("sequencing_summary1" "basecalling" "demux_cat1" "sequencing_summary2" "qc_filter1" "blast")
+WF3_steps=("sequencing_summary1" "basecalling" "demux_cat2" "sequencing_summary2" "qc_filter2" "human_filter" "autocorrection" "kraken")
 
 # Executa as etapas declaradas no worfflow selecionado
 echo "Executando o workflow $WF..."
