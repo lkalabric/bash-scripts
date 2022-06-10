@@ -95,6 +95,7 @@ function sequencing_summary1 () {
 function basecalling () {
   # Step 1 - Basecalling (comum a todos workflows)
   # Parâmetros Guppy basecaller (ONT)
+  echo "Modelo dentro da função: $MODEL"
   CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
   ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
   # Parâmetros para otimização do Guppy basecaller para modelo fast utilizadando o LAPTOP-Yale (benckmark)
@@ -321,7 +322,8 @@ indice=$(expr $WF - 1)
 # Executa as etapas do workflow selecionado
 echo "Executando o workflow WF$WF..."
 echo "Passos do WF$WF: ${workflowList[$indice]}"
-
+echo "Libray: $RUNNAME"
+echo "Modelo: $MODEL"
 # Separa os passos do workflow
 read -r -a steps <<< "${workflowList[$indice]}"
 
