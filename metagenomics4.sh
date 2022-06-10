@@ -313,9 +313,9 @@ function kraken () {
 
 # Define a etapas de cada workflow
 workflowList=(
-	'sequencing_summary1 basecaller'
-	'sequencing_summary1 basecaller demux_cat1 sequencing_summary2 qc_filter1 blast'
-	'sequencing_summary1 basecaller demux_cat2 sequencing_summary2 qc_filter2 human_filter autocorrection kraken'
+	'sequencing_summary1 basecalling'
+	'sequencing_summary1 basecalling demux_cat1 sequencing_summary2 qc_filter1 blast'
+	'sequencing_summary1 basecalling demux_cat2 sequencing_summary2 qc_filter2 human_filter autocorrection kraken'
 )
 # Índice do array 0..n
 indice=$(expr $WF - 1)
@@ -334,23 +334,6 @@ for i in ${steps[@]}; do
 	echo "$i" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
 
-exit 0
-
-# Define a etapas de cada workflow
-WF1_steps=("sequencing_summary1" "basecalling")
-WF2_steps=("sequencing_summary1" "basecalling" "demux_cat1" "sequencing_summary2" "qc_filter1" "blast")
-WF3_steps=("sequencing_summary1" "basecalling" "demux_cat2" "sequencing_summary2" "qc_filter2" "human_filter" "autocorrection" "kraken")
-
-# Executa as etapas declaradas no worfflow selecionado
-echo "Executando o workflow $WF..."
-for i in ${WF$WF_steps}; do
-  echo "Etapa $i  - ${WF$WF_steps[@]}"
-  # Executa o código e estima o tempo de execução
-  export -f ${WF$WF_steps[@]}
-  echo ${WF$WF_steps[@]} | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${WF$WF_steps[@]}.time /bin/bash
-done
-
-echo "Workflow $WF concluido com sucesso!"
 exit 0
 
 # Análise de cobertura do sequenciamento
