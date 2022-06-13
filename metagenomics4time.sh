@@ -76,7 +76,7 @@ PRIMER="GTTTCCCACTGGAGGATA"
 
 function sequencing_summary1 () {
   $RAWDIR=$1
-  # Step 0 - Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
+  # Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
   echo "Sumário da corrida"
   echo "Total files:"
   ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
@@ -85,7 +85,7 @@ function sequencing_summary1 () {
 }
 
 function basecalling () {
-  # Basecalling
+  # Basecalling  (comum a todos workflows)
   $RAWDIR=$1
   $BASECALLDIR=$2
   $MODEL=$3
