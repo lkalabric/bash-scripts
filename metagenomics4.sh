@@ -307,10 +307,9 @@ function kraken () {
 		echo -e "\nResultados ${i}"
 		~/scripts/kraken2_quick_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done
-	exit 31
 }
 
-# Define a etapas de cada workflow
+# Define as etapas de cada workflow
 workflowList=(
 	'sequencing_summary1 basecalling'
 	'sequencing_summary1 basecalling demux_cat1 sequencing_summary2 qc_filter1 blast'
@@ -330,7 +329,6 @@ read -r -a steps <<< "${workflowList[$indice]}"
 for i in ${steps[@]}; do
 	echo "$i"
 	# Executa o código e estima o tempo de execução
-	export -f "$i"
 	echo "$i" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
 
