@@ -118,12 +118,13 @@ function basecalling () {
   echo "GPUPERDEVICE: $GPUPERDEVICE"
   echo "CHUNCKSIZE: $CHUNCKSIZE"
   echo "CHUNKPERRUNNER: $CHUNKPERRUNNER"
-  # Esta etapa pode ser realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
-  mkdir -vp $BASECALLDIR
-  echo -e "\nExecutando guppy_basecaller..."
-  # Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
-  # Comando para guppy_basecaller usando GPU
-  guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
+  if [ ! -d $BASECALLDIR ]; then
+	echo -e "\nExecutando guppy_basecaller..."
+	mkdir -vp $BASECALLDIR
+	# Esta etapa está sendo realizada pelo script guppy_gpu_v1_ag.sh no LAPTOP-Yale
+	# Comando para guppy_basecaller usando GPU
+	guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto  --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
+  fi
 }
 
 # Para debug
