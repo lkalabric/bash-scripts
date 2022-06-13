@@ -84,7 +84,7 @@ fi
 # read -p "Press [Enter] key to continue..."
 
 function sequencing_summary1 () {
-  # Step 0 - Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
+  # Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
   echo "Sumário da corrida"
   echo "Total files:"
   ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
@@ -93,7 +93,7 @@ function sequencing_summary1 () {
 }
 
 function basecalling () {
-  # Step 1 - Basecalling (comum a todos workflows)
+  # Basecalling (comum a todos workflows)
   # Parâmetros Guppy basecaller (ONT)
   echo "Modelo dentro da função: $MODEL"
   CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
@@ -139,8 +139,7 @@ function basecalling () {
 # fi # Fim do desvio para execução rápida
 
 function demux_cat1 () {
-  # WF 2 Classificação Taxonômica por BLAST
-  # Step 2 - Demultiplex & adapter removal
+  # Demultiplex, adapter removal & sem headcrop 18
   if [ ! -d $DEMUXDIR ]; then
     echo -e "\nExecutando guppy_barcoder..."
     mkdir -vp $DEMUXDIR
@@ -158,8 +157,7 @@ function demux_cat1 () {
 }
 
 function demux_cat2 () {
-  # WF 31 - Classificação Taxonômica por KRAKEN2
-  # Step 2 - Demultiplex & adapter removal
+  # Demultiplex, adapter removal com headcrop 18
   if [ ! -d $DEMUXDIR ]; then
     echo -e "\nExecutando guppy_barcoder..."
     mkdir -vp $DEMUXDIR
@@ -176,7 +174,7 @@ function demux_cat2 () {
 }
 
 function sequencing_summary2 () {
-  # Step 3 - Quality control QC
+  # pycoQC summary
   echo -e "\nExecutando pycoQC..."
   # source activate ngs
   # Default do guppybasecaller para min_pass_qual 8 (isso não está escrito em nenhum lugar)
@@ -191,7 +189,7 @@ function sequencing_summary2 () {
 }
 
 function qc_filter1 () {
-	# Step 4 - Remoção dos primers
+	# Remoção dos primers
 	echo -e "\nExecutando cutadapt..."
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
@@ -199,7 +197,7 @@ function qc_filter1 () {
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 	done
 
-	# Step 5 - Filtro por tamanho
+	# Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \;); do
@@ -207,7 +205,7 @@ function qc_filter1 () {
 		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
 
-	# Step 6 - Filtro de complexidade
+	# Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
@@ -225,7 +223,7 @@ function qc_filter1 () {
 }
 
 function blast () {
-	# Step 7 - Classificação taxonômica utilizando blastn
+	# Classificação taxonômica utilizando blastn
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
 		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
@@ -245,8 +243,8 @@ function blast () {
 }
 
 function qc_filter2 () {
+	# Filtro por tamanho
 	source activate ngs
-	# Step 4 - Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
@@ -254,7 +252,7 @@ function qc_filter2 () {
 		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
 
-	# Step 5 - Filtro de complexidade
+	# Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
@@ -266,7 +264,7 @@ function qc_filter2 () {
 }
 
 function human_filter () {
-	# Step 6 - Remoção das reads do genoma humano
+	# Remoção das reads do genoma humano
 	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
@@ -287,7 +285,7 @@ function human_filter () {
 }
 
 function autocorrection () {
-	# Step 7 - Autocorreção das reads
+	# Autocorreção das reads
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
@@ -299,7 +297,7 @@ function autocorrection () {
 }
 
 function kraken () {
-	# Step 8 - Classificação taxonômica
+	# Classificação taxonômica utilizando Kraken2
 	echo -e "\nExecutando o Kraken2..."
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
