@@ -326,11 +326,12 @@ echo "Modelo: $MODEL"
 # Separa os passos do workflow
 read -r -a steps <<< "${workflowList[$indice]}"
 
-for i in ${steps[@]}; do
-	echo "$i"
+for call_func in ${steps[@]}; do
+	echo "Executando a função $call_func..."
 	# Executa o código e estima o tempo de execução
-	export -f "$i"
-	echo "$i" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
+	eval $call_func
+	# export -f "$call_func"
+	# echo "$call_fun" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
 
 exit 0
