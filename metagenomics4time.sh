@@ -45,7 +45,7 @@ KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se nec
 
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
-RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
+RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 # rm -r ${RESULTSDIR}
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
