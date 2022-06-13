@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# script: metagenomics4.sh
+# script: metagenomics4time.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
@@ -38,8 +38,8 @@ if [ ! -d $RAWDIR ]; then
 fi
 
 # Caminho de INPUT dos bancos de dados
-REFSEQDIR=${HOME}/data/REFSEQ
 HUMANREFDIR=${HOME}/data/GRCh38
+REFSEQDIR=${HOME}/data/REFSEQ
 BLASTDBDIR="${HOME}/data/BLAST_DB"
 KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 
@@ -64,26 +64,18 @@ ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 
 # Parâmetros de qualidade mínima
-QSCORE=9
-LENGTH=100
+  QSCORE=9
+  LENGTH=100
 
 # Parâmetros Barcoder ou Cutadapt para remoção do primer
 TRIMADAPTER=18
 PRIMER="GTTTCCCACTGGAGGATA"
 
-# Parâmetros minimap2 
-# wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
-HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
-HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
-# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
-if [ ! -f $HUMANREFMMI ]; then
-	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
-fi
-
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
 
 function sequencing_summary1 () {
+  $RAWDIR=$1
   # Step 0 - Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
   echo "Sumário da corrida"
   echo "Total files:"
@@ -93,11 +85,12 @@ function sequencing_summary1 () {
 }
 
 function basecalling () {
-  # Step 1 - Basecalling (comum a todos workflows)
+  # Basecalling
+  $RAWDIR=$1
+  $BASECALLDIR=$2
+  $MODEL=$3
   # Parâmetros Guppy basecaller (ONT)
-  echo "Modelo dentro da função: $MODEL"
   CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
-  ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
   # Parâmetros para otimização do Guppy basecaller para modelo fast utilizadando o LAPTOP-Yale (benckmark)
   case $MODEL in
     fast)
@@ -138,8 +131,12 @@ function basecalling () {
 # fi # Fim do desvio para execução rápida
 
 function demux_cat1 () {
-  # WF 2 Classificação Taxonômica por BLAST
-  # Step 2 - Demultiplex & adapter removal
+  # Demultiplex, adapter removal & sem headcrop 18
+  $BASECALLDIR=$1
+  $DEMUXDIR=$2
+  $DEMUXCATDIR=$3
+  # Parâmetros Guppy barcoder (ONT)
+  ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
   if [ ! -d $DEMUXDIR ]; then
     echo -e "\nExecutando guppy_barcoder..."
     mkdir -vp $DEMUXDIR
@@ -157,8 +154,12 @@ function demux_cat1 () {
 }
 
 function demux_cat2 () {
-  # WF 31 - Classificação Taxonômica por KRAKEN2
-  # Step 2 - Demultiplex & adapter removal
+  # Demultiplex, adapter removal com headcrop 18
+  $BASECALLDIR=$1
+  $DEMUXDIR=$2
+  $DEMUXCATDIR=$3
+  # Parâmetros Guppy barcoder (ONT)
+  ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
   if [ ! -d $DEMUXDIR ]; then
     echo -e "\nExecutando guppy_barcoder..."
     mkdir -vp $DEMUXDIR
@@ -175,30 +176,46 @@ function demux_cat2 () {
 }
 
 function sequencing_summary2 () {
-  # Step 3 - Quality control QC
-  echo -e "\nExecutando pycoQC..."
-  # source activate ngs
-  # Default do guppybasecaller para min_pass_qual 8 (isso não está escrito em nenhum lugar)
-  if [ ! -f "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" ]; then
-    # Comando para pycoQC version 2.5
-    pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" --report_title $RUNNAME --min_pass_qual 8
-  fi
-  if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
-    # Comando para pycoQC version 2.5
-    pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
-  fi
+	# pycoQC summary
+	$RESULTSDIR=$1
+	$RUNNAME=$2
+	$BASECALLDIR=$3
+	$DEMUXDIR=$4
+	$QSCORE=$5
+	$LENGTH=$6
+	echo -e "\nExecutando pycoQC..."
+	# source activate ngs
+	# Default do guppybasecaller para min_pass_qual 8 (isso não está escrito em nenhum lugar)
+	if [ ! -f "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" ]; then
+	    # Comando para pycoQC version 2.5
+	    pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_basecaller_pycoqc.html" --report_title $RUNNAME --min_pass_qual 8
+	fi
+	if [ ! -f "${RESULTSDIR}/${RUNNAME}_pycoqc.html" ]; then
+	    # Comando para pycoQC version 2.5
+	    pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
+	fi
 }
 
-function qc_filter1 () {
-	# Step 4 - Remoção dos primers
+function primer_removal () {
+	# Remoção dos primers
+	$CUTADAPTDIR=$1
+	$PRIMER=$2
+	DEMUXCATDIR=$3
 	echo -e "\nExecutando cutadapt..."
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 	done
+}
 
-	# Step 5 - Filtro por tamanho
+function qc_filter1 () {
+	# Filtro por tamanho
+	$CUTADAPTDIR=$1
+	$LENGTH=$2
+	$NANOFILTERDIR=$3
+	$PRINSEQDIR=$4
+	$QUERYDIR=$5
 	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \;); do
@@ -206,7 +223,7 @@ function qc_filter1 () {
 		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
 
-	# Step 6 - Filtro de complexidade
+	# Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
@@ -224,7 +241,11 @@ function qc_filter1 () {
 }
 
 function blast () {
-	# Step 7 - Classificação taxonômica utilizando blastn
+	# Classificação taxonômica utilizando blastn
+	$BLASTDIR=$1
+	$QUERYDIR=$2
+	$RUNNAME=$3
+	$MODEL=$4
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
 		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
@@ -244,8 +265,12 @@ function blast () {
 }
 
 function qc_filter2 () {
+	# Filtro por tamanho
+	$DEMUXCATDIR=$1
+	$LENGTH=$2
+	$NANOFILTERDIR=$3
+	$PRINSEQDIR=$4
 	source activate ngs
-	# Step 4 - Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \;); do
@@ -265,12 +290,24 @@ function qc_filter2 () {
 }
 
 function human_filter () {
-	# Step 6 - Remoção das reads do genoma humano
+	# Remoção das reads do genoma humano
+	$HUMANREFDIR=$1
+	$READSLEVELDIR=$2
+	$ASSEMBLYDIR=$3
+	$PRINSEQDIR=$4
+	# Parâmetros minimap2 
+	# wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
+	HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
+	HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
+	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
+	# minimap2 -d ${HUMANREFMMI} ${HUMANREFSEQ}
+	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
+	if [ ! -f $HUMANREFMMI ]; then
+		minimap2 -d $HUMANREFMMI $HUMANREFSEQ
+	fi
 	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
-	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
-	minimap2 -d ${HUMANREFMMI} ${HUMANREFSEQ}
 	# Loop para analisar todos barcodes, um de cada vez
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
@@ -286,7 +323,10 @@ function human_filter () {
 }
 
 function autocorrection () {
-	# Step 7 - Autocorreção das reads
+	# Autocorreção das reads
+	$PRINSEQDIR=$1
+	$THREADS=$2
+	$READSLEVELDIR=$3
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
@@ -298,7 +338,12 @@ function autocorrection () {
 }
 
 function kraken () {
-	# Step 8 - Classificação taxonômica
+	# Classificação taxonômica utilizando Kraken2
+	$KRAKENDB=$1
+	$THREADS=$2
+	$READSLEVELDIR=$3
+	$RUNNAME=$4
+	$MODEL=$5
 	echo -e "\nExecutando o Kraken2..."
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
@@ -309,12 +354,13 @@ function kraken () {
 	done
 }
 
-# Define a etapas de cada workflow
+# Define as etapas e argumentos de cada workflow
 workflowList=(
-	'sequencing_summary1 basecalling'
-	'sequencing_summary1 basecalling demux_cat1 sequencing_summary2 qc_filter1 blast'
-	'sequencing_summary1 basecalling demux_cat2 sequencing_summary2 qc_filter2 human_filter autocorrection kraken'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;BASECALLDIR;MODEL'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;BASECALLDIR;MODEL demux_cat1:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;RUNNAME;BASECALLDIR;DEMUXDIR;QSCORE;LENGTH primer_removal:CUTADAPTDIR;PRIMER;DEMUXCATDIR qc_filter1:CUTADAPTDIR;LENTGH;NANOFILTERDIR;PRINSEQDIR;QUERYDIR blast:BLASTDIR;QUERYDIR;RUNNAME;MODEL'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;BASECALLDIR;MODEL demux_cat2:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;RUNNAME;BASECALLDIR;DEMUXDIR;QCORE;LENGTH qc_filter2:DEMUXCATDIR;LENGTH;NANOFILTERDIR;PRINSEQDIR human_filter:HUMANREFDIR;READSLEVELDIR;ASSEMBLYDIR;PRINSEQDIR autocorrection:PRINSEQDIR;THREADS;READSLEVELDIR kraken:KRAKENDB;THREADS;READSLEVELDIR;RUNNAME;MODEL'
 )
+
 # Índice do array 0..n
 indice=$(expr $WF - 1)
 
@@ -323,15 +369,25 @@ echo "Executando o workflow WF$WF..."
 echo "Passos do WF$WF: ${workflowList[$indice]}"
 echo "Libray: $RUNNAME"
 echo "Modelo: $MODEL"
-# Separa os passos do workflow
-read -r -a steps <<< "${workflowList[$indice]}"
-
-for call_func in ${steps[@]}; do
-	echo "Executando a função $call_func..."
+# Separa cada etapa do workflow no vetor steps
+read -r -a steps <<< "${workflowList[0]}"
+for call_func in "${steps[@]}"; do 
+	echo "Step: $i"
+	# Separo o nome da função dos argumentos
+	IFS=":" read -r -a func_name <<< $call_func
+	args=$(echo "${func_name[1]}" | tr ";" " ")
+	# Obtem os valores de cada argumento
+	args_values=""
+	for j in $args; do
+		echo "Argumentos separados: $j - Valor do argumento: ${!j}"
+		args_values="$args_values ${!j}"
+	done
+	echo "Executando a função ${func_name[0]}"..."
+	echo "Argumentos passados: $args...
+	echo "Valores dos argumentos: $args_values..."
 	# Executa o código e estima o tempo de execução
-	eval $call_func
-	# export -f "$call_func"
-	# echo "$call_fun" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
+	export -f "$call_func"
+	echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
 
 exit 0
