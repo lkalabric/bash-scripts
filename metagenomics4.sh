@@ -247,8 +247,6 @@ function human_filter () {
 	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
-	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
-	minimap2 -d ${HUMANREFMMI} ${HUMANREFSEQ}
 	# Loop para analisar todos barcodes, um de cada vez
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
