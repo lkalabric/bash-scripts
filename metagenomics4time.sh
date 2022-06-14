@@ -44,6 +44,15 @@ REFSEQDIR=${HOME}/data/REFSEQ
 BLASTDBDIR="${HOME}/data/BLAST_DB"
 KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 
+# Parâmetros minimap2 
+# wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
+HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
+HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
+# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
+if [ ! -f $HUMANREFMMI ]; then
+	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
+fi
+
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
@@ -61,9 +70,6 @@ BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
 READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
 ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
-
-# Parâmetro de otimização minimap2, samtools, racon e kraken2
-THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -261,19 +267,10 @@ function blast () {
 function human_filter () {
 	# Remoção das reads do genoma humano
 	$HUMANREFDIR=$1
-	$READSLEVELDIR=$2
-	$ASSEMBLYDIR=$3
-	$PRINSEQDIR=$4
-	# Parâmetros minimap2 
-	# wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
-	HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
-	HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
-	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
-	# minimap2 -d ${HUMANREFMMI} ${HUMANREFSEQ}
-	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
-	if [ ! -f $HUMANREFMMI ]; then
-		minimap2 -d $HUMANREFMMI $HUMANREFSEQ
-	fi
+	$PRINSEQDIR=$2
+	$READSLEVELDIR=$3
+	# Parâmetro de otimização minimap2, samtools, racon e kraken2
+	THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
@@ -294,8 +291,9 @@ function human_filter () {
 function autocorrection () {
 	# Autocorreção das reads
 	$PRINSEQDIR=$1
-	$THREADS=$2
 	$READSLEVELDIR=$3
+	# Parâmetro de otimização minimap2, samtools, racon e kraken2
+	THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
@@ -309,17 +307,16 @@ function autocorrection () {
 function kraken () {
 	# Classificação taxonômica utilizando Kraken2
 	$KRAKENDB=$1
-	$THREADS=$2
-	$READSLEVELDIR=$3
-	$RUNNAME=$4
-	$MODEL=$5
+	$READSLEVELDIR=$2
+	# Parâmetro de otimização minimap2, samtools, racon e kraken2
+	THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 	echo -e "\nExecutando o Kraken2..."
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo -e "\nCarregando os dados ${i}..."
 		kraken2 --db ${KRAKENDB} --quick --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo -e "\nResultados ${i}"
-		~/scripts/kraken2_quick_report.sh "${RUNNAME}_${MODEL}" "${i}"
+		~/scripts/kraken2_quick_report.sh "${READSLEVELDIR}/${i}_report.txt"
 	done
 }
 
@@ -327,7 +324,7 @@ function kraken () {
 workflowList=(
 	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR'
 	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux_cat1:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR primer_removal:DEMUXCATDIR;CUTADAPTDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR blast:PRINSEQDIR;QUERYDIR;BLASTDIR'
-	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux_cat2:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR human_filter:HUMANREFDIR;READSLEVELDIR;ASSEMBLYDIR;PRINSEQDIR autocorrection:PRINSEQDIR;THREADS;READSLEVELDIR kraken:KRAKENDB;THREADS;READSLEVELDIR;RUNNAME;MODEL'
+	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux_cat2:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR human_filter:HUMANREFDIR;PRINSEQDIR;READSLEVELDIR autocorrection:PRINSEQDIR;READSLEVELDIR kraken:KRAKENDB;READSLEVELDIR'
 )
 
 # Índice do array 0..n
