@@ -5,26 +5,48 @@
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # objetivo: relatório dos resultados da calssificação taxonômica pelo blastn
 # criação: 25 AGO 2021
-# ultima atualização: 17 OUT 2021
+# ultima atualização: 14 JUN 2022
 # atualização: revisão do script
 
 # Valiação da entrada de dados na linha de comando
-if [[ $# -ne 2 ]]; then
-	echo "Falta o nome da biblioteca_model e/ou do barcodeXX!"
-	echo "Sintáxe: ./blast_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
-	echo "Exemplo: ./blast_report.sh DENV_FTA_1_hac barcode01"
-	exit 0
-fi
+die () {
+    echo >&2 "$@"
+    exit 0
+}
 
-RUNNAME=$1
-BARCODE=$2
-WF=2
-RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}"
-BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
-echo "Lista de taxons no BLAST_DB"
+case $# in
+	1)
+		if [ ! -f $1 ]; then
+			echo "Arquivo ou diretório inválido"
+			echo "Sintáxe: ./blast_report.sh <caminho_completo/barcode01.blastn>"
+			echo "Exemplo: ./blast_report.sh ngs-library/DENV_FTA_1_fast/wf2/BLAST/barcode01.blastn"
+			exit 1
+		fi
+		$FILENAME=$1
+	;;
+	2)
+		RUNNAME=$1
+		BARCODE=$2
+		RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}"
+		BLASTDIR="${RESULTSDIR}/wf2/BLAST"
+		echo "Lista de taxons no BLAST_DB"
+		FILENAME="${BLASTDIR}/${BARCODE}.blastn"
+		if [ ! -f ${FILENAME} ]; then	
+			echo "Falta o nome da biblioteca_model e/ou do barcodeXX"
+			echo "Sintáxe: ./blast_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
+			echo "Exemplo: ./blast_report.sh DENV_FTA_1_fast barcode01"
+			exit 2
+		fi
+	;;
+	*)
+		die "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
+	;;
+esac
+
+# Lista os vírus pesquisados
 WIMPDIR="${HOME}/data/WIMP"
+echo "Lista de vírus pesquisados"
 ls ${WIMPDIR}
-FILENAME="${BLASTDIR}/${BARCODE}.blastn"
 
 echo "All reads: $(wc -l ${FILENAME})" 
 echo "Número de reads por taxon"
