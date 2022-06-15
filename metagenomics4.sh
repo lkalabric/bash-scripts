@@ -49,14 +49,10 @@ echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/DEMUX"
-DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
-# Remove as pastas de resultados com os resultados anteriores da worflow selecionada
-rm -r "${RESULTSDIR}/wf${WF}"
-
-# Pausa a execução para debug
-read -p "Press [Enter] key to continue..."
-
+# Remove as pastas de resultados anteriores antes das análises
+[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"
+DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
+DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
 CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
 NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
 PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
@@ -65,6 +61,9 @@ BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
 READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
 ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
+
+# Pausa a execução para debug
+# read -p "Press [Enter] key to continue..."
 
 # Parâmetros de qualidade mínima
 QSCORE=9	# Default Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
