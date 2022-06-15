@@ -16,8 +16,8 @@ BLASTDBDIR=${HOME}/data/BLAST_DB
 echo "Concatenando as sequencias referência em refseq.fasta..."
 if [[ ! -f ${REFSEQDIR}/refseq.fasta ]]
 then
-	find ${REFSEQDIR} -type f -name '*.fasta' -print0 | sort -z | xargs -0 cat > refseq.fasta
-	mv refseq.fasta ${REFSEQDIR}
+	find ${REFSEQDIR} -type f -name '*.fasta' -print0 | sort -z | xargs -0 cat > "${REFSEQDIR}/refseq.fasta"
+	# mv refseq.fasta ${REFSEQDIR}
 fi
 
 # Processando a linha de descrição para conter apenas o número de acesso sem espaços
