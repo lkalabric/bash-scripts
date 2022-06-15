@@ -33,11 +33,12 @@ KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se nec
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-# rm -r ${RESULTSDIR}
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/DEMUX"
-DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
+# Remove as pastas de resultados anteriores antes das análises
+[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"
+DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
+DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
 CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
 NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
 PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
