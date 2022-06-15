@@ -135,8 +135,8 @@ function demux_cat1 () {
 	# Parâmetros Guppy barcoder (ONT)
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
-		echo -e "\nExecutando guppy_barcoder..."
 		mkdir -vp $DEMUXDIR
+		echo -e "\nExecutando guppy_barcoder..."
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
 	fi
 	# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
@@ -154,9 +154,8 @@ function demux_cat2 () {
 	TRIMADAPTER=18
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
-		echo -e "\nExecutando guppy_barcoder..."
 		mkdir -vp $DEMUXDIR
-		#bm7 WF31 com headcrop 18
+		echo -e "\nExecutando guppy_barcoder..."
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 	fi
 	# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
@@ -170,14 +169,13 @@ function demux_cat2 () {
 
 function sequencing_summary2 () {
 	# pycoQC summary
-	echo -e "\nExecutando pycoQC no sequencing summary com o parâmetro default QSCORE=8..."
+	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_pycoqc.html" ]; then
-		# Comando para pycoQC version 2.5
+		echo -e "\nExecutando pycoQC no sequencing summary com o parâmetro default QSCORE=8..."
 		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_pycoqc.html" --report_title $RUNNAME --min_pass_qual 8
 	fi
-	echo -e "\nExecutando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9..."
 	if [ ! -f "${RESULTSDIR}/barcoding_pycoqc.html" ]; then
-		# Comando para pycoQC version 2.5
+		echo -e "\nExecutando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9..."
 		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
@@ -185,8 +183,8 @@ function sequencing_summary2 () {
 function primer_removal () {
 	# Remoção dos primers
 	PRIMER="GTTTCCCACTGGAGGATA"
-	echo -e "\nExecutando cutadapt..."
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
+	echo -e "\nExecutando cutadapt..."
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
@@ -196,19 +194,18 @@ function primer_removal () {
 function qc_filter1 () {
 	# Filtro por tamanho
 	source activate ngs
-	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
+	echo -e "\nExecutando NanoFilt..."
 	for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \; | sort); do
 		NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
 }
 
 function qc_filter2 () {
 	# Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
-	echo -e "\nExecutando prinseq-lite.pl..."
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
+	echo -e "\nExecutando prinseq-lite.pl..."
 	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nResultados ${i}..."
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
@@ -230,8 +227,8 @@ function blast () {
 		sed -n '1~4s/^@/>/p;2~4p' "${PRINSEQDIR}/${i}.good.fastq" > "${QUERYDIR}/${i}.fasta"
 	done
 	# Busca as QUERIES no BLASTDB local
-	echo -e "\nExecutando blastn..."
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
+	echo -e "\nExecutando blastn..."
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \; | sort); do
 		echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
 		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
@@ -244,9 +241,9 @@ function blast () {
 
 function human_filter () {
 	# Remoção das reads do genoma humano
-	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
+	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	# Loop para analisar todos barcodes, um de cada vez
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
