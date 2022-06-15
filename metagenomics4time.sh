@@ -60,8 +60,8 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 BASECALLDIR="${RESULTSDIR}/BASECALL"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
 DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
-# Remove as pastas de resultados com os resultados anteriores da worflow selecionada
-rm -r "${RESULTSDIR}/wf${WF}"
+# Remove as pastas de resultados anteriores antes das análises 
+[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"
 CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
 NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
 PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
