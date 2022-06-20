@@ -195,9 +195,21 @@ function qc_filter1 () {
 	source activate ngs
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	echo -e "\nExecutando NanoFilt..."
-	for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \; | sort); do
-		NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-	done
+	case $WF in
+	  2)
+		for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \; | sort); do
+			NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
+		done
+	  ;;
+	  3)
+		for i in $(find "${DEMUXCATDIR}" -type f -exec basename {} .fastq \; | sort); do
+			NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
+		done	  ;;
+	  *)
+		echo "Erro na função qc_filter1!"
+		exit 0;
+	  ;;
+	esac
 }
 
 function qc_filter2 () {
@@ -299,6 +311,7 @@ echo "Modelo: $MODEL"
 read -r -a steps <<< "${workflowList[$indice]}"
 
 for call_func in ${steps[@]}; do
+	echo "Executando a função $call_func..."
 	eval $call_func	
 done
 
