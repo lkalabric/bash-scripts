@@ -299,6 +299,10 @@ workflowList=(
 	'sequencing_summary1 basecalling demux_cat1 sequencing_summary2 primer_removal qc_filter1 qc_filter2 blast'
 	'sequencing_summary1 basecalling demux_cat2 sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken'
 )
+if [[ $wf -ge ${#workflowList[@]} ]]; then
+	echo "Workflow não definido!"
+	exit 0;
+fi
 # Índice do array 0..n
 indice=$(expr $WF - 1)
 
