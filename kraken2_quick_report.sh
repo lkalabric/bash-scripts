@@ -23,8 +23,7 @@ case $# in
 			echo "Exemplo: ./kraken2_quick_report.sh ngs-library/DENV_FTA_1_fast/wf3/READS_LEVEL/barcode01_report.txt"
 			exit 1
 		fi
-		$FILENAME=$1
-		
+		FILENAME=$1
 	;;
 	2)
 		RUNNAME=$1
@@ -38,7 +37,7 @@ case $# in
 			echo "Exemplo: ./kraken2_quick_report.sh DENV_FTA_1_hac barcode01"
 			exit 2
 		fi
-		
+	;;	
 	*)
 		die "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
 	;;
