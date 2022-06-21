@@ -11,8 +11,8 @@
 # sequencing_summary1
 # sequencing_summary2
 # basecalling
-# demux_cat1
-# demux_cat2
+# demux
+# demux_headcrop
 # primer_removal
 # qc_filter1
 # qc_filter2
@@ -129,7 +129,7 @@ function basecalling () {
 # if false; then # Desvio para execução rápida
 # fi # Fim do desvio para execução rápida
 
-function demux_cat1 () {
+function demux () {
 	# Demultiplex, adapter removal & sem headcrop 18 para uso do cutadapt
 	# Parâmetros Guppy barcoder (ONT)
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
@@ -147,7 +147,7 @@ function demux_cat1 () {
 	fi
 }
 
-function demux_cat2 () {
+function demux_headcrop () {
 	# Demultiplex, adapter removal com headcrop 18 sem uso do cutadapt
 	# Parâmetros Guppy barcoder (ONT)
 	TRIMADAPTER=18
@@ -171,11 +171,11 @@ function sequencing_summary2 () {
 	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_pycoqc.html" ]; then
 		echo -e "\nExecutando pycoQC no sequencing summary com o parâmetro default QSCORE=8..."
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_pycoqc.html" --report_title $RUNNAME --min_pass_qual 8
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${wf}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE}
 	fi
 	if [ ! -f "${RESULTSDIR}/barcoding_pycoqc.html" ]; then
 		echo -e "\nExecutando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9..."
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${wf}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
 
@@ -296,17 +296,21 @@ function kraken () {
 # Define as etapas de cada workflow
 workflowList=(
 	'sequencing_summary1 basecalling'
-	'sequencing_summary1 basecalling demux_cat1 sequencing_summary2 primer_removal qc_filter1 qc_filter2 blast'
-	'sequencing_summary1 basecalling demux_cat2 sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken'
+	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blast'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken'
 )
-if [[ $wf -ge ${#workflowList[@]} ]]; then
+
+
+# Executa as etapas do workflow selecionado
+# Validação do WF
+if [[ $WF -gt ${#workflowList[@]} ]]; then
 	echo "Workflow não definido!"
 	exit 0;
 fi
-# Índice do array 0..n
+# Índice para o array workflowList 0..n
 indice=$(expr $WF - 1)
 
-# Executa as etapas do workflow selecionado
+# Execução das análises propriamente ditas a partir do workflow selecionado
 echo "Executando o workflow WF$WF..."
 echo "Passos do WF$WF: ${workflowList[$indice]}"
 echo "Libray: $RUNNAME"
