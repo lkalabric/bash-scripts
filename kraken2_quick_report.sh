@@ -19,7 +19,7 @@ case $# in
 	1)
 		if [ ! -f $1 ]; then
 			echo "Arquivo ou diretório inválido"
-			echo "Sintáxe: ./kraken2_quick_report.sh <caminho_completo/barcode01.blastn>"
+			echo "Sintáxe: ./kraken2_quick_report.sh <caminho_completo/barcodeXX.blastn>"
 			echo "Exemplo: ./kraken2_quick_report.sh ngs-library/DENV_FTA_1_fast/wf3/READS_LEVEL/barcode01_report.txt"
 			exit 1
 		fi
@@ -40,6 +40,8 @@ case $# in
 	;;	
 	*)
 		die "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
+		echo "Sintáxe: ./kraken2_quick_report.sh <caminho_completo/barcodeXX.blastn>"
+		echo "Sintáxe: ./kraken2_quick_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
 	;;
 esac
 
