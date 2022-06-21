@@ -127,7 +127,7 @@ function basecalling () {
 # if false; then # Desvio para execução rápida
 # fi # Fim do desvio para execução rápida
 
-function demux_cat1 () {
+function demux () {
 	# Demultiplex, adapter removal & sem headcrop 18 para uso do cutadapt
 	$BASECALLDIR=$1
 	$DEMUXDIR=$2
@@ -138,17 +138,17 @@ function demux_cat1 () {
 		mkdir -vp $DEMUXDIR
 		echo -e "\nExecutando guppy_barcoder..."
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
+		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
+		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
+		# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
+		[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
+		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
+		done
 	fi
-	# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
-	[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
-	# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
-	[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
-	for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
-		[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
-	done
 }
 
-function demux_cat2 () {
+function demux_headcrop () {
 	# Demultiplex, adapter removal com headcrop 18 sem uso do cutadapt
 	$BASECALLDIR=$1
 	$DEMUXDIR=$2
@@ -160,14 +160,14 @@ function demux_cat2 () {
 		mkdir -vp $DEMUXDIR
 		echo -e "\nExecutando guppy_barcoder..."
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
+		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
+		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
+		# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
+		[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
+		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
+		done
 	fi
-	# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
-	[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
-	# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
-	[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
-	for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
-		[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
-	done
 }
 
 function sequencing_summary2 () {
@@ -181,11 +181,11 @@ function sequencing_summary2 () {
 	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_pycoqc.html" ]; then
 		echo -e "\nExecutando pycoQC no sequencing summary com o parâmetro default QSCORE=8..."
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_pycoqc.html" --report_title $RUNNAME --min_pass_qual 8
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${wf}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE}
 	fi
 	if [ ! -f "${RESULTSDIR}/barcoding_pycoqc.html" ]; then
 		echo -e "\nExecutando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9..."
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${wf}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
 
@@ -207,14 +207,25 @@ function qc_filter1 () {
 	$CUTADAPTDIR=$1
 	$NANOFILTDIR=$2
 	# Parâmetros de qualidade mínima
-	QSCORE=9	# Default Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
 	LENGTH=100
 	source activate ngs
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	echo -e "\nExecutando NanoFilt..."
-	for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \; | sort); do
-		NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-	done
+	case $WF in
+	  2)
+		for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \; | sort); do
+			NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
+		done
+	  ;;
+	  3)
+		for i in $(find "${DEMUXCATDIR}" -type f -exec basename {} .fastq \; | sort); do
+			NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
+		done	  ;;
+	  *)
+		echo "Erro na função qc_filter1!"
+		exit 0;
+	  ;;
+	esac
 }
 
 function qc_filter2 () {
@@ -318,14 +329,22 @@ function kraken () {
 # Define as etapas e argumentos de cada workflow
 workflowList=(
 	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR'
-	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux_cat1:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR primer_removal:DEMUXCATDIR;CUTADAPTDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR blast:PRINSEQDIR;QUERYDIR;BLASTDIR'
-	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux_cat2:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR human_filter:HUMANREFDIR;PRINSEQDIR;READSLEVELDIR autocorrection:PRINSEQDIR;READSLEVELDIR kraken:KRAKENDB;READSLEVELDIR'
+	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR primer_removal:DEMUXCATDIR;CUTADAPTDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR blast:PRINSEQDIR;QUERYDIR;BLASTDIR'
+	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux_headcrop:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR human_filter:HUMANREFDIR;PRINSEQDIR;READSLEVELDIR autocorrection:PRINSEQDIR;READSLEVELDIR kraken:KRAKENDB;READSLEVELDIR'
 )
 
-# Índice do array 0..n
-indice=$(expr $WF - 1)
 
 # Executa as etapas do workflow selecionado
+
+# Validação do WF
+if [[ $WF -gt ${#workflowList[@]} ]]; then
+	echo "Workflow não definido!"
+	exit 0;
+fi
+# Índice para o array workflowList 0..n
+indice=$(expr $WF - 1)
+
+# Execução das análises propriamente ditas a partir do workflow selecionado
 echo "Executando o workflow WF$WF..."
 echo "Passos do WF$WF: ${workflowList[$indice]}"
 echo "Libray: $RUNNAME"
