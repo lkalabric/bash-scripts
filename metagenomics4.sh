@@ -234,7 +234,7 @@ function blastn () {
 
 	# Converte arquivos .fastq em .fasta para query no blastn
 	[ ! -d "${QUERYDIR}" ] && mkdir -vp ${QUERYDIR}
-	for i in $(find "${PRINSEQDIR}"/*.good.fastq -type f -exec basename {} .good.fastq \; | sort); do
+	for i in $(find "${PRINSEQDIR}"/*.good.fastq -type f -exec basename {} .good.fastq \;); do
 		sed -n '1~4s/^@/>/p;2~4p' "${PRINSEQDIR}/${i}.good.fastq" > "${QUERYDIR}/${i}.fasta"
 	done
 	# Busca as QUERIES no BLASTDB local
