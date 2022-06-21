@@ -246,7 +246,7 @@ function blastn () {
 		# Busca remota
 		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		echo -e "\nResultados ${i}"
-		~/scripts/blast_report.sh "${BLASTDIR}/${i}.blastn"
+		~/scripts/blast_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done
 }
 
