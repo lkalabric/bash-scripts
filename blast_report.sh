@@ -18,7 +18,7 @@ case $# in
 	1)
 		if [ ! -f $1 ]; then
 			echo "Arquivo ou diretório inválido"
-			echo "Sintáxe: ./blast_report.sh <caminho_completo/barcode01.blastn>"
+			echo "Sintáxe: ./blast_report.sh <caminho_completo/barcodeXX.blastn>"
 			echo "Exemplo: ./blast_report.sh ngs-library/DENV_FTA_1_fast/wf2/BLAST/barcode01.blastn"
 			exit 1
 		fi
@@ -40,13 +40,15 @@ case $# in
 	;;
 	*)
 		die "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
+		echo "Sintáxe: ./blast_report.sh <caminho_completo/barcodeXX.blastn>"
+		echo "Sintáxe: ./blast_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
 	;;
 esac
 
 # Lista os vírus pesquisados
 WIMPDIR="${HOME}/data/WIMP"
-echo "Lista de vírus pesquisados"
-ls ${WIMPDIR}
+# echo "Lista de vírus pesquisados"
+# ls ${WIMPDIR}
 
 echo "All reads: $(wc -l ${FILENAME})" 
 echo "Número de reads por taxon"
