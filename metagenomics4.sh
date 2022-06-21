@@ -119,7 +119,7 @@ function basecalling () {
 	esac
 	if [ ! -d $BASECALLDIR ]; then
 		mkdir -vp $BASECALLDIR
-		echo -e "\nExecutando guppy_basecaller..."
+		echo -e "executando guppy_basecaller...\n"
 		# Comando para guppy_basecaller usando GPU
 		guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto --min_qscore ${QSCORE} --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 	fi
@@ -135,7 +135,7 @@ function demux () {
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
 		mkdir -vp $DEMUXDIR
-		echo -e "\nExecutando guppy_barcoder..."
+		echo -e "executando guppy_barcoder...\n"
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
 		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
 		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
@@ -154,7 +154,7 @@ function demux_headcrop () {
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
 		mkdir -vp $DEMUXDIR
-		echo -e "\nExecutando guppy_barcoder..."
+		echo -e "executando guppy_barcoder...\n"
 		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
 		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
@@ -170,11 +170,11 @@ function sequencing_summary2 () {
 	# pycoQC summary
 	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_pycoqc.html" ]; then
-		echo -e "\nExecutando pycoQC no sequencing summary com o parâmetro default QSCORE=8..."
+		echo -e "executando pycoQC no sequencing summary com o parâmetro default QSCORE=9...\n"
 		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${wf}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE}
 	fi
 	if [ ! -f "${RESULTSDIR}/barcoding_pycoqc.html" ]; then
-		echo -e "\nExecutando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9..."
+		echo -e "executando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9...\n"
 		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${wf}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
@@ -183,7 +183,7 @@ function primer_removal () {
 	# Remoção dos primers
 	PRIMER="GTTTCCCACTGGAGGATA"
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
-	echo -e "\nExecutando cutadapt..."
+	echo -e "executando cutadapt...\n"
 	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
@@ -194,7 +194,7 @@ function qc_filter1 () {
 	# Filtro por tamanho
 	source activate ngs
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
-	echo -e "\nExecutando NanoFilt..."
+	echo -e "executando NanoFilt...\n"
 	case $WF in
 	  2)
 		for i in $(find "${CUTADAPTDIR}" -type f -exec basename {} .fastq \; | sort); do
@@ -206,7 +206,7 @@ function qc_filter1 () {
 			NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 		done	  ;;
 	  *)
-		echo "Erro na função qc_filter1!"
+		echo "WF não previsto para a função qc_filter1!"
 		exit 0;
 	  ;;
 	esac
@@ -216,7 +216,7 @@ function qc_filter2 () {
 	# Filtro de complexidade
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
-	echo -e "\nExecutando prinseq-lite.pl..."
+	echo -e "executando prinseq-lite.pl...\n"
 	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nResultados ${i}..."
 		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
@@ -239,7 +239,7 @@ function blast () {
 	done
 	# Busca as QUERIES no BLASTDB local
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
-	echo -e "\nExecutando blastn..."
+	echo -e "executando blastn...\n"
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \; | sort); do
 		echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
 		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
@@ -254,7 +254,7 @@ function human_filter () {
 	# Remoção das reads do genoma humano
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
-	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
+	echo -e "executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
 	# Loop para analisar todos barcodes, um de cada vez
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
@@ -273,7 +273,7 @@ function autocorrection () {
 	# Autocorreção das reads
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-		echo -e "\nCarregando os dados ${i}..."
+		echo -e "\nCarregando os dados ${i} para autocorreção...\n"
 		# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
 		minimap2 -ax ava-ont -t ${THREADS} ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.overlap.sam
 		# Correção de erros a partir das sequencias consenso
@@ -283,7 +283,7 @@ function autocorrection () {
 
 function kraken () {
 	# Classificação taxonômica utilizando Kraken2
-	echo -e "\nExecutando o Kraken2..."
+	echo -e "executando o Kraken2...\n"
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo -e "\nCarregando os dados ${i}..."
@@ -319,7 +319,7 @@ echo "Modelo: $MODEL"
 read -r -a steps <<< "${workflowList[$indice]}"
 
 for call_func in ${steps[@]}; do
-	echo "Executando a função $call_func..."
+	echo -e "\nExecutando o passo $call_func... "
 	eval $call_func	
 done
 
