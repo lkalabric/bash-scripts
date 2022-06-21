@@ -171,11 +171,11 @@ function sequencing_summary2 () {
 	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_pycoqc.html" ]; then
 		echo -e "executando pycoQC no sequencing summary com o parâmetro default QSCORE=9...\n"
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${wf}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE}
 	fi
 	if [ ! -f "${RESULTSDIR}/barcoding_pycoqc.html" ]; then
 		echo -e "executando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9...\n"
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${wf}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
 
@@ -224,7 +224,7 @@ function qc_filter2 () {
 	done
 }
 
-function blast () {
+function blastn () {
 	# Classificação taxonômica utilizando blastn
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
@@ -296,7 +296,7 @@ function kraken () {
 # Define as etapas de cada workflow
 workflowList=(
 	'sequencing_summary1 basecalling'
-	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blast'
+	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blastn'
 	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken'
 )
 
