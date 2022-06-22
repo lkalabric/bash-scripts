@@ -239,7 +239,9 @@ function blastn () {
 	done
 	# Busca as QUERIES no BLASTDB local
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
-	echo -e "executando blastn...\n"
+	
+	echo -e "\nExecutando blastn..."
+	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
 		echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
 		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
@@ -247,7 +249,7 @@ function blastn () {
 		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		echo -e "\nResultados ${i}"
 		~/scripts/blast_report.sh "${RUNNAME}_${MODEL}" "${i}"
-	done
+	done	
 }
 
 function human_filter () {
