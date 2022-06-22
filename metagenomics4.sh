@@ -246,7 +246,7 @@ function blastn () {
 	done
 # Pausa a execução para debug
 read -p "Press [Enter] key to continue..."
-	
+	exit
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
 		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		# Busca remota
