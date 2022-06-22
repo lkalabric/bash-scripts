@@ -22,7 +22,7 @@ case $# in
 			echo "Exemplo: ./blast_report.sh ngs-library/DENV_FTA_1_fast/wf2/BLAST/barcode01.blastn"
 			exit 1
 		fi
-		$FILENAME=$1
+		FILENAME=$1
 	;;
 	2)
 		RUNNAME=$1
