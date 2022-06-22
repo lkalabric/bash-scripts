@@ -18,7 +18,7 @@
 # qc_filter2
 # human_filter
 # autocorrection
-# blast
+# blastn
 # kraken
 
 # Validação da entrada de dados na linha de comando
@@ -239,13 +239,26 @@ function blastn () {
 	done
 	# Busca as QUERIES no BLASTDB local
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
-	
+
+
+# Pausa a execução para debug
+ls "${QUERYDIR}"
+read -p "Press [Enter] key to continue..."
+
+
 	echo -e "\nExecutando blastn..."
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
-		echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
-		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-		# Busca remota
+ls "${BLASTDIR}"
+echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
+# Pausa a execução para debug
+read -p "Press [Enter] key to continue..."
+
+blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+# Pausa a execução para debug
+read -p "Press [Enter] key to continue..."
+
+# Busca remota
 		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		echo -e "\nResultados ${i}"
 		~/scripts/blast_report.sh "${RUNNAME}_${MODEL}" "${i}"
