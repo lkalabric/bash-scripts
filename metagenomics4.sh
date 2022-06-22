@@ -325,8 +325,11 @@ echo "Modelo: $MODEL"
 read -r -a steps <<< "${workflowList[$indice]}"
 
 for call_func in ${steps[@]}; do
+	echo $#
+	echo $@
 	echo -e "\nExecutando o passo $call_func... "
-	eval $call_func	
+	eval $call_func
+	
 done
 
 exit 0
