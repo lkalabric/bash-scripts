@@ -39,8 +39,8 @@ if [ ! -d $RAWDIR ]; then
 fi
 
 # Caminho de INPUT dos bancos de dados
-HUMANREFDIR=${HOME}/data/GRCh38
-REFSEQDIR=${HOME}/data/REFSEQ
+HUMANREFDIR="${HOME}/data/GRCh38"
+REFSEQDIR="${HOME}/data/REFSEQ"
 BLASTDBDIR="${HOME}/data/BLAST_DB"
 KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 
