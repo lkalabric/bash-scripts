@@ -54,15 +54,12 @@ if [ ! -f $HUMANREFMMI ]; then
 fi
 
 # Caminhos de OUTPUT das análises
+echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp "${RESULTSDIR}"
 # Reseta a pasta de resultados anteriores da worflow 
 [ -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"; mkdir -vp "${RESULTSDIR}/wf${WF}"
-exit
 
-CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
 QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
 BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
 READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
@@ -129,9 +126,10 @@ function basecalling () {
 function demux () {
 	# Demultiplex, adapter removal & sem headcrop 18 para uso do cutadapt
 	RESULTSDIR=$1
+	WF=$2
 	BASECALLDIR="${RESULTSDIR}/BASECALL"
-	DEMUXDIR="${RESULTSDIR}/DEMUX"
-	DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
+	DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
+	DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
 	# Parâmetros Guppy barcoder (ONT)
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
@@ -151,9 +149,10 @@ function demux () {
 function demux_headcrop () {
 	# Demultiplex, adapter removal com headcrop 18 sem uso do cutadapt
 	RESULTSDIR=$1
+	WF=$2
 	BASECALLDIR="${RESULTSDIR}/BASECALL"
-	DEMUXDIR="${RESULTSDIR}/DEMUX"
-	DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
+	DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
+	DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
 	# Parâmetros Guppy barcoder (ONT)
 	TRIMADAPTER=18
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
@@ -174,26 +173,29 @@ function demux_headcrop () {
 function sequencing_summary2 () {
 	# pycoQC summary
 	$RESULTSDIR=$1
-	$BASECALLDIR=$2
-	$DEMUXDIR=$3
+	WF=$2
+	BASECALLDIR="${RESULTSDIR}/BASECALL"
+	DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
 	# Parâmetros de qualidade mínima
 	QSCORE=9	# Defalut Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
 	LENGTH=100
 	# Comando para pycoQC version 2.5
-	if [ ! -f "${RESULTSDIR}/basecalling_pycoqc.html" ]; then
+	if [ ! -f "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" ]; then
 		echo -e "\nExecutando pycoQC no sequencing summary com o parâmetro default QSCORE=8..."
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE}
 	fi
-	if [ ! -f "${RESULTSDIR}/barcoding_pycoqc.html" ]; then
+	if [ ! -f "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" ]; then
 		echo -e "\nExecutando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9..."
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
 
 function primer_removal () {
 	# Remoção dos primers
-	$DEMUXCATDIR=$1
-	$CUTADAPTDIR=$2
+	RESULTSDIR=$1
+	WF=$2
+	DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
+	CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
 	PRIMER="GTTTCCCACTGGAGGATA"
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
 	echo -e "\nExecutando cutadapt..."
@@ -205,8 +207,10 @@ function primer_removal () {
 
 function qc_filter1 () {
 	# Filtro por tamanho
-	$CUTADAPTDIR=$1
-	$NANOFILTDIR=$2
+	RESULTSDIR=$1
+	WF=$2
+	CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
+	NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
 	# Parâmetros de qualidade mínima
 	LENGTH=100
 	source activate ngs
@@ -231,8 +235,10 @@ function qc_filter1 () {
 
 function qc_filter2 () {
 	# Filtro de complexidade
-	$NANOFILTERDIR=$1
-	$PRINSEQDIR=$2
+	RESULTSDIR=$1
+	WF=$2
+	NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	echo -e "\nExecutando prinseq-lite.pl..."
@@ -245,9 +251,12 @@ function qc_filter2 () {
 
 function blastn_local () {
 	# Classificação taxonômica utilizando blastn
-	$PRINSEQDIR=$1
-	$QUERYDIR=$2
-	$BLASTDIR=$3
+	RESULTSDIR=$1
+	WF=$2
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
+	QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
+	BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
+
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
 		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
@@ -330,8 +339,8 @@ function kraken_local () {
 # Define as etapas e argumentos de cada workflow
 workflowList=(
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR sequencing_summary2:RESULTSDIR primer_removal:DEMUXCATDIR;CUTADAPTDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR blastn_local:PRINSEQDIR;QUERYDIR;BLASTDIR'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR sequencing_summary2:RESULTSDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR human_filter:HUMANREFDIR;PRINSEQDIR;READSLEVELDIR autocorrection:PRINSEQDIR;READSLEVELDIR kraken_local:KRAKENDB;READSLEVELDIR'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:HUMANREFDIR;PRINSEQDIR;READSLEVELDIR autocorrection:PRINSEQDIR;READSLEVELDIR kraken_local:KRAKENDB;READSLEVELDIR'
 )
 
 
