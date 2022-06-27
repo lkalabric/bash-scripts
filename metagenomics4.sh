@@ -4,7 +4,7 @@
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
-# última atualização: 09 JUN 2022
+# última atualização: 27 JUN 2022
 # versão 1: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
 
 # Descrição de cada etapa disponível para construção dos workflows
@@ -18,8 +18,8 @@
 # qc_filter2
 # human_filter
 # autocorrection
-# blastn
-# kraken
+# blastn_local
+# kraken_local
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
