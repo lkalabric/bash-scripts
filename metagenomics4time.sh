@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# script: metagenomics4time.sh
+# script: metagenomics5.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
 # última atualização: 09 JUN 2022
-# versão 1: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
+# versão 5: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função e analisar o tempo de execução de cada etapa
 
 # Descrição de cada etapa disponível para construção dos workflows
 # sequencing_summary1
@@ -18,16 +18,17 @@
 # qc_filter2
 # human_filter
 # autocorrection
-# blast
-# kraken
+# blastn_local
+# kraken_local
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
 WF=$3		# Workflow de bioinformatica 1, 2 ou 3
+TIME=$4		# Se, time executa com time!
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./metagenomics4time.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3>"
+	echo "Sintáxe: ./metagenomics4time.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3> <time>"
 	exit 0
 fi
 
@@ -55,7 +56,14 @@ fi
 
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
-RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
+if [[ $TIME == "time" ]]; then
+	RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
+	else
+	RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
+fi
+
+exit
+
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
@@ -75,7 +83,7 @@ ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
 # read -p "Press [Enter] key to continue..."
 
 function sequencing_summary1 () {
-  $RAWDIR=$1
+  RAWDIR=$1
   # Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
   echo "Sumário da corrida"
   echo "Total files:"
@@ -86,9 +94,10 @@ function sequencing_summary1 () {
 
 function basecalling () {
 	# Basecalling  (comum a todos workflows)
-	$MODEL=$1
-	$RAWDIR=$2
-	$BASECALLDIR=$3
+	RAWDIR=$1
+	MODEL=$2
+	RESULTDIR=$3
+	BASECALLDIR="${RESULTSDIR}/BASECALL"
 	# Parâmetros Guppy basecaller (ONT)
 	QSCORE=9 	# Defalut Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
 	CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
@@ -129,9 +138,10 @@ function basecalling () {
 
 function demux () {
 	# Demultiplex, adapter removal & sem headcrop 18 para uso do cutadapt
-	$BASECALLDIR=$1
-	$DEMUXDIR=$2
-	$DEMUXCATDIR=$3
+	RESULTSDIR=$1
+	BASECALLDIR="${RESULTSDIR}/BASECALL"
+	DEMUXDIR="${RESULTSDIR}/DEMUX"
+	DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 	# Parâmetros Guppy barcoder (ONT)
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
@@ -150,9 +160,10 @@ function demux () {
 
 function demux_headcrop () {
 	# Demultiplex, adapter removal com headcrop 18 sem uso do cutadapt
-	$BASECALLDIR=$1
-	$DEMUXDIR=$2
-	$DEMUXCATDIR=$3
+	RESULTSDIR=$1
+	BASECALLDIR="${RESULTSDIR}/BASECALL"
+	DEMUXDIR="${RESULTSDIR}/DEMUX"
+	DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 	# Parâmetros Guppy barcoder (ONT)
 	TRIMADAPTER=18
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
@@ -242,7 +253,7 @@ function qc_filter2 () {
 	done
 }
 
-function blast () {
+function blastn_local () {
 	# Classificação taxonômica utilizando blastn
 	$PRINSEQDIR=$1
 	$QUERYDIR=$2
@@ -310,7 +321,7 @@ function autocorrection () {
 	done
 }
 
-function kraken () {
+function kraken_local () {
 	# Classificação taxonômica utilizando Kraken2
 	$KRAKENDB=$1
 	$READSLEVELDIR=$2
@@ -328,9 +339,9 @@ function kraken () {
 
 # Define as etapas e argumentos de cada workflow
 workflowList=(
-	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR'
-	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR primer_removal:DEMUXCATDIR;CUTADAPTDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR blast:PRINSEQDIR;QUERYDIR;BLASTDIR'
-	'sequencing_summary1:RAWDIR basecalling:MODEL;RAWDIR;BASECALLDIR demux_headcrop:BASECALLDIR;DEMUXDIR;DEMUXCATDIR sequencing_summary2:RESULTSDIR;BASECALLDIR;DEMUXDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR human_filter:HUMANREFDIR;PRINSEQDIR;READSLEVELDIR autocorrection:PRINSEQDIR;READSLEVELDIR kraken:KRAKENDB;READSLEVELDIR'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR sequencing_summary2:RESULTSDIR primer_removal:DEMUXCATDIR;CUTADAPTDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR blastn_local:PRINSEQDIR;QUERYDIR;BLASTDIR'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR sequencing_summary2:RESULTSDIR qc_filter1:CUTADAPTDIR;NANOFILTDIR qc_filter2:NANOFILTDIR;PRINSEQDIR human_filter:HUMANREFDIR;PRINSEQDIR;READSLEVELDIR autocorrection:PRINSEQDIR;READSLEVELDIR kraken_local:KRAKENDB;READSLEVELDIR'
 )
 
 
@@ -365,9 +376,13 @@ for call_func in "${steps[@]}"; do
 	echo "Executando a função ${func_name[0]}"..."
 	echo "Argumentos passados: $args...
 	echo "Valores dos argumentos: $args_values..."
-	# Executa o código e estima o tempo de execução
-	export -f "$call_func"
-	echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
+	if [[ $TIME == "time]]; then
+		# Executa o código e estima o tempo de execução
+		export -f "$call_func"
+		echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
+	else
+		eval $call_func
+	fi
 done
 
 exit 0
