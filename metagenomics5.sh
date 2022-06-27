@@ -56,7 +56,7 @@ fi
 
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
-if [[ $TIME == "time" ]]; then
+if [ $TIME == "time" ]; then
 	RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 	else
 	RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
@@ -376,7 +376,7 @@ for call_func in "${steps[@]}"; do
 	echo "Executando a função ${func_name[0]}"..."
 	echo "Argumentos passados: $args...
 	echo "Valores dos argumentos: $args_values..."
-	if [[ $TIME == "time]]; then
+	if [ $TIME == "time"]; then
 		# Executa o código e estima o tempo de execução
 		export -f "$call_func"
 		echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
@@ -385,7 +385,3 @@ for call_func in "${steps[@]}"; do
 	fi
 done
 exit 0
-
-    © 2022 GitHub, Inc.
-
-    Terms
