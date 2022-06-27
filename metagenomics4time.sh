@@ -4,7 +4,7 @@
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
-# última atualização: 09 JUN 2022
+# última atualização: 27 JUN 2022
 # versão 5: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função e analisar o tempo de execução de cada etapa
 
 # Descrição de cada etapa disponível para construção dos workflows
@@ -57,7 +57,7 @@ fi
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp "${RESULTSDIR}"
 # Reseta a pasta de resultados anteriores da worflow 
-[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"; mkdir -vp "${RESULTSDIR}/wf${WF}"
+[ -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"; mkdir -vp "${RESULTSDIR}/wf${WF}"
 exit
 
 CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
