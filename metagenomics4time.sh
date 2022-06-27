@@ -25,10 +25,9 @@
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
 WF=$3		# Workflow de bioinformatica 1, 2 ou 3
-TIME=$4		# Se, time executa com time!
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./metagenomics4time.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3> <time>"
+	echo "Sintáxe: ./metagenomics4time.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3>"
 	exit 0
 fi
 
@@ -55,21 +54,12 @@ if [ ! -f $HUMANREFMMI ]; then
 fi
 
 # Caminhos de OUTPUT das análises
-echo "Preparando pastas para (re-)análise dos dados..."
-if [[ $TIME == "time" ]]; then
-	RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
-	else
-	RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-fi
-
+RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
+[ ! -d "${RESULTSDIR}" ] && mkdir -vp "${RESULTSDIR}"
+# Reseta a pasta de resultados anteriores da worflow 
+[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}" ; mkdir -vp "${RESULTSDIR}/wf${WF}"
 exit
 
-[ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
-BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/DEMUX"
-DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
-# Remove as pastas de resultados anteriores antes das análises 
-[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"
 CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
 NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
 PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
@@ -96,7 +86,7 @@ function basecalling () {
 	# Basecalling  (comum a todos workflows)
 	RAWDIR=$1
 	MODEL=$2
-	RESULTDIR=$3
+	RESULTSDIR=$3
 	BASECALLDIR="${RESULTSDIR}/BASECALL"
 	# Parâmetros Guppy basecaller (ONT)
 	QSCORE=9 	# Defalut Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
