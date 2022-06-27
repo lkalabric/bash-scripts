@@ -375,13 +375,9 @@ for call_func in "${steps[@]}"; do
 	echo "Executando a função ${func_name[0]}"..."
 	echo "Argumentos passados: $args...
 	echo "Valores dos argumentos: $args_values..."
-	if [[ $TIME == "time]]; then
-		# Executa o código e estima o tempo de execução
-		export -f "$call_func"
-		echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
-	else
-		eval $call_func
-	fi
+	# Executa o código e estima o tempo de execução
+	export -f "$call_func"
+	echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
 
 exit 0
