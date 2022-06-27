@@ -49,18 +49,19 @@ echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
-# Remove as pastas de resultados anteriores antes das análises
-[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"
-DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
-DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
-CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
-QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
-BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
-READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
-CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
-ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
+# Reseta a pasta de resultados anteriores da worflow 
+RESULTSDIR="${RESULTSDIR}/wf${WF}"
+[ -d "${RESULTSDIR}" ] && rm -r "${RESULTSDIR}"; mkdir -vp "${RESULTSDIR}"
+DEMUXDIR="${RESULTSDIR}/DEMUX"
+DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
+CUTADAPTDIR="${RESULTSDIR}/CUTADAPT"
+NANOFILTDIR="${RESULTSDIR}/NANOFILT"
+PRINSEQDIR="${RESULTSDIR}/PRINSEQ"
+QUERYDIR="${RESULTSDIR}/QUERY"
+BLASTDIR="${RESULTSDIR}/BLAST"
+READSLEVELDIR="${RESULTSDIR}/READS_LEVEL"
+CONTIGLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
+ASSEMBLYDIR="${RESULTSDIR}/ASSEMBLY"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -169,13 +170,13 @@ function demux_headcrop () {
 function sequencing_summary2 () {
 	# pycoQC summary
 	# Comando para pycoQC version 2.5
-	if [ ! -f "${RESULTSDIR}/basecalling_pycoqc.html" ]; then
+	if [ ! -f "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" ]; then
 		echo -e "executando pycoQC no sequencing summary com o parâmetro default QSCORE=9...\n"
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE}
 	fi
-	if [ ! -f "${RESULTSDIR}/barcoding_pycoqc.html" ]; then
+	if [ ! -f "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" ]; then
 		echo -e "executando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9...\n"
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title $RUNNAME --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
 
