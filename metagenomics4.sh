@@ -224,7 +224,7 @@ function qc_filter2 () {
 	done
 }
 
-function blastn () {
+function blastn_local () {
 	# Classificação taxonômica utilizando blastn
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
@@ -285,7 +285,7 @@ function autocorrection () {
 	done
 }
 
-function kraken () {
+function kraken_local () {
 	# Classificação taxonômica utilizando Kraken2
 	echo -e "executando o Kraken2...\n"
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -300,8 +300,8 @@ function kraken () {
 # Define as etapas de cada workflow
 workflowList=(
 	'sequencing_summary1 basecalling'
-	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blastn'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken'
+	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blastn_local'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken_local'
 )
 
 
