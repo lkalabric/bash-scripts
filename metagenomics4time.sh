@@ -57,7 +57,7 @@ fi
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp "${RESULTSDIR}"
 # Reseta a pasta de resultados anteriores da worflow 
-[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}" ; mkdir -vp "${RESULTSDIR}/wf${WF}"
+[ ! -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"; mkdir -vp "${RESULTSDIR}/wf${WF}"
 exit
 
 CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
