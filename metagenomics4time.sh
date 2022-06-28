@@ -357,6 +357,14 @@ function assembly () {
 #
 # Main do script
 #
+
+# Define as etapas e argumentos de cada workflow
+workflowList=(
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFDIR autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
+)
+
 # Validação do WF
 if [[ $WF -gt ${#workflowList[@]} ]]; then
 	echo "Workflow não definido!"
@@ -364,13 +372,8 @@ if [[ $WF -gt ${#workflowList[@]} ]]; then
 fi
 # Índice para o array workflowList 0..n
 indice=$(expr $WF - 1)
-# Define as etapas e argumentos de cada workflow
-workflowList=(
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFDIR autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
-)
-# Executa as análises propriamente ditas a partir do workflow selecionado
+
+# Execução das análises propriamente ditas a partir do workflow selecionado
 echo "Executando o workflow WF$WF..."
 echo "Passos do WF$WF: ${workflowList[$indice]}"
 # Separa cada etapa do workflow no vetor steps
