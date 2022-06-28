@@ -118,6 +118,7 @@ function basecalling () {
 	    CHUNKPERRUNNER=50
 	  ;;
 	esac
+	# Cria a pasta BASECALLDIR e faz o basecalling
 	if [ ! -d $BASECALLDIR ]; then
 		mkdir -vp $BASECALLDIR
 		echo -e "executando guppy_basecaller...\n"
@@ -253,7 +254,6 @@ function blastn_local () {
 function human_filter () {
 	# Remoção das reads do genoma humano
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
-	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
 	echo -e "executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
 	# Loop para analisar todos barcodes, um de cada vez
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -271,6 +271,7 @@ function human_filter () {
 
 function autocorrection () {
 	# Autocorreção das reads
+	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i} para autocorreção...\n"
@@ -293,13 +294,30 @@ function kraken_local () {
 	done
 }
 
+function assembly () {
+	# Faz a análise de cobertura e montagem das reads em sequencias referências
+	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
+	case $WF in
+		2)
+	  		echo "Montando as sequencias do WF $WF..."		
+	  	;;
+	  	3)
+	    		echo "Montando as sequencias do WF $WF..."
+	    	 ;;
+	  	*)
+	    		echo "Dados não disponíveis para o WF $WF!"
+			exit 1
+		;;
+	esac
+}
+
 # Define as etapas de cada workflow
 workflowList=(
 	'sequencing_summary1 basecalling'
 	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blastn_local'
 	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken_local'
+	'assembly'
 )
-
 
 # Executa as etapas do workflow selecionado
 # Validação do WF
