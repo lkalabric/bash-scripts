@@ -42,7 +42,7 @@ fi
 HUMANREFDIR=${HOME}/data/GRCh38
 REFSEQDIR=${HOME}/data/REFSEQ
 BLASTDBDIR="${HOME}/data/BLAST_DB"
-KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
+KRAKENDBDIR="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 
 # Parâmetros minimap2 
 # wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
@@ -59,12 +59,6 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp "${RESULTSDIR}"
 # Reseta a pasta de resultados anteriores da worflow 
 [ -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"; mkdir -vp "${RESULTSDIR}/wf${WF}"
-
-QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
-BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
-READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
-CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
-ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -256,7 +250,6 @@ function blastn_local () {
 	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
 	QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
 	BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
-
 	# Preparação do BLASTDB local
 	# Script: makeblastdb_refseq.sh
 		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
@@ -282,13 +275,14 @@ function blastn_local () {
 
 function human_filter () {
 	# Remoção das reads do genoma humano
-	$HUMANREFDIR=$1
-	$PRINSEQDIR=$2
-	$READSLEVELDIR=$3
+	RESULTSDIR=$1
+	WF=$2
+	$HUMANREFDIR=$3
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
+	READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
+	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	# Parâmetro de otimização minimap2, samtools, racon e kraken2
 	THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
-	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
-	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
 	echo -e "\nExecutando minimap2 & samtools para filtrar as reads do genoma humano..."
 	# Loop para analisar todos barcodes, um de cada vez
 	for i in $(find ${PRINSEQDIR} -type f -name "*.good.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -306,8 +300,10 @@ function human_filter () {
 
 function autocorrection () {
 	# Autocorreção das reads
-	$PRINSEQDIR=$1
-	$READSLEVELDIR=$3
+	RESULTSDIR=$1
+	WF=$2
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
+	READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 	# Parâmetro de otimização minimap2, samtools, racon e kraken2
 	THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
@@ -322,25 +318,46 @@ function autocorrection () {
 
 function kraken_local () {
 	# Classificação taxonômica utilizando Kraken2
-	$KRAKENDB=$1
-	$READSLEVELDIR=$2
+	RESULTSDIR=$1
+	WF=$2
+	KRAKENDBDIR=$3
+	READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 	# Parâmetro de otimização minimap2, samtools, racon e kraken2
 	THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 	echo -e "\nExecutando o Kraken2..."
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
+		# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo -e "\nCarregando os dados ${i}..."
-		kraken2 --db ${KRAKENDB} --quick --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
+		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo -e "\nResultados ${i}"
 		~/scripts/kraken2_quick_report.sh "${READSLEVELDIR}/${i}_report.txt"
 	done
+}
+
+function assembly () {
+# Faz a análise de cobertura e montagem das reads em sequencias referências
+	CONTIGLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
+	ASSEMBLYDIR="${RESULTSDIR}/wf${WF}/ASSEMBLY"
+	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
+	case $WF in
+		2)
+	  		echo "Montando as sequencias do WF $WF..."		
+	  	;;
+	  	3)
+	    		echo "Montando as sequencias do WF $WF..."
+	    	 ;;
+	  	*)
+	    		echo "Dados não disponíveis para o WF $WF!"
+			exit 1
+		;;
+	esac
 }
 
 # Define as etapas e argumentos de cada workflow
 workflowList=(
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:HUMANREFDIR;PRINSEQDIR;READSLEVELDIR autocorrection:PRINSEQDIR;READSLEVELDIR kraken_local:KRAKENDB;READSLEVELDIR'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFDIR autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
 )
 
 
