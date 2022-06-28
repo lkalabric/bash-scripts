@@ -315,13 +315,7 @@ function assembly () {
 #
 # Main do script
 #
-# Validação do WF
-if [[ $WF -gt ${#workflowList[@]} ]]; then
-	echo "Workflow não definido!"
-	exit 3
-fi
-# Índice para o array workflowList 0..n
-indice=$(expr $WF - 1)
+
 # Define as etapas de cada workflow
 workflowList=(
 	'sequencing_summary1 basecalling'
@@ -330,7 +324,15 @@ workflowList=(
 	'assembly'
 )
 
-# Executa as análises propriamente ditas a partir do workflow selecionado
+# Validação do WF
+if [[ $WF -gt ${#workflowList[@]} ]]; then
+	echo "Workflow não definido!"
+	exit 3
+fi
+# Índice para o array workflowList 0..n
+indice=$(expr $WF - 1)
+
+# Execução das análises propriamente ditas a partir do workflow selecionado
 echo "Executando o workflow WF$WF..."
 echo "Passos do WF$WF: ${workflowList[$indice]}"
 # Separa cada etapa do workflow no vetor steps
