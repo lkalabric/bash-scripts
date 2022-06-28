@@ -312,6 +312,16 @@ function assembly () {
 	esac
 }
 
+#
+# Main do script
+#
+# Validação do WF
+if [[ $WF -gt ${#workflowList[@]} ]]; then
+	echo "Workflow não definido!"
+	exit 3
+fi
+# Índice para o array workflowList 0..n
+indice=$(expr $WF - 1)
 # Define as etapas de cada workflow
 workflowList=(
 	'sequencing_summary1 basecalling'
@@ -320,31 +330,16 @@ workflowList=(
 	'assembly'
 )
 
-# Executa as etapas do workflow selecionado
-# Validação do WF
-if [[ $WF -gt ${#workflowList[@]} ]]; then
-	echo "Workflow não definido!"
-	exit 3
-fi
-# Índice para o array workflowList 0..n
-indice=$(expr $WF - 1)
-
-# Execução das análises propriamente ditas a partir do workflow selecionado
+# Executa as análises propriamente ditas a partir do workflow selecionado
 echo "Executando o workflow WF$WF..."
 echo "Passos do WF$WF: ${workflowList[$indice]}"
-echo "Libray: $RUNNAME"
-echo "Modelo: $MODEL"
-# Separa os passos do workflow
+# Separa cada etapa do workflow no vetor steps
 read -r -a steps <<< "${workflowList[$indice]}"
-
 for call_func in ${steps[@]}; do
-	echo $#
-	echo $@
 	echo -e "\nExecutando o passo $call_func... "
 	eval $call_func
 	
 done
-
 exit 4
 
 # Análise de cobertura do sequenciamento
