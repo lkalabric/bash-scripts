@@ -354,16 +354,9 @@ function assembly () {
 	esac
 }
 
-# Define as etapas e argumentos de cada workflow
-workflowList=(
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFDIR autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
-)
-
-
-# Executa as etapas do workflow selecionado
-
+#
+# Main do script
+#
 # Validação do WF
 if [[ $WF -gt ${#workflowList[@]} ]]; then
 	echo "Workflow não definido!"
@@ -371,31 +364,31 @@ if [[ $WF -gt ${#workflowList[@]} ]]; then
 fi
 # Índice para o array workflowList 0..n
 indice=$(expr $WF - 1)
-
-# Execução das análises propriamente ditas a partir do workflow selecionado
+# Define as etapas e argumentos de cada workflow
+workflowList=(
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFDIR autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
+)
+# Executa as análises propriamente ditas a partir do workflow selecionado
 echo "Executando o workflow WF$WF..."
 echo "Passos do WF$WF: ${workflowList[$indice]}"
-echo "Libray: $RUNNAME"
-echo "Modelo: $MODEL"
 # Separa cada etapa do workflow no vetor steps
 read -r -a steps <<< "${workflowList[0]}"
 for call_func in "${steps[@]}"; do 
-	echo "Step: $i"
 	# Separo o nome da função dos argumentos
 	IFS=":" read -r -a func_name <<< $call_func
 	args=$(echo "${func_name[1]}" | tr ";" " ")
 	# Obtem os valores de cada argumento
 	args_values=""
 	for j in $args; do
-		echo "Argumentos separados: $j - Valor do argumento: ${!j}"
 		args_values="$args_values ${!j}"
 	done
 	echo "Executando a função ${func_name[0]}"..."
-	echo "Argumentos passados: $args...
-	echo "Valores dos argumentos: $args_values..."
+	echo "Argumentos: $args
+	echo "Valores dos argumentos: $args_values"
 	# Executa o código e estima o tempo de execução
 	export -f "$call_func"
 	echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
-
 exit 5
