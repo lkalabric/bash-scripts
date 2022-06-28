@@ -1,8 +1,10 @@
 #!/bin/bash
 
+# script: basecaller_bm_v1_ag.sh
 # author: Alessandra Gonzalez <le.sandragonzalez@gmail.com>
 # institution: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # date: 18 AGO 2021
+# útlima atualização: 28 JUN 2022
 
 # Nome dos dados passado pelo teclado
 RUNNAME=$1
