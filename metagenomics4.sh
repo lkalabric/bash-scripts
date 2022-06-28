@@ -20,6 +20,7 @@
 # autocorrection
 # blastn_local
 # kraken_local
+# assembly
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
@@ -42,7 +43,7 @@ fi
 HUMANREFDIR="${HOME}/data/GRCh38"
 REFSEQDIR="${HOME}/data/REFSEQ"
 BLASTDBDIR="${HOME}/data/BLAST_DB"
-KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
+KRAKENDBDIR="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
@@ -209,7 +210,7 @@ function qc_filter1 () {
 		done	  ;;
 	  *)
 		echo "WF não previsto para a função qc_filter1!"
-		exit 0;
+		exit 1
 	  ;;
 	esac
 }
@@ -286,9 +287,9 @@ function kraken_local () {
 	# Classificação taxonômica utilizando Kraken2
 	echo -e "executando o Kraken2...\n"
 	for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-		# kraken2 --db ${KRAKENDB} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
+		# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --report-minimizer-data --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo -e "\nCarregando os dados ${i}..."
-		kraken2 --db ${KRAKENDB} --quick --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
+		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${READSLEVELDIR}/${i}_report.txt --output ${READSLEVELDIR}/${i}_output.txt ${READSLEVELDIR}/${i}.corrected.fasta
 		echo -e "\nResultados ${i}"
 		~/scripts/kraken2_quick_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done
@@ -306,7 +307,7 @@ function assembly () {
 	    	 ;;
 	  	*)
 	    		echo "Dados não disponíveis para o WF $WF!"
-			exit 1
+			exit 2
 		;;
 	esac
 }
@@ -323,7 +324,7 @@ workflowList=(
 # Validação do WF
 if [[ $WF -gt ${#workflowList[@]} ]]; then
 	echo "Workflow não definido!"
-	exit 0;
+	exit 3
 fi
 # Índice para o array workflowList 0..n
 indice=$(expr $WF - 1)
@@ -344,7 +345,7 @@ for call_func in ${steps[@]}; do
 	
 done
 
-exit 0
+exit 4
 
 # Análise de cobertura do sequenciamento
 # Genomas referência e plot de cobertura
