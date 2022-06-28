@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# script: metagenomics5.sh
+# script: metagenomics4time.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
@@ -20,6 +20,7 @@
 # autocorrection
 # blastn_local
 # kraken_local
+# assembly
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
@@ -35,7 +36,7 @@ fi
 RAWDIR="${HOME}/data/${RUNNAME}"
 if [ ! -d $RAWDIR ]; then
 	echo "Pasta de dados não encontrada!"
-	exit 0
+	exit 1
 fi
 
 # Caminho de INPUT dos bancos de dados
@@ -222,7 +223,7 @@ function qc_filter1 () {
 		done	  ;;
 	  *)
 		echo "Erro na função qc_filter1!"
-		exit 0;
+		exit 2
 	  ;;
 	esac
 }
@@ -348,7 +349,7 @@ function assembly () {
 	    	 ;;
 	  	*)
 	    		echo "Dados não disponíveis para o WF $WF!"
-			exit 1
+			exit 3
 		;;
 	esac
 }
@@ -366,7 +367,7 @@ workflowList=(
 # Validação do WF
 if [[ $WF -gt ${#workflowList[@]} ]]; then
 	echo "Workflow não definido!"
-	exit 0;
+	exit 4
 fi
 # Índice para o array workflowList 0..n
 indice=$(expr $WF - 1)
@@ -397,4 +398,4 @@ for call_func in "${steps[@]}"; do
 	echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
 
-exit 0
+exit 5
