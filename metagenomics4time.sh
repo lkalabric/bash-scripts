@@ -359,39 +359,40 @@ function assembly () {
 #
 
 # Define as etapas e argumentos de cada workflow
-workflowList=(
+WF_LIST=(
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF'
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFDIR autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
 )
 
 # Validação do WF
-if [[ $WF -gt ${#workflowList[@]} ]]; then
+if [[ $WF -gt ${#WF_LIST[@]} ]]; then
 	echo "Workflow não definido!"
 	exit 4
 fi
 # Índice para o array workflowList 0..n
-indice=$(expr $WF - 1)
+WF_INDICE=$(expr $WF - 1)
 
 # Execução das análises propriamente ditas a partir do workflow selecionado
 echo "Executando o workflow WF$WF..."
-echo "Passos do WF$WF: ${workflowList[$indice]}"
+echo "Passos e argumentos do WF$WF: ${WF_LIST[$WF_INDICE]}"
 # Separa cada etapa do workflow no vetor steps
-read -r -a steps <<< "${workflowList[0]}"
-for call_func in "${steps[@]}"; do 
-	# Separo o nome da função dos argumentos
-	IFS=":" read -r -a func_name <<< $call_func
-	args=$(echo "${func_name[1]}" | tr ";" " ")
+read -r -a WF_STEPS <<< "${WF_LIST[$WF_INDICE]}"
+for CALL_FUNC in "${WF_STEPS[@]}"; do 
+	# Separo o nome da função $FUNC_NAME[0] dos argumentos $FUNC_NAME[1]
+	IFS=":" read -r -a FUNC_NAME <<< $CALL_FUNC
+	# Subsititui ";" por espaços nos argumentos da função $FUNC_NAME[1] e cria $FUNC_ARGS
+	FUNC_ARGS=$(echo "${FUNC_NAME[1]}" | tr ";" " ")
 	# Obtem os valores de cada argumento
-	args_values=""
-	for j in $args; do
-		args_values="$args_values ${!j}"
+	ARGS_VALUES=""
+	for j in $FUNC_ARGS; do
+		ARGS_VALUES="$ARGS_VALUES ${!j}"
 	done
-	echo "Executando a função ${func_name[0]}"..."
-	echo "Argumentos: $args
-	echo "Valores dos argumentos: $args_values"
+	echo "Executando a função ${FUNC_NAME[0]}"..."
+	echo "Argumentos: $FUNC_ARGS"
+	echo "Valores dos argumentos: $ARGS_VALUES"
 	# Executa o código e estima o tempo de execução
-	export -f "$call_func"
-	echo "$call_fun $args_values" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
+	export -f "$CALL_FUNC"
+	echo "$FUNC_NAME[0] $ARGS_VALUES" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
 exit 5
