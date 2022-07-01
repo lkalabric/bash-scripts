@@ -23,7 +23,7 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 # rm -r ${RESULTSDIR}
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/DEMUX"
+DEMUXDIR="${RESULTSDIR}/DEMUX_bm"
 
 # Parâmetros Guppy basecaller (ONT)
 CONFIG="dna_r9.4.1_450bps_${MODEL}.cfg" #dna_r9.4.1_450bps_fast.cfg dna_r9.4.1_450bps_hac.cfg dna_r9.4.1_450bps_sup.cfg
@@ -39,37 +39,37 @@ LENGTH=100
 # Demultiplex Benchmarks
 #bm1 
 echo -e "\nExecutando barcoder_bm1..."
-[ -d "$DEMUXDIR_bm/bm1" ] && rm -r "$DEMUXDIR_bm/bm1"; mkdir -vp "$DEMUXDIR_bm/bm1"
+[ -d "${DEMUXDIR}/bm1" ] && rm -r "${DEMUXDIR}/bm1"; mkdir -vp "${DEMUXDIR}/bm1"
 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s "${DEMUXDIR}/bm1" --arrangements_files ${ARRANGEMENTS} --trim_barcodes
 pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}_bm/bm1/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_bm1_pycoqc.html" --report_title "${RUNNAME}_bm1" --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 
 #bm2 
 echo -e "\nExecutando barcoder_bm2..."
-[ -d "$DEMUXDIR_bm/bm2" ] && rm -r "$DEMUXDIR_bm/bm2"; mkdir -vp "$DEMUXDIR_bm/bm2"
+[ -d "${DEMUXDIR}/bm2" ] && rm -r "${DEMUXDIR}/bm2"; mkdir -vp "${DEMUXDIR}/bm2"
 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s "${DEMUXDIR}/bm2" --arrangements_files ${ARRANGEMENTS} --detect_mid_strand_adapter --trim_barcodes
 pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}_bm/bm2/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_bm2_pycoqc.html" --report_title "${RUNNAME}_bm2" --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 
 #bm3 
 echo -e "\nExecutando barcoder_bm3..."
-[ -d "$DEMUXDIR_bm/bm3" ] && rm -r "$DEMUXDIR_bm/bm3"; mkdir -vp "$DEMUXDIR_bm/bm3"
+[ -d "${DEMUXDIR}/bm3" ] && rm -r "${DEMUXDIR}/bm3"; mkdir -vp "${DEMUXDIR}/bm3"
 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s "${DEMUXDIR}/bm3" --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends --trim_barcodes
 pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}_bm/bm3/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_bm3_pycoqc.html" --report_title "${RUNNAME}_bm3" --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 
 #bm4 
 echo -e "\nExecutando barcoder_bm4..."
-[ -d "$DEMUXDIR_bm/bm4" ] && rm -r "$DEMUXDIR_bm/bm4"; mkdir -vp "$DEMUXDIR_bm/bm4"
+[ -d "${DEMUXDIR}/bm4" ] && rm -r "${DEMUXDIR}/bm4"; mkdir -vp "${DEMUXDIR}/bm4"
 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s "${DEMUXDIR}/bm4" --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends --detect_mid_strand_barcodes --trim_barcodes  
 pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}_bm/bm4/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_bm4_pycoqc.html" --report_title "${RUNNAME}_bm4" --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 
 #bm5
 echo -e "\nExecutando barcoder_bm5..."
-[ -d "$DEMUXDIR_bm/bm5" ] && rm -r "$DEMUXDIR_bm/bm5"; mkdir -vp "$DEMUXDIR_bm/bm5"
+[ -d "${DEMUXDIR}/bm5" ] && rm -r "${DEMUXDIR}/bm5"; mkdir -vp "${DEMUXDIR}/bm5"
 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s "${DEMUXDIR}/bm5" --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --detect_mid_strand_adapter --trim_barcodes  
 pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}_bm/bm5/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_bm5_pycoqc.html" --report_title "${RUNNAME}_bm5" --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 
 #bm6 
 echo -e "\nExecutando barcoder_bm6..."
-[ -d "$DEMUXDIR_bm/bm6" ] && rm -r "$DEMUXDIR_bm/bm6"; mkdir -vp "$DEMUXDIR_bm/bm6"
+[ -d "${DEMUXDIR}/bm6" ] && rm -r "${DEMUXDIR}/bm6"; mkdir -vp "${DEMUXDIR}/bm6"
 guppy_barcoder -r -i "${BASECALLDIR}/pass" -s "${DEMUXDIR}/bm6" --barcode_kits EXP-NBD104 --require_barcodes_both_ends --detect_mid_strand_barcodes --trim_barcodes  
 pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}_bm/bm6/barcoding_summary.txt" -o "${RESULTSDIR}/${RUNNAME}_bm6_pycoqc.html" --report_title "${RUNNAME}_bm6" --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 
