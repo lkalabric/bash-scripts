@@ -388,7 +388,7 @@ for CALL_FUNC in "${WF_STEPS[@]}"; do
 	for j in $FUNC_ARGS; do
 		ARGS_VALUES="$ARGS_VALUES ${!j}"
 	done
-	echo "Executando a função ${FUNC_NAME[0]}"..."
+	echo "Executando a função ${FUNC_NAME[0]}..."
 	echo "Argumentos: $FUNC_ARGS"
 	echo "Valores dos argumentos: $ARGS_VALUES"
 	# Executa o código e estima o tempo de execução
