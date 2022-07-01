@@ -60,6 +60,10 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp "${RESULTSDIR}"
 # Reseta a pasta de resultados anteriores da worflow 
 [ -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"; mkdir -vp "${RESULTSDIR}/wf${WF}"
+# Reseta a pasta de resultados time 
+PERFORMANCEDIR="${HOME}/performance-analysis/${RUNNAME}_${MODEL}"
+[ -d "${PERFORMANCEDIR}" ] && rm -r "${PERFORMANCEDIR}"; mkdir -vp "${PERFORMANCEDIR}"
+
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -393,6 +397,6 @@ for CALL_FUNC in "${WF_STEPS[@]}"; do
 	echo "Valores dos argumentos: ${ARGS_VALUES}"
 	# Executa o código e estima o tempo de execução
 	export -f "${FUNC_NAME[0]}"
-	echo "${FUNC_NAME[0]} ${ARGS_VALUES}" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
+	echo "${FUNC_NAME[0]} ${ARGS_VALUES}" | /usr/bin/time -o "${PERFORMANCEDIR}/${FUNC_NAME[0]}.time" /bin/bash
 done
 exit 5
