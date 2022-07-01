@@ -39,9 +39,7 @@ case $# in
 		fi
 	;;
 	*)
-		die "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
-		echo "Sintáxe: ./blast_report.sh <caminho_completo/barcodeXX.blastn>"
-		echo "Sintáxe: ./blast_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
+		die "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"; echo "Sintáxe: ./blast_report.sh <caminho_completo/barcodeXX.blastn>"; echo "Sintáxe: ./blast_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
 	;;
 esac
 
