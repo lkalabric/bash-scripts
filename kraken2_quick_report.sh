@@ -37,6 +37,7 @@ case $# in
 		echo "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
 		echo "Sintáxe: ./kraken2_quick_report.sh <caminho_completo/barcodeXX_report.txt>"
 		echo "Sintáxe: ./kraken2_quick_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
+		exit 0
 	;;
 esac
 OUTPUTFILENAME=$(echo ${FILENAME} | replace "_report.txt" "_report.kraken")
