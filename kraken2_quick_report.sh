@@ -40,6 +40,8 @@ case $# in
 		exit 0
 	;;
 esac
+
+# Define o nome do arquivo de output do relatório
 OUTPUTFILENAME=$(echo ${FILENAME} | replace "_report.txt" "_report.kraken")
 
 while read -r line ; do
