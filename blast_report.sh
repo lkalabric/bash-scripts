@@ -9,11 +9,6 @@
 # atualização: revisão do script
 
 # Valiação da entrada de dados na linha de comando
-die () {
-    echo >&2 "$@"
-    exit 0
-}
-
 case $# in
 	1)
 		if [ ! -f $1 ]; then
@@ -39,7 +34,10 @@ case $# in
 		fi
 	;;
 	*)
-		die "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"; echo "Sintáxe: ./blast_report.sh <caminho_completo/barcodeXX.blastn>"; echo "Sintáxe: ./blast_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
+		echo "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
+		echo "Sintáxe: ./blast_report.sh <caminho_completo/barcodeXX.blastn>"
+		echo "Sintáxe: ./blast_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
+		exit 0
 	;;
 esac
 
