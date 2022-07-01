@@ -35,6 +35,28 @@ LENGTH=100
 
 # if false; then # Desvio para execução rápida
 
+barcode_bm () {
+	BARCODE_ARGS=(
+		'--trim_barcodes'
+		'--detect_mid_strand_adapter --trim_barcodes'
+		'--require_barcodes_both_ends --trim_barcodes'
+		'--require_barcodes_both_ends --detect_mid_strand_barcodes --trim_barcodes'
+		'--require_barcodes_both_ends  --detect_mid_strand_barcodes --detect_mid_strand_adapter --trim_barcodes  '
+		'--barcode_kits EXP-NBD104 --require_barcodes_both_ends --detect_mid_strand_barcodes --trim_barcodes'
+	)
+	# Contador do número de BMs
+	BM=1
+	for i in "${BARCODE_ARGS[@]}"; do
+		echo -e "\nExecutando barcoder_bm${BM}..."
+		[ -d "${DEMUXDIR}/bm${BM}" ] && rm -r "${DEMUXDIR}/bm${BM}"; mkdir -vp "${DEMUXDIR}/bm${BM}"
+		guppy_barcoder -r -i "${BASECALLDIR}/pass" -s "${DEMUXDIR}/bm${BM}" --arrangements_files ${ARRANGEMENTS} ${i}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/bm${BM}/barcoding_summary.txt" -o "${DEMUXDIR}/${RUNNAME}_bm${BM}_pycoqc.html" --report_title "${RUNNAME}_bm1" --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
+		BM=$((BM+1))
+	done
+}
+
+barcode_bm
+exit
 
 # Demultiplex Benchmarks
 #bm1 
