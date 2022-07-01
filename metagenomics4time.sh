@@ -389,10 +389,10 @@ for CALL_FUNC in "${WF_STEPS[@]}"; do
 		ARGS_VALUES="$ARGS_VALUES ${!j}"
 	done
 	echo "Executando a função ${FUNC_NAME[0]}..."
-	echo "Argumentos: $FUNC_ARGS"
-	echo "Valores dos argumentos: $ARGS_VALUES"
+	echo "Argumentos: ${FUNC_ARGS}"
+	echo "Valores dos argumentos: ${ARGS_VALUES}"
 	# Executa o código e estima o tempo de execução
-	export -f "$FUNC_NAME[0]"
-	echo "$FUNC_NAME[0] $ARGS_VALUES" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
+	export -f "${FUNC_NAME[0]}"
+	echo "${FUNC_NAME[0]} ${ARGS_VALUES}" | /usr/bin/time -o ~/performance-analysis/${RUNNAME}_${i}.time /bin/bash
 done
 exit 5
