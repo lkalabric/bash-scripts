@@ -10,16 +10,11 @@
 # requisito: arquivo taxin que contém a lista de taxons de interesse
 
 # Valiação da entrada de dados na linha de comando
-die () {
-    echo >&2 "$@"
-    exit 0
-}
-
 case $# in
 	1)
 		if [ ! -f $1 ]; then
 			echo "Arquivo ou diretório inválido"
-			echo "Sintáxe: ./kraken2_quick_report.sh <caminho_completo/barcodeXX.blastn>"
+			echo "Sintáxe: ./kraken2_quick_report.sh <caminho_completo/barcodeXX._report.txt>"
 			echo "Exemplo: ./kraken2_quick_report.sh ngs-library/DENV_FTA_1_fast/wf3/READS_LEVEL/barcode01_report.txt"
 			exit 1
 		fi
@@ -39,13 +34,14 @@ case $# in
 		fi
 	;;	
 	*)
-		die "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
-		echo "Sintáxe: ./kraken2_quick_report.sh <caminho_completo/barcodeXX.blastn>"
+		echo "Mínimo de 1 e máximo de 2 argumentos são requiridos, $# provido"
+		echo "Sintáxe: ./kraken2_quick_report.sh <caminho_completo/barcodeXX_report.txt>"
 		echo "Sintáxe: ./kraken2_quick_report.sh <BIBLIOTECA_MODEL> <BARCODE>"
 	;;
 esac
+OUTPUTFILENAME=$(echo ${FILENAME} | replace "_report.txt" "_report.kraken")
 
 while read -r line ; do
 	count=$(agrep -q -w "$line" ${FILENAME} | cut -f 2)
-	echo "$line - $count"
+	echo "$line - $count" | tee -a ${OUTPUTFILENAME}
 done < <(cat /home/brazil1/data/REFSEQ/taxin | tr '\t' ';')
