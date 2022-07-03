@@ -268,7 +268,7 @@ function blastn_local () {
 	# Busca as QUERIES no BLASTDB local
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	echo -e "\nExecutando blastn..."
-	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \; | sort); do
+	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
 		echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
 		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		# Busca remota
