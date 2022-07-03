@@ -61,7 +61,7 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/time"
 # Reseta a pasta de resultados anteriores da worflow 
 [ -d "${RESULTSDIR}/wf${WF}" ] && rm -r "${RESULTSDIR}/wf${WF}"; mkdir -vp "${RESULTSDIR}/wf${WF}"
 # Reseta a pasta de resultados time 
-PERFORMANCEDIR="${HOME}/performance-analysis/${RUNNAME}_${MODEL}"
+PERFORMANCEDIR="${HOME}/performance-analysis/${RUNNAME}_${MODEL}/wf${WF}"
 [ -d "${PERFORMANCEDIR}" ] && rm -r "${PERFORMANCEDIR}"; mkdir -vp "${PERFORMANCEDIR}"
 
 
