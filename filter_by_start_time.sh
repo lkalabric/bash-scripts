@@ -27,12 +27,12 @@ FILTER_BY_START_TIMEDIR="${RESULTSDIR}/FILTER_BY_START_TIME"
 
 # Filter_by_start_time
 # Expressões regulares para filtar pelo tempo da corrida
-declare -a START_TIME=(01 02 04 08 16 24 all)
-declare -a REGEXP=("0[0-1]" "0[0-2]" "0[0-4]" "0[0-8]" "0[0-9]|1[0-6]" "0[0-9]|1[0-9]|2[0-4]" "..")
+declare -a START_TIME=(01 02 04 08 12 16 24 all)
+declare -a REGEXP=("0[0-1]" "0[0-2]" "0[0-4]" "0[0-8]" "0[0-9]|1[0-2]" "0[0-9]|1[0-6]" "0[0-9]|1[0-9]|2[0-4]" "..")
 for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 	echo -e "\nContando as reads do arquivo ${DEMUXCATDIR}/${i}.fastq..."
 	wc -l "${DEMUXCATDIR}/${i}.fastq"
-	for ((j=0; j<=6; j++)); do
+	for ((j=0; j<=7; j++)); do
 		echo -e "\nExecutando filter_by_start_time ${START_TIME[${j}]}..."
 		egrep -A3 "${START_DATE}T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
 		echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"..."
