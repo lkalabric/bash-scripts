@@ -73,9 +73,9 @@ function sequencing_summary1 () {
   # Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
   echo "Sumário da corrida"
   echo "Total files:"
-  ls $(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;) | wc -l
+  ls $(find ${RAWDIR} -type f -name "*.fast5") | wc -l
   echo "Total reads:"
-  # h5ls "$(find ${RAWDIR} -type f -name "*.fast5" -exec dirname {} \;)"/*.fast5 | wc -l
+  h5ls $(find ${RAWDIR} -type f -name "*.fast5") | wc -l
 }
 
 function basecalling () {
