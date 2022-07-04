@@ -49,10 +49,10 @@ KRAKENDBDIR="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se 
 echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 [ ! -d "${RESULTSDIR}" ] && mkdir -vp ${RESULTSDIR}
-BASECALLDIR="${RESULTSDIR}/BASECALL"
 # Reseta a pasta de resultados anteriores da worflow 
 RESULTSDIR="${RESULTSDIR}/wf${WF}"
 [ -d "${RESULTSDIR}" ] && rm -r "${RESULTSDIR}"; mkdir -vp "${RESULTSDIR}"
+BASECALLDIR="${RESULTSDIR}/BASECALL"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
 DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 CUTADAPTDIR="${RESULTSDIR}/CUTADAPT"
