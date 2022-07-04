@@ -174,7 +174,7 @@ function sequencing_summary2 () {
 	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" ]; then
 		echo -e "executando pycoQC no sequencing summary com o parâmetro default QSCORE=9...\n"
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 	if [ ! -f "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" ]; then
 		echo -e "executando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9...\n"
@@ -243,7 +243,7 @@ function blastn_local () {
 
 	# Busca as QUERIES no BLASTDB local e salva na pasta BLASTDIR
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
-	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
+	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \; | sort); do
 		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		# Busca remota
 		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
