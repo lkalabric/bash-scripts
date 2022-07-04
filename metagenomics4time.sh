@@ -253,19 +253,20 @@ function blastn_local () {
 	# Classificação taxonômica utilizando blastn
 	RESULTSDIR=$1
 	WF=$2
+	BLASTDBDIR=$3
 	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
 	QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
-	BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
-	# Preparação do BLASTDB local
-	# Script: makeblastdb_refseq.sh
-		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
-		# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
-		# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
 	# Converte arquivos .fastq em .fasta para query no blastn
 	[ ! -d "${QUERYDIR}" ] && mkdir -vp ${QUERYDIR}
 	for i in $(find "${PRINSEQDIR}"/*.good.fastq -type f -exec basename {} .good.fastq \; | sort); do
 		sed -n '1~4s/^@/>/p;2~4p' "${PRINSEQDIR}/${i}.good.fastq" > "${QUERYDIR}/${i}.fasta"
 	done
+	# Preparação do BLASTDB local
+	# Script: makeblastdb_refseq.sh
+	# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
+	# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
+	# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
+	BLASTDIR="${RESULTSDIR}/wf${WF}/BLAST"
 	# Busca as QUERIES no BLASTDB local
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	echo -e "\nExecutando blastn..."
@@ -366,7 +367,7 @@ function assembly () {
 # Define as etapas e argumentos de cada workflow
 WF_LIST=(
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF;BLASTDBDIR'
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFDIR autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
 )
 
