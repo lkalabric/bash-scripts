@@ -181,7 +181,7 @@ function sequencing_summary2 () {
 	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" ]; then
 		echo -e "\nExecutando pycoQC no sequencing summary com o parâmetro default QSCORE=8..."
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE}
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 	if [ ! -f "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" ]; then
 		echo -e "\nExecutando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9..."
@@ -208,6 +208,7 @@ function qc_filter1 () {
 	# Filtro por tamanho
 	RESULTSDIR=$1
 	WF=$2
+	DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
 	CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
 	NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
 	# Parâmetros de qualidade mínima
@@ -268,7 +269,7 @@ function blastn_local () {
 	# Busca as QUERIES no BLASTDB local
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	echo -e "\nExecutando blastn..."
-	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \;); do
+	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \; | sort); do
 		echo -e "\nAnalisando dados ${BLASTDIR}/${i}..."
 		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		# Busca remota
