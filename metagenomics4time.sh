@@ -285,7 +285,7 @@ function human_filter () {
 	RESULTSDIR=$1
 	WF=$2
 	$HUMANREFMMI=$3
-	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
 	READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	# Parâmetro de otimização minimap2, samtools, racon e kraken2
@@ -309,7 +309,7 @@ function autocorrection () {
 	# Autocorreção das reads
 	RESULTSDIR=$1
 	WF=$2
-	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
 	READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 	# Parâmetro de otimização minimap2, samtools, racon e kraken2
 	THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
