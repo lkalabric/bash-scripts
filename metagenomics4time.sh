@@ -244,8 +244,8 @@ function qc_filter2 () {
 	echo -e "\nExecutando prinseq-lite.pl..."
 	for i in $(find ${NANOFILTDIR} -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nResultados ${i}..."
-		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 		# Resultados disponíveis no report do Prinseq (Good sequences)
+		prinseq-lite.pl -fastq "${NANOFILTDIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.good" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 	done
 }
 
@@ -284,7 +284,7 @@ function human_filter () {
 	# Remoção das reads do genoma humano
 	RESULTSDIR=$1
 	WF=$2
-	$HUMANREFDIR=$3
+	$HUMANREFMMI=$3
 	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
 	READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
@@ -368,7 +368,7 @@ function assembly () {
 WF_LIST=(
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR'
 	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF primer_removal:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF blastn_local:RESULTSDIR;WF;BLASTDBDIR'
-	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFDIR autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
+	'sequencing_summary1:RAWDIR basecalling:RAWDIR;MODEL;RESULTSDIR demux_headcrop:RESULTSDIR;WF sequencing_summary2:RESULTSDIR;WF qc_filter1:RESULTSDIR;WF qc_filter2:RESULTSDIR;WF human_filter:RESULTSDIR;WF;HUMANREFMMI autocorrection:RESULTSDIR;WF kraken_local:RESULTSDIR;WF;KRAKENDBDIR'
 )
 
 # Validação do WF
