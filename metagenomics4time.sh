@@ -284,7 +284,7 @@ function human_filter () {
 	# Remoção das reads do genoma humano
 	RESULTSDIR=$1
 	WF=$2
-	$HUMANREFMMI=$3
+	HUMANREFMMI=$3
 	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
 	READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
