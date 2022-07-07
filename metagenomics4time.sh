@@ -238,7 +238,7 @@ function qc_filter2 () {
 	RESULTSDIR=$1
 	WF=$2
 	NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
-	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	echo -e "\nExecutando prinseq-lite.pl..."
@@ -254,7 +254,7 @@ function blastn_local () {
 	RESULTSDIR=$1
 	WF=$2
 	BLASTDBDIR=$3
-	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQDIR"
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
 	QUERYDIR="${RESULTSDIR}/wf${WF}/QUERY"
 	# Converte arquivos .fastq em .fasta para query no blastn
 	[ ! -d "${QUERYDIR}" ] && mkdir -vp ${QUERYDIR}
