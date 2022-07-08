@@ -8,11 +8,13 @@
 # ultima atualização: 08 JUL 2022
 # atualização: criação do arquivo
 
+FILENAME=$1
+
 # sintaxe
 # tar_multiplefiles.sh *.fastq
 
 # solução 1
-# for file in `ls $1`; do tar -czvf $file.tar $file ; done
+# for file in `ls ${FILENAME}`; do tar -czvf $file.tar $file ; done
 
 # solução 2
-find . -type f -execdir tar -czvf '{}.tar' '{}' \;
+find ${FILENAME} -type f -execdir tar -czvf '{}.tar' '{}' \;
