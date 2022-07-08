@@ -8,4 +8,8 @@
 # ultima atualização: 08 JUL 2022
 # atualização: criação do arquivo
 
+# solução 1
 for file in `ls $1`; do tar -czvf $file.tar.gz $file ; done
+
+# solução 2
+# find . -type f -execdir zip '{}.zip' '{}' \;
