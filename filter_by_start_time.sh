@@ -11,6 +11,7 @@
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
+WF=3		# Workflow de bioinformatica 1, 2 ou 3
 STAR_DATE=#3	# Data da corrida
 
 if [[ $# -eq 0 ]]; then
@@ -19,9 +20,11 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-# Caminhos de OUTPUT das análises
+# Caminhos de INPUT das análises
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-DEMUXCATDIR="${RESULTSDIR}/wf3/DEMUX_CAT"
+DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
+
+# Caminho de OUTPUT das análises
 FILTER_BY_START_TIMEDIR="${RESULTSDIR}/FILTER_BY_START_TIME"
 [ ! -d "${FILTER_BY_START_TIMEDIR}" ] && mkdir -vp "${FILTER_BY_START_TIMEDIR}"
 
