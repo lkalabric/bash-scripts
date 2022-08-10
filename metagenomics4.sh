@@ -4,8 +4,8 @@
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
-# última atualização: 27 JUN 2022
-# versão 1: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
+# última atualização: 10 AGO 2022
+# versão 4: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
 
 # Descrição de cada etapa disponível para construção dos workflows
 # sequencing_summary1
@@ -19,7 +19,9 @@
 # human_filter
 # autocorrection
 # blastn_local
+  # blast_report
 # kraken_local
+  # kraken2_quick_report
 # assembly
 
 # Validação da entrada de dados na linha de comando
@@ -250,6 +252,8 @@ function blastn_local () {
 		# Busca remota
 		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		echo -e "\nResultados ${i}"
+		echo "${RUNNAME}_${MODEL}"
+		echo "${i}"
 		~/scripts/blast_report.sh "${RUNNAME}_${MODEL}" "${i}"
 	done	
 }
