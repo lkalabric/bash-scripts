@@ -9,11 +9,11 @@
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
-WF=$3		# Workflow de bioinformatica 1, 2 ou 31
+WF=3		# Workflow de bioinformatica 1, 2 ou 3 (default)
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./reads_level.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
+	echo "Sintáxe: ./reads_level.sh <LIBRARY> <MODELO:fast,hac,sup>"
 	exit 0
 fi
 
