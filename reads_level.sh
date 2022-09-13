@@ -9,11 +9,11 @@
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
-WF=3		# Workflow de bioinformatica 1, 2 ou 3 (default)
+WF=$3		# Workflow de bioinformatica 1, 2 ou 3 (default)
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./reads_level.sh <LIBRARY> <MODELO:fast,hac,sup>"
+	echo "Sintáxe: ./reads_level.sh <LIBRARY> <MODELO:fast,hac,sup> <WF>"
 	exit 0
 fi
 
@@ -23,17 +23,17 @@ HUMANREFDIR=${HOME}/data/GRCh38
 BLASTDBDIR="${HOME}/data/BLAST_DB"
 KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 echo "Preparando pastas para (re-)análise dos dados..."
-RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-# DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
-FILTER_BY_START_TIMEDIR="${RESULTSDIR}/FILTER_BY_START_TIME"
+# Resultados do Filter_by_start_time
+RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/wf${WF}_filter"
+DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 
 # Caminhos de OUTPUT das análises
-CUTADAPTDIR="${RESULTSDIR}/wf${WF}_filter/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/wf${WF}_filter/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/wf${WF}_filter/PRINSEQ"
-QUERYDIR="${RESULTSDIR}/wf${WF}_filter/QUERY"
-BLASTDIR="${RESULTSDIR}/wf${WF}_filter/BLAST"
-READSLEVELDIR="${RESULTSDIR}/wf${WF}_filter/READS_LEVEL"
+CUTADAPTDIR="${RESULTSDIR}/CUTADAPT"
+NANOFILTDIR="${RESULTSDIR}/NANOFILT"
+PRINSEQDIR="${RESULTSDIR}/PRINSEQ"
+QUERYDIR="${RESULTSDIR}/QUERY"
+BLASTDIR="${RESULTSDIR}/BLAST"
+READSLEVELDIR="${RESULTSDIR}/READS_LEVEL"
 
 # Parâmetro de otimização minimap2, samtools, racon e kraken2
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
@@ -63,7 +63,7 @@ fi
 
 # if false; then # Desvio para execução rápida
 
-# WF 2 & 31
+# WF 2 & 3
 #
 # Read-level taxid
 #
@@ -73,7 +73,7 @@ if [[ $WF -eq 2 ]]; then
 	# Step 4 - Remoção dos primers
 	echo -e "\nExecutando cutadapt..."
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
-	for i in $(find ${FILTER_BY_START_TIMEDIR} -type f -exec basename {} .fastq \; | sort); do
+	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 	done
@@ -128,8 +128,8 @@ if [[ $WF -eq 3 ]]; then
 	# Step 4 - Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
-	for i in $(find ${FILTER_BY_START_TIMEDIR} -type f -exec basename {} .fastq \; | sort); do
-		NanoFilt -l ${LENGTH} < "${FILTER_BY_START_TIMEDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
+	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
+		NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 		# Resultados disponíveis no report do Prinseq (Input sequences) 
 	done
 
