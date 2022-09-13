@@ -24,16 +24,16 @@ BLASTDBDIR="${HOME}/data/BLAST_DB"
 KRAKENDB="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
 echo "Preparando pastas para (re-)análise dos dados..."
 RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
+# DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 FILTER_BY_START_TIMEDIR="${RESULTSDIR}/FILTER_BY_START_TIME"
 
 # Caminhos de OUTPUT das análises
-CUTADAPTDIR="${RESULTSDIR}/wf${WF}_filter/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/wf${WF}_filter/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/wf${WF}_filter/PRINSEQ"
-QUERYDIR="${RESULTSDIR}/wf${WF}_filter/QUERY"
-BLASTDIR="${RESULTSDIR}/wf${WF}_filter/BLAST"
-READSLEVELDIR="${RESULTSDIR}/wf${WF}_filter/READS_LEVEL"
+CUTADAPTDIR="${FILTER_BY_START_TIMEDIR}/wf${WF}/CUTADAPT"
+NANOFILTDIR="${FILTER_BY_START_TIMEDIR}/wf${WF}/NANOFILT"
+PRINSEQDIR="${FILTER_BY_START_TIMEDIR}/wf${WF}/PRINSEQ"
+QUERYDIR="${FILTER_BY_START_TIMEDIR}/wf${WF}/QUERY"
+BLASTDIR="${FILTER_BY_START_TIMEDIR}/wf${WF}/BLAST"
+READSLEVELDIR="${FILTER_BY_START_TIMEDIR}/wf${WF}/READS_LEVEL"
 
 # Parâmetro de otimização minimap2, samtools, racon e kraken2
 THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
@@ -123,7 +123,7 @@ if [[ $WF -eq 2 ]]; then
 fi
 
 # WF 3 - Classificação Taxonômica pelo Kraken2
-if [[ $WF -eq 31 ]]; then 
+if [[ $WF -eq 3 ]]; then 
 	source activate ngs
 	# Step 4 - Filtro por tamanho
 	echo -e "\nExecutando NanoFilt..."
