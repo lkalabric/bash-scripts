@@ -12,7 +12,7 @@
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
 WF=$3		# Workflow de bioinformatica 1, 2 ou 3
-STAR_DATE=#3	# Data da corrida
+STAR_DATE=$4	# Data da corrida
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, modelo ou data da corrida!"
