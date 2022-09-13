@@ -11,12 +11,12 @@
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
-WF=3		# Workflow de bioinformatica 1, 2 ou 3
+WF=$3		# Workflow de bioinformatica 1, 2 ou 3
 STAR_DATE=#3	# Data da corrida
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, modelo ou data da corrida!"
-	echo "Sintáxe: ./filter_by_start_time.sh <LIBRARY> <MODELO:fast,hac,sup> <DATA:YYYY-MM-DD>"
+	echo "Sintáxe: ./filter_by_start_time.sh <LIBRARY> <MODELO:fast,hac,sup> <WF> <DATA:YYYY-MM-DD>"
 	exit 0
 fi
 
