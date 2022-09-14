@@ -13,7 +13,7 @@ WF=$3		#Worflow de bioinformatica
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome da library,modelo Guppy Basecaller ou número do workflow!"
-	echo "Sintáxe: ./assembly2.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,31>"
+	echo "Sintáxe: ./assembly2.sh <LIBRARY> <MODELO:fast,hac,sup> <WF: 1,2,3>"
 	exit 0
 fi
 
