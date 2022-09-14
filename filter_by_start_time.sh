@@ -31,7 +31,7 @@ FILTER_BY_START_TIMEDIR="${RESULTSDIR}/wf${WF}_filter/DEMUX_CAT"
 # Filter_by_start_time
 # Expressões regulares para filtar pelo tempo da corrida
 declare -a START_TIME=(01 02 04 08 12 16 24 all)
-declare -a REGEXP=("0[0-1]" "0[0-2]" "0[0-4]" "0[0-8]" "0[0-9]|1[0-2]" "0[0-9]|1[0-6]" "0[0-9]|1[0-9]|2[0-4]" "..")
+declare -a REGEXP=("(0+[0-1])" "(0+[0-2])" "(0+[0-4])" "(0+[0-8])" "(0+[0-9]|1+[0-2])" "(0+[0-9]|1+[0-6])" "(0+[0-9]|1+[0-9]|2+[0-4])" "..")
 for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 	echo -e "\nContando as reads do arquivo ${DEMUXCATDIR}/${i}.fastq..."
 	grep "${RUNNAME}" "${DEMUXCATDIR}/${i}.fastq" | wc -l
