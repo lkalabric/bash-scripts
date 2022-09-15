@@ -67,7 +67,7 @@ wget ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz -P ${BLASTDBDIR}
 # para conferência
 echo "Conferir o arquivo refseq.fasta e os arquivos .wimp..."
 echo "Total de taxons encontrados no arquivo refseq.fasta atual: $(grep -c ">" ${REFSEQDIR}/refseq.fasta)"
-echo "Total de números de acesso (refseq.acc): $(grep -c ">" ${REFSEQDIR}/refseq.acc)"
-echo "Total de números de acesso com taxid (refseq.map): $(grep -c ">" ${REFSEQDIR}/refseq.map)"
-echo "Total de números de acesso em cada arquivo .wimp: $(wc -l ${HOME}/data/WIMP/*.wimp)"
+echo "Total de números de acesso (refseq.acc): $(wc -l ${REFSEQDIR}/refseq.acc)"
+echo "Total de números de acesso com taxid (refseq.map): $(wc -l ${REFSEQDIR}/refseq.map)"
+echo -e "Total de números de acesso em cada arquivo .wimp:\n $(wc -l ${HOME}/data/WIMP/*.wimp)"
 echo "IMPORTANTE: Atualizar os arquivos .wimp para uma relatoria correta!"
