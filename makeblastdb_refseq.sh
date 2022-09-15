@@ -3,6 +3,7 @@
 # Cria o banco de dados BLAST a partir de arquivos .fasta
 # Autor: Luciano Kalabric Silva
 # Data: 28/08/2021
+# Última atualização: 15/09/2022
 # Referencia: https://www.ncbi.nlm.nih.gov/books/NBK569841/
 
 # Diretórios de dados
@@ -66,6 +67,7 @@ wget ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz -P ${BLASTDBDIR}
 # para conferência
 echo "Conferir o arquivo refseq.fasta e os arquivos .wimp..."
 echo "Total de taxons encontrados no arquivo refseq.fasta atual: $(grep -c ">" data/REFSEQ/refseq.fasta)"
-echo "Lista de números de acessos (aacList): $(grep -c ">" data/REFSEQ/refseq.fasta)"
+echo "Total de números de acesso (refseq.acc): $(grep -c ">" data/REFSEQ/refseq.acc)"
+echo "Total de números de acesso com taxid (refseq.map): $(grep -c ">" data/REFSEQ/refseq.map)"
 echo "Total de números de acesso em cada arquivo .wimp: $(wc -l data/WIMP/*.wimp)"
-echo "IMPORTANTE: Incluir os números de acesso buscados nos respectivos arquivos .wimp para uma relatoria correta!"
+echo "IMPORTANTE: Atualizar os arquivos .wimp para uma relatoria correta!"
