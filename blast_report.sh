@@ -64,6 +64,7 @@ printf "	%s      		%s\n" "JEV	" "$(grep -c -F -f ${WIMPDIR}/jev.wimp ${FILENAME}
 printf "	%s      		%s\n" "ILHV	" "$(grep -c -F -f ${WIMPDIR}/ilhv.wimp ${FILENAME})" | tee -a ${OUTPUTFILENAME} 
 printf "	%s      		%s\n" "ROCV	" "$(grep -c -F -f ${WIMPDIR}/rocv.wimp ${FILENAME})" | tee -a ${OUTPUTFILENAME} 
 printf "	%s      		%s\n" "HCV	" "$(grep -c -F -f ${WIMPDIR}/hcv.wimp ${FILENAME})" | tee -a ${OUTPUTFILENAME} 
+printf "	%s      		%s\n" "GB-CV	" "$(grep -c -F -f ${WIMPDIR}/gb-cv.wimp ${FILENAME})" | tee -a ${OUTPUTFILENAME} 
 echo "Picornaviridae" | tee -a ${OUTPUTFILENAME} 
 printf "	%s     	 	%s\n" "CV	" "$(grep -c -f ${WIMPDIR}/cv.wimp ${FILENAME})" | tee -a ${OUTPUTFILENAME} 
 printf "	%s      		%s\n" "EV-A	" "$(grep -c -F -f ${WIMPDIR}/ev-a.wimp ${FILENAME})" | tee -a ${OUTPUTFILENAME} 
