@@ -5,10 +5,19 @@
 # Data: 28/08/2021
 # Referencia: https://www.ncbi.nlm.nih.gov/books/NBK569841/
 
+# Diretórios de dados
+# Salvar os arquivos contendo as sequencias referências no formato Fasta (obtidos do Genbank) 
+# individualmente ou formato multiseq Fasta neste diretório ou em sub-diretórios. Os arquivos
+# são contatenados em um único arquivo refseq.fasta para montagem do banco de dados
 REFSEQDIR=${HOME}/data/REFSEQ
+
+# Reseta o arquivo antes de concatenar novas sequencias referências
+[[ -r ${REFSEQDIR}/refseq.fasta ]] && rm ${REFSEQDIR}/refseq.fasta
+
+# Diretório do banco de dados 
 BLASTDBDIR=${HOME}/data/BLAST_DB
 
-[[ -r ${REFSEQDIR}/refseq.fasta ]] && rm ${REFSEQDIR}/refseq.fasta
+# Reseta o diretório antes de criar um novo banco de dados
 [[ -d ${BLASTDBDIR} ]] && rm -r ${BLASTDBDIR}
 [ ! -d ${BLASTDBDIR} ] && mkdir -vp ${BLASTDBDIR}
 
@@ -17,21 +26,19 @@ echo "Concatenando as sequencias referência em refseq.fasta..."
 if [[ ! -f ${REFSEQDIR}/refseq.fasta ]]
 then
 	find ${REFSEQDIR} -type f -name '*.fasta' -print0 | sort -z | xargs -0 cat > "${REFSEQDIR}/refseq.fasta"
-	# mv refseq.fasta ${REFSEQDIR}
 fi
 
-# Processando a linha de descrição para conter apenas o número de acesso sem espaços
+# Processa a linha de descrição das sequencias referências para conter apenas o número de acesso sem espaços
 echo "Processando os labels do arquivo refseq.fasta..."
-cp ${REFSEQDIR}/refseq.fasta ${REFSEQDIR}/refseq.old
+mv ${REFSEQDIR}/refseq.fasta ${REFSEQDIR}/refseq.old
 while read -r line; do
 	if echo "$line" | grep ">";
 	then
-    	echo "$line" | cut -d "." -f 1 >>${REFSEQDIR}/refseq.temp
+    	echo "$line" | cut -d "." -f 1 >>${REFSEQDIR}/refseq.fasta
 	else
-		echo "$line" >>${REFSEQDIR}/refseq.temp
+		echo "$line" >>${REFSEQDIR}/refseq.fasta
 	fi
-done < ${REFSEQDIR}/refseq.fasta
-mv ${REFSEQDIR}/refseq.temp ${REFSEQDIR}/refseq.fasta
+done < ${REFSEQDIR}/refseq.old
 
 # Cria a lista de números de acc Genbank a partir do arquivo .fasta
 echo "Criando o arquivo refseq.acc..."
@@ -53,3 +60,12 @@ echo "Banco de dados criado com sucesso!"
 
 # Faz o donwload do taxdb
 wget ftp://ftp.ncbi.nlm.nih.gov/blast/db/taxdb.tar.gz -P ${BLASTDBDIR}
+
+# IMPORTATE: Após incluir uma nova sequencia no diretório REFSEQ e executar uma nova análise, é importante
+# atualizar os arquivos WIMP para sumarizar o relatório da busca pelo Blast. Abaixo seguem alguns reports
+# para conferência
+echo "Conferir o arquivo refseq.fasta e os arquivos .wimp..."
+echo "Total de taxons encontrados no arquivo refseq.fasta atual: $(grep -c ">" data/REFSEQ/refseq.fasta)"
+echo "Lista de números de acessos (aacList): $(grep -c ">" data/REFSEQ/refseq.fasta)"
+echo "Total de números de acesso em cada arquivo .wimp: $(wc -l data/WIMP/*.wimp)"
+echo "IMPORTANTE: Incluir os números de acesso buscados nos respectivos arquivos .wimp para uma relatoria correta!"
