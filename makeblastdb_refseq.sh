@@ -22,11 +22,11 @@ BLASTDBDIR=${HOME}/data/BLAST_DB
 [[ -d ${BLASTDBDIR} ]] && rm -r ${BLASTDBDIR}
 [ ! -d ${BLASTDBDIR} ] && mkdir -vp ${BLASTDBDIR}
 
-# Concatena todos os arquivos .fasta em refseq.fasta
+# Concatena todos os arquivos .fasta em refseq.fasta, exceto o arquivo refgen.fasta que é gerado pelo make_refgen.sh
 echo "Concatenando as sequencias referência em refseq.fasta..."
 if [[ ! -f ${REFSEQDIR}/refseq.fasta ]]
 then
-	find ${REFSEQDIR} -type f -name '*.fasta' -print0 | sort -z | xargs -0 cat > "${REFSEQDIR}/refseq.fasta"
+	find ${REFSEQDIR} -type f -iname '*.fasta' -not -name 'refgen.fasta' -print0 | sort -z | xargs -0 cat > "${REFSEQDIR}/refseq.fasta"
 fi
 
 # Processa a linha de descrição das sequencias referências para conter apenas o número de acesso sem espaços
