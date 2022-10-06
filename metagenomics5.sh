@@ -235,7 +235,7 @@ function blastn_local () {
 
 	# Converte arquivos .fastq em .fasta para query no blastn
 	[ ! -d "${QUERYDIR}" ] && mkdir -vp ${QUERYDIR}
-	if [${IODIR} = ${PRINSEQDIR}]; then
+	if ["$IODIR" = "$PRINSEQDIR"]; then
 		for i in $(find "${IODIR}"/*.filtered.fastq -type f -exec basename {} .filtered.fastq \;); do
 			sed -n '1~4s/^@/>/p;2~4p' "${IODIR}/${i}.filtered.fastq" > "${QUERYDIR}/${i}.fasta"
 		done
