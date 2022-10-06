@@ -130,7 +130,7 @@ function basecalling () {
 		# Comando para guppy_basecaller usando GPU
 		guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto --min_qscore ${QSCORE} --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 	fi
-  IODIR=$BASECALLDIR
+  IODIR=$BASECALLDIR; echo "IODIR=${IODIR}"
 }
 
 # Para debug
@@ -143,7 +143,7 @@ function demux () {
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
 		mkdir -vp $DEMUXDIR
-		echo -e "executando guppy_barcoder...\n"
+		echo -e "executando guppy_barcoder em ${IODIR}...\n"
 		guppy_barcoder -r -i "${IODIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
 		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
 		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
@@ -153,7 +153,7 @@ function demux () {
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 		done
 	fi
-  IODIR=$DEMUXCATDIR  
+  IODIR=$DEMUXCATDIR; echo "IODIR=${IODIR}"  
 }
 
 function demux_headcrop () {
@@ -163,7 +163,7 @@ function demux_headcrop () {
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
 		mkdir -vp $DEMUXDIR
-		echo -e "executando guppy_barcoder+headcrop...\n"
+		echo -e "executando guppy_barcoder+headcrop em ${IODIR}...\n"
 		guppy_barcoder -r -i "${IODIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
 		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
@@ -173,7 +173,7 @@ function demux_headcrop () {
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 		done
 	fi
-  IODIR=$DEMUXCATDIR
+  IODIR=$DEMUXCATDIR; echo "IODIR=${IODIR}"
 }
 
 function sequencing_summary2 () {
@@ -193,23 +193,23 @@ function primer_removal () {
 	# Remoção dos primers
 	PRIMER="GTTTCCCACTGGAGGATA"
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
-	echo -e "executando cutadapt...\n"
+	echo -e "executando cutadapt em ${IODIR}...\n"
 	for i in $(find ${IODIR} -type f -exec basename {} .fastq \; | sort); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 	done
-  IODIR=$CUTADAPTDIR
+  IODIR=$CUTADAPTDIR; echo "IODIR=${IODIR}"
 }
 
 function qc_filter1 () {
 	# Filtro por tamanho
 	source activate ngs
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
-	echo -e "executando NanoFilt...\n"
+	echo -e "executando NanoFilt em ${IODIR}...\n"
 	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
 		NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 	done
-	IODIR=$NANOFILTDIR
+	IODIR=$NANOFILTDIR; echo "IODIR=${IODIR}"
 }
 
 function qc_filter2 () {
@@ -222,7 +222,7 @@ function qc_filter2 () {
 		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.corrected" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 		# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
 	done
-  IODIR=$PRINSEQDIR
+  IODIR=$PRINSEQDIR; echo "IODIR=${IODIR}"
 }
 
 function blastn_local () {
@@ -266,7 +266,7 @@ function human_filter () {
 		# Salva os dados no formato .fastq
 		samtools fastq ${READSLEVELDIR}/${i}.unmapped.bam > ${READSLEVELDIR}/${i}.unmapped.fastq -@ ${THREADS}
 	done
-  IODIR=$READSLEVELDIR
+  IODIR=$READSLEVELDIR; echo "IODIR=${IODIR}"
 }
 
 function autocorrection () {
@@ -280,7 +280,7 @@ function autocorrection () {
 		# Correção de erros a partir das sequencias consenso
 	 	racon -t ${THREADS} -f -u ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.overlap.sam ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.corrected.fasta
 	done
-  IODIR=$READSLEVELDIR
+  IODIR=$READSLEVELDIR; echo "IODIR=${IODIR}"
 }
 
 function kraken_local () {
