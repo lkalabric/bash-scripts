@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# script: metagenomics4.sh
+# script: metagenomics5.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
-# última atualização: 10 AGO 2022
-# versão 4: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
+# última atualização: 10 OUT 2022
+# versão 5: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
 
 # Descrição de cada etapa disponível para construção dos workflows
 # sequencing_summary1
@@ -194,7 +194,7 @@ function primer_removal () {
 	PRIMER="GTTTCCCACTGGAGGATA"
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
 	echo -e "executando cutadapt...\n"
-	for i in $(find ${IODIR} -type f -exec basename {} .fastq \; | sort); do
+	for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 	done
@@ -213,7 +213,7 @@ function qc_filter1 () {
 		done
 	  ;;
 	  3)
-		for i in $(find "${DEMUXCATDIR}" -type f -exec basename {} .fastq \; | sort); do
+		for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
 			NanoFilt -l ${LENGTH} < "${DEMUXCATDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 		done	  ;;
 	  *)
