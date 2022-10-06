@@ -235,10 +235,15 @@ function blastn_local () {
 
 	# Converte arquivos .fastq em .fasta para query no blastn
 	[ ! -d "${QUERYDIR}" ] && mkdir -vp ${QUERYDIR}
-	for i in $(find "${IODIR}"/*.filtered.fastq -type f -exec basename {} .corrected.fastq \;); do
-		sed -n '1~4s/^@/>/p;2~4p' "${PRINSEQDIR}/${i}.good.fastq" > "${QUERYDIR}/${i}.fasta"
-	done
-
+	if [${IODIR} = ${PRINSEQDIR}]; then
+		for i in $(find "${IODIR}"/*.filtered.fastq -type f -exec basename {} .filtered.fastq \;); do
+			sed -n '1~4s/^@/>/p;2~4p' "${IODIR}/${i}.filtered.fastq" > "${QUERYDIR}/${i}.fasta"
+		done
+	else
+		for i in $(find "${IODIR}"/*.filtered.fastq -type f -exec basename {} .filtered.fasta \;); do
+			cp "${IODIR}/${i}.filtered.fasta" "${QUERYDIR}/${i}.fasta"
+		done
+	fi
 	# Busca as QUERIES no BLASTDB local e salva na pasta BLASTDIR
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \; | sort); do
@@ -258,7 +263,7 @@ function human_filter () {
 	for i in $(find ${IODIR} -type f -name "*.filtered.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
 	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
-	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.corrected.fastq | samtools sort -@ ${THREADS} -o ${READSLEVELDIR}/${i}.sorted.bam -
+	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.filtered.fastq | samtools sort -@ ${THREADS} -o ${READSLEVELDIR}/${i}.sorted.bam -
 	    	# Indexa o arquivo para acesso mais rápido
 	    	samtools index -@ ${THREADS} ${READSLEVELDIR}/${i}.sorted.bam
 	    	# Filtra os segmentos não mapeados Flag 4 (-f 4) para um novo arquivo unmapped.sam 
