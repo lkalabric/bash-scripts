@@ -163,7 +163,7 @@ function demux_headcrop () {
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
 		mkdir -vp $DEMUXDIR
-		echo -e "executando guppy_barcoder...\n"
+		echo -e "executando guppy_barcoder+headcrop...\n"
 		guppy_barcoder -r -i "${IODIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
 		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
@@ -207,7 +207,7 @@ function qc_filter1 () {
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	echo -e "executando NanoFilt...\n"
 	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
-		NanoFilt -l ${LENGTH} < "${CUTADAPTDIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
+		NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 	done
 	IODIR=$NANOFILTDIR
 }
