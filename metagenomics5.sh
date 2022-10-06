@@ -333,7 +333,8 @@ workflowList=(
 	'sequencing_summary1 basecalling'
 	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blastn_local'
 	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken_local'
-  'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection blastn_local'
+  	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection blastn_local'
+	'sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection blastn_local'
 	'assembly'
 )
 
