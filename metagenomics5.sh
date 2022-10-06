@@ -219,7 +219,7 @@ function qc_filter2 () {
 	echo -e "executando prinseq-lite.pl...\n"
 	for i in $(find ${IODIR} -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nResultados ${i}..."
-		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.corrected" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
+		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.filtered" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 		# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
 	done
   IODIR=$PRINSEQDIR; echo "IODIR=${IODIR}"
@@ -235,7 +235,7 @@ function blastn_local () {
 
 	# Converte arquivos .fastq em .fasta para query no blastn
 	[ ! -d "${QUERYDIR}" ] && mkdir -vp ${QUERYDIR}
-	for i in $(find "${IODIR}"/*.corrected.fastq -type f -exec basename {} .corrected.fastq \;); do
+	for i in $(find "${IODIR}"/*.filtered.fastq -type f -exec basename {} .corrected.fastq \;); do
 		sed -n '1~4s/^@/>/p;2~4p' "${PRINSEQDIR}/${i}.good.fastq" > "${QUERYDIR}/${i}.fasta"
 	done
 
@@ -255,7 +255,7 @@ function human_filter () {
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	echo -e "executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
 	# Loop para analisar todos barcodes, um de cada vez
-	for i in $(find ${IODIR} -type f -name "*.corrected.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+	for i in $(find ${IODIR} -type f -name "*.filtered.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i}..."
 	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
 	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.corrected.fastq | samtools sort -@ ${THREADS} -o ${READSLEVELDIR}/${i}.sorted.bam -
@@ -273,12 +273,12 @@ function autocorrection () {
 	# Autocorreção das reads
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
-	for i in $(find ${IODIR} -type f -name "*.corrected.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+	for i in $(find ${IODIR} -type f -name "*.unmapped.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 		echo -e "\nCarregando os dados ${i} para autocorreção...\n"
 		# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
 		minimap2 -ax ava-ont -t ${THREADS} ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.overlap.sam
 		# Correção de erros a partir das sequencias consenso
-	 	racon -t ${THREADS} -f -u ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.overlap.sam ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.corrected.fasta
+	 	racon -t ${THREADS} -f -u ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.overlap.sam ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.filtered.fasta
 	done
   IODIR=$READSLEVELDIR; echo "IODIR=${IODIR}"
 }
