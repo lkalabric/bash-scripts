@@ -16,5 +16,5 @@ grep -o "runid" $(find -H  $1 -name *.fastq) | wc -l
 # Conta o total de reads por BC
 echo "Total reads por BC:"
 for i in $(find $1/*.fastq -type f -exec basename {} .fastq \; | cut -d_ -f1 | sort); do
-	echo "${i} - $(grep -o "runid" $1/${i}.fastq | wc -l)"
+	grep -o "runid" $1/${i}.fastq | wc -l
 done
