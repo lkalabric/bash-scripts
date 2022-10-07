@@ -61,12 +61,13 @@ DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 CUTADAPTDIR="${RESULTSDIR}/CUTADAPT"
 NANOFILTDIR="${RESULTSDIR}/NANOFILT"
 PRINSEQDIR="${RESULTSDIR}/PRINSEQ"
-QUERYDIR="${RESULTSDIR}/QUERY"
-BLASTDIR="${RESULTSDIR}/BLAST"
+HUMANFILTERDIR="${RESULTSDIR}/HUMANFILTER"
 READSLEVELDIR="${RESULTSDIR}/READS_LEVEL"
 KRAKENDIR="${RESULTSDIR}/KRAKEN"
-CONTIGLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
+QUERYDIR="${RESULTSDIR}/QUERY"
+BLASTDIR="${RESULTSDIR}/BLAST"
 ASSEMBLYDIR="${RESULTSDIR}/ASSEMBLY"
+CONTIGLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -130,7 +131,7 @@ function basecalling () {
 		# Comando para guppy_basecaller usando GPU
 		guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto --min_qscore ${QSCORE} --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
 	fi
-  IODIR=$BASECALLDIR; echo "IODIR=${IODIR}"
+  IODIR=$BASECALLDIR
 }
 
 # Para debug
@@ -153,7 +154,7 @@ function demux () {
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 		done
 	fi
-  IODIR=$DEMUXCATDIR; echo "IODIR=${IODIR}"  
+  IODIR=$DEMUXCATDIR  
 }
 
 function demux_headcrop () {
@@ -173,7 +174,7 @@ function demux_headcrop () {
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 		done
 	fi
-  IODIR=$DEMUXCATDIR; echo "IODIR=${IODIR}"
+  IODIR=$DEMUXCATDIR
 }
 
 function sequencing_summary2 () {
@@ -194,11 +195,11 @@ function primer_removal () {
 	PRIMER="GTTTCCCACTGGAGGATA"
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
 	echo -e "executando cutadapt em ${IODIR}...\n"
-	for i in $(find ${IODIR} -type f -exec basename {} .fastq \; | sort); do
+	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | cut -d_ -f1 | sort); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 	done
-  IODIR=$CUTADAPTDIR; echo "IODIR=${IODIR}"
+  IODIR=$CUTADAPTDIR
 }
 
 function qc_filter1 () {
@@ -209,7 +210,7 @@ function qc_filter1 () {
 	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
 		NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 	done
-	IODIR=$NANOFILTDIR; echo "IODIR=${IODIR}"
+	IODIR=$NANOFILTDIR
 }
 
 function qc_filter2 () {
@@ -217,12 +218,45 @@ function qc_filter2 () {
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	echo -e "executando prinseq-lite.pl...\n"
-	for i in $(find ${IODIR} -type f -exec basename {} .fastq \; | sort); do
+	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nResultados ${i}..."
-		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}.filtered" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
+		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 		# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
 	done
-  IODIR=$PRINSEQDIR; echo "IODIR=${IODIR}"
+  IODIR=$PRINSEQDIR
+}
+
+function human_filter () {
+	# Remoção das reads do genoma humano
+	[ ! -d "${HUMANFILTER}" ] && mkdir -vp ${HUMANFILTER}
+	echo -e "Executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
+	# Loop para analisar todos barcodes, um de cada vez
+	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
+		echo -e "\nCarregando os dados ${i}..."
+	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
+	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTER}/${i}_sorted.bam -
+	    	# Indexa o arquivo para acesso mais rápido
+	    	samtools index -@ ${THREADS} ${HUMANFILTER}/${i}_sorted.bam
+	    	# Filtra os segmentos não mapeados Flag 4 (-f 4) para um novo arquivo filtered.sam 
+	    	samtools view -bS -f 4 ${HUMANFILTER}/${i}_sorted.bam > ${HUMANFILTER}/${i}.bam -@ ${THREADS}
+		# Salva os dados no formato .fastq
+		samtools fastq ${HUMANFILTER}/${i}.bam > ${HUMANFILTER}/${i}.fastq -@ ${THREADS}
+	done
+	IODIR=$HUMANFILTER
+}
+
+function reads_polishing () {
+	# Autocorreção das reads
+	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
+	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
+	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
+		echo -e "\nCarregando os dados ${i} para autocorreção...\n"
+		# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
+		minimap2 -ax ava-ont -t ${THREADS} ${IODIR}/${i}.fastq ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}_overlap.sam
+		# Correção de erros a partir das sequencias consenso
+	 	racon -t ${THREADS} -f -u ${IODIR}/${i}.fastq ${READSLEVELDIR}/${i}_overlap.sam ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}.fasta
+	done
+  IODIR=$READSLEVELDIR
 }
 
 function blastn_local () {
@@ -233,69 +267,25 @@ function blastn_local () {
 		# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
 		# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
 
-	# Converte arquivos .fastq em .fasta para query no blastn
-	[ ! -d "${QUERYDIR}" ] && mkdir -vp ${QUERYDIR}
-	if ["$IODIR" = "$PRINSEQDIR"]; then
-		for i in $(find "${IODIR}"/*.filtered.fastq -type f -exec basename {} .filtered.fastq \;); do
-			sed -n '1~4s/^@/>/p;2~4p' "${IODIR}/${i}.filtered.fastq" > "${QUERYDIR}/${i}.fasta"
-		done
-	else
-		for i in $(find "${IODIR}"/*.filtered.fastq -type f -exec basename {} .filtered.fasta \;); do
-			cp "${IODIR}/${i}.filtered.fasta" "${QUERYDIR}/${i}.fasta"
-		done
-	fi
 	# Busca as QUERIES no BLASTDB local e salva na pasta BLASTDIR
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
-	for i in $(find ${QUERYDIR} -type f -exec basename {} .fasta \; | sort); do
-		blastn -db "${BLASTDBDIR}/refseq" -query "${QUERYDIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+	for i in $(find ${IODIR} -type f -exec basename {} .fasta \; | sort); do
+		blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		# Busca remota
-		# blastn -db nt -remote -query ${QUERYDIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+		# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		echo -e "\nResultados ${i}"
 		~/scripts/blast_report.sh "${BLASTDIR}/${i}.blastn"
 	done	
-}
-
-function human_filter () {
-	# Remoção das reads do genoma humano
-	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
-	echo -e "executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
-	# Loop para analisar todos barcodes, um de cada vez
-	for i in $(find ${IODIR} -type f -name "*.filtered.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-		echo -e "\nCarregando os dados ${i}..."
-	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
-	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.filtered.fastq | samtools sort -@ ${THREADS} -o ${READSLEVELDIR}/${i}.sorted.bam -
-	    	# Indexa o arquivo para acesso mais rápido
-	    	samtools index -@ ${THREADS} ${READSLEVELDIR}/${i}.sorted.bam
-	    	# Filtra os segmentos não mapeados Flag 4 (-f 4) para um novo arquivo unmapped.sam 
-	    	samtools view -bS -f 4 ${READSLEVELDIR}/${i}.sorted.bam > ${READSLEVELDIR}/${i}.unmapped.bam -@ ${THREADS}
-		# Salva os dados no formato .fastq
-		samtools fastq ${READSLEVELDIR}/${i}.unmapped.bam > ${READSLEVELDIR}/${i}.unmapped.fastq -@ ${THREADS}
-	done
-  IODIR=$READSLEVELDIR; echo "IODIR=${IODIR}"
-}
-
-function autocorrection () {
-	# Autocorreção das reads
-	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
-	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
-	for i in $(find ${IODIR} -type f -name "*.unmapped.fastq" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-		echo -e "\nCarregando os dados ${i} para autocorreção...\n"
-		# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
-		minimap2 -ax ava-ont -t ${THREADS} ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.overlap.sam
-		# Correção de erros a partir das sequencias consenso
-	 	racon -t ${THREADS} -f -u ${READSLEVELDIR}/${i}.unmapped.fastq ${READSLEVELDIR}/${i}.overlap.sam ${READSLEVELDIR}/${i}.unmapped.fastq > ${READSLEVELDIR}/${i}.filtered.fasta
-	done
-  IODIR=$READSLEVELDIR; echo "IODIR=${IODIR}"
 }
 
 function kraken_local () {
 	# Classificação taxonômica utilizando Kraken2
 	[ ! -d "${KRAKENDIR}" ] && mkdir -vp ${KRAKENDIR}
 	echo -e "executando o Kraken2...\n"
-	for i in $(find ${IODIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+	for i in $(find ${IODIR} -type f -exec basename {} .fasta \; | sort); do
 		echo -e "\nCarregando os dados ${i}..."
 		# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
-		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
+		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.fasta
 		echo -e "\nGerando o ${i}_report.txt"
 		~/scripts/kraken2_quick_report.sh "${KRAKENDIR}/${i}_report.txt"
 	done
@@ -314,10 +304,10 @@ function assembly () {
 # Define as etapas de cada workflow
 workflowList=(
 	'sequencing_summary1 basecalling'
-	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blastn_local'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken_local'
-  	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection blastn_local'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter qc_filter1 qc_filter2 autocorrection kraken_local'
+	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter reads_polishing kraken_local'
+  	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter reads_polishing blastn_local'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter qc_filter1 qc_filter2 reads_polishing kraken_local'
 	'assembly'
 )
 
