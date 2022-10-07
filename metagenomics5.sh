@@ -207,7 +207,7 @@ function qc_filter1 () {
 	source activate ngs
 	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
 	echo -e "executando NanoFilt em ${IODIR}...\n"
-	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
+	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 		NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 	done
 	IODIR=$NANOFILTDIR
@@ -218,7 +218,7 @@ function qc_filter2 () {
 	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
 	echo -e "executando prinseq-lite.pl...\n"
-	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
+	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nResultados ${i}..."
 		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 		# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
@@ -231,7 +231,7 @@ function human_filter () {
 	[ ! -d "${HUMANFILTERDIR}" ] && mkdir -vp ${HUMANFILTERDIR}
 	echo -e "Executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
 	# Loop para analisar todos barcodes, um de cada vez
-	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
+	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nCarregando os dados ${i}..."
 	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
 	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTERDIR}/${i}_sorted_bam -
@@ -249,7 +249,7 @@ function reads_polishing () {
 	# Autocorreção das reads
 	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
-	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
+	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nCarregando os dados ${i} para autocorreção...\n"
 		# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
 		minimap2 -ax ava-ont -t ${THREADS} ${IODIR}/${i}.fastq ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}_overlap.sam
@@ -269,7 +269,7 @@ function blastn_local () {
 
 	# Busca as QUERIES no BLASTDB local e salva na pasta BLASTDIR
 	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
-	for i in $(find ${IODIR} -type f -exec basename {} .fasta \; | sort); do
+	for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
 		blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 		# Busca remota
 		# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
@@ -282,7 +282,7 @@ function kraken_local () {
 	# Classificação taxonômica utilizando Kraken2
 	[ ! -d "${KRAKENDIR}" ] && mkdir -vp ${KRAKENDIR}
 	echo -e "executando o Kraken2...\n"
-	for i in $(find ${IODIR} -type f -exec basename {} .fasta \; | sort); do
+	for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
 		echo -e "\nCarregando os dados ${i}..."
 		# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
 		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.fasta
