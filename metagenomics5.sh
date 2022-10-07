@@ -220,7 +220,7 @@ function qc_filter2 () {
 	echo -e "executando prinseq-lite.pl...\n"
 	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nResultados ${i}..."
-		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -out_bad "${PRINSEQDIR}/${i}.bad -graph_data" "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
+		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -out_bad "${PRINSEQDIR}/${i}.bad" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 		# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
 	done
   IODIR=$PRINSEQDIR
@@ -234,13 +234,13 @@ function human_filter () {
 	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nCarregando os dados ${i}..."
 	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
-	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTER}/${i}_sorted.bam -
+	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTERDIR}/${i}_sorted_bam -
 	    	# Indexa o arquivo para acesso mais rápido
-	    	samtools index -@ ${THREADS} ${HUMANFILTERDIR}/${i}_sorted.bam
+	    	samtools index -@ ${THREADS} ${HUMANFILTERDIR}/${i}_sorted_bam
 	    	# Filtra os segmentos não mapeados Flag 4 (-f 4) para um novo arquivo filtered.sam 
-	    	samtools view -bS -f 4 ${HUMANFILTERDIR}/${i}_sorted.bam > ${HUMANFILTERDIR}/${i}.bam -@ ${THREADS}
+	    	samtools view -bS -f 4 ${HUMANFILTERDIR}/${i}_sorted_bam > ${HUMANFILTERDIR}/${i}_bam -@ ${THREADS}
 		# Salva os dados no formato .fastq
-		samtools fastq ${HUMANFILTERDIR}/${i}.bam > ${HUMANFILTERDIR}/${i}.fastq -@ ${THREADS}
+		samtools fastq ${HUMANFILTERDIR}/${i}_bam > ${HUMANFILTERDIR}/${i}.fastq -@ ${THREADS}
 	done
 	IODIR=$HUMANFILTERDIR
 }
