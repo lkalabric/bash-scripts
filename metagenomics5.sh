@@ -228,7 +228,7 @@ function qc_filter2 () {
 
 function human_filter () {
 	# Remoção das reads do genoma humano
-	[ ! -d "${HUMANFILTER}" ] && mkdir -vp ${HUMANFILTER}
+	[ ! -d "${HUMANFILTERDIR}" ] && mkdir -vp ${HUMANFILTERDIR}
 	echo -e "Executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
 	# Loop para analisar todos barcodes, um de cada vez
 	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
@@ -236,13 +236,13 @@ function human_filter () {
 	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
 	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTER}/${i}_sorted.bam -
 	    	# Indexa o arquivo para acesso mais rápido
-	    	samtools index -@ ${THREADS} ${HUMANFILTER}/${i}_sorted.bam
+	    	samtools index -@ ${THREADS} ${HUMANFILTERDIR}/${i}_sorted.bam
 	    	# Filtra os segmentos não mapeados Flag 4 (-f 4) para um novo arquivo filtered.sam 
-	    	samtools view -bS -f 4 ${HUMANFILTER}/${i}_sorted.bam > ${HUMANFILTER}/${i}.bam -@ ${THREADS}
+	    	samtools view -bS -f 4 ${HUMANFILTERDIR}/${i}_sorted.bam > ${HUMANFILTERDIR}/${i}.bam -@ ${THREADS}
 		# Salva os dados no formato .fastq
-		samtools fastq ${HUMANFILTER}/${i}.bam > ${HUMANFILTER}/${i}.fastq -@ ${THREADS}
+		samtools fastq ${HUMANFILTERDIR}/${i}.bam > ${HUMANFILTERDIR}/${i}.fastq -@ ${THREADS}
 	done
-	IODIR=$HUMANFILTER
+	IODIR=$HUMANFILTERDIR
 }
 
 function reads_polishing () {
