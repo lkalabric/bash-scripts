@@ -293,10 +293,10 @@ function kraken_local () {
 	[ ! -d "${KRAKENDIR}" ] && mkdir -vp ${KRAKENDIR}
 	echo -e "executando o Kraken2...\n"
 	for i in $(find ${IODIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-		# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.corrected.fasta
 		echo -e "\nCarregando os dados ${i}..."
-		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.corrected.fasta
-		echo -e "\nResultados ${i}"
+		# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
+		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
+		echo -e "\nGerando o ${i}_report.txt"
 		~/scripts/kraken2_quick_report.sh "${KRAKENDIR}/${i}_report.txt"
 	done
 }
@@ -317,7 +317,7 @@ workflowList=(
 	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 blastn_local'
 	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection kraken_local'
   	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection blastn_local'
-	'sequencing_summary2 qc_filter1 qc_filter2 human_filter autocorrection blastn_local'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter qc_filter1 qc_filter2 autocorrection kraken_local'
 	'assembly'
 )
 
