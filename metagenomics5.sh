@@ -220,7 +220,7 @@ function qc_filter2 () {
 	echo -e "executando prinseq-lite.pl...\n"
 	for i in $(find "${IODIR}" -type f -exec basename {} .fastq \; | sort); do
 		echo -e "\nResultados ${i}..."
-		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -out_bad "${PRINSEQDIR}/${i}.bad" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
+		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 		# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
 	done
   IODIR=$PRINSEQDIR
