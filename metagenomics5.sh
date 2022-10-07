@@ -195,7 +195,7 @@ function primer_removal () {
 	PRIMER="GTTTCCCACTGGAGGATA"
 	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
 	echo -e "executando cutadapt em ${IODIR}...\n"
-	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | cut -d_ -f1 | sort); do
+	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 	done
