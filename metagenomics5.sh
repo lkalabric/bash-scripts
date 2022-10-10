@@ -69,6 +69,7 @@ BLASTDIR="${RESULTSDIR}/BLAST"
 ASSEMBLYDIR="${RESULTSDIR}/ASSEMBLY"
 CONTIGSLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
 KRAKENCONTIGDIR="${RESULTSDIR}/KRAKEN_CONTIG"
+BLASTCONTIGDIR="${RESULTSDIR}/BLAST"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -310,7 +311,7 @@ function krakencontig_local () {
 	for i in $(find ${IODIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 		[ ! -d "${IODIR}/${i}" ] && continue
 		echo -e "\nCarregando os dados ${i}..."
-		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGDIR}/${i}_report.txt --output ${KRAKENCONTIGDIR}/${i}_output.txt ${IODIR}/${i}.fasta
+		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGDIR}/${i}_report.txt --output ${KRAKENCONTIGDIR}/${i}_output.txt ${IODIR}/${i}/contigs.fasta
 		echo -e "\nGerando o ${i}_report.txt"
 		~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGDIR}/${i}_quick_report.txt"
 	done
