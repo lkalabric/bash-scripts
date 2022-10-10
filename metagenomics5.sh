@@ -67,7 +67,8 @@ KRAKENDIR="${RESULTSDIR}/KRAKEN"
 QUERYDIR="${RESULTSDIR}/QUERY"
 BLASTDIR="${RESULTSDIR}/BLAST"
 ASSEMBLYDIR="${RESULTSDIR}/ASSEMBLY"
-CONTIGLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
+CONTIGSLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
+KRAKENCONTIGDIR="${RESULTSDIR}/KRAKEN_CONTIG"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -287,7 +288,31 @@ function kraken_local () {
 		# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
 		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.fasta
 		echo -e "\nGerando o ${i}_report.txt"
-		~/scripts/kraken2_quick_report.sh "${KRAKENDIR}/${i}_report.txt"
+		~/scripts/kraken2_quick_report.sh "${KRAKENDIR}/${i}_quick_report.txt"
+	done
+}
+
+function spades () {
+	# Faz a análise de cobertura e montagem das reads em sequencias referências
+	[ ! -d "${CONTIGSLEVELDIR}" ] && mkdir -vp ${CONTIGSLEVELDIR}
+	echo -e "Executando o pipeline Spades...\n"
+	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+		echo -e "\nCarregando os dados ${i} para monategm...\n"
+		# Pipeline Spades 
+		spades -s ${IODIR}/${i}.fastq - o ${CONTIGSLEVELDIR}/${i}		
+	done
+	IODIR=$CONTIGSLEVELDIR
+}
+
+function krakencontig_local () {
+	# Classificação taxonômica utilizando Kraken2
+	echo -e "Executando o Kraken2...\n"
+	for i in $(find ${IODIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+		[ ! -d "${IODIR}/${i}" ] && continue
+		echo -e "\nCarregando os dados ${i}..."
+		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGDIR}/${i}_report.txt --output ${KRAKENCONTIGDIR}/${i}_output.txt ${IODIR}/${i}.fasta
+		echo -e "\nGerando o ${i}_report.txt"
+		~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGDIR}/${i}_quick_report.txt"
 	done
 }
 
@@ -305,7 +330,7 @@ function assembly () {
 workflowList=(
 	'sequencing_summary1 basecalling'
 	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter reads_polishing kraken_local'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter reads_polishing kraken_local spades'
   	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter reads_polishing blastn_local'
 	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter qc_filter1 qc_filter2 reads_polishing kraken_local'
 	'assembly'
