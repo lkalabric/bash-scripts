@@ -69,7 +69,8 @@ DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 CUTADAPTDIR="${RESULTSDIR}/CUTADAPT"
 NANOFILTDIR="${RESULTSDIR}/NANOFILT"
 PRINSEQDIR="${RESULTSDIR}/PRINSEQ"
-HUMANFILTERDIR="${RESULTSDIR}/HUMANFILTER"
+HUMANFILTERDIR1="${RESULTSDIR}/HUMANFILTER1"
+HUMANFILTERDIR2="${RESULTSDIR}/HUMANFILTER2"
 READSLEVELDIR="${RESULTSDIR}/READS_LEVEL"
 KRAKENDIR="${RESULTSDIR}/KRAKEN"
 QUERYDIR="${RESULTSDIR}/QUERY"
@@ -256,28 +257,46 @@ function qc_filter2 () {
   IODIR=$PRINSEQDIR
 }
 
-function human_filter () {
+function human_filter1 () {
 	# Remoção das reads do genoma humano
 	if [ ! -d $HUMANFILTERDIR ]; then
-		mkdir $HUMANFILTERDIR
-		# [ ! -d "${HUMANFILTERDIR}" ] && mkdir -vp ${HUMANFILTERDIR}
+		mkdir $HUMANFILTERDIR1
+		# [ ! -d "${HUMANFILTERDIR1}" ] && mkdir -vp ${HUMANFILTERDIR1}
 		echo -e "Executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
 		# Loop para analisar todos barcodes, um de cada vez
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			echo -e "\nCarregando os dados ${i}..."
 				# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
-				minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTERDIR}/${i}_sorted_bam -
+				minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTERDIR1}/${i}_sorted_bam -
 				# Indexa o arquivo para acesso mais rápido
-				samtools index -@ ${THREADS} ${HUMANFILTERDIR}/${i}_sorted_bam
-				# Filtra os segmentos não mapeados Flag 4 (-f 4) para um novo arquivo filtered.sam 
-				samtools view -bS -f 4 ${HUMANFILTERDIR}/${i}_sorted_bam > ${HUMANFILTERDIR}/${i}_bam -@ ${THREADS}
+				samtools index -@ ${THREADS} ${HUMANFILTERDIR1}/${i}_sorted_bam
+				# Filtra as reads não mapeados Flag 4 (-f 4) para um novo arquivo filtered.sam 
+				samtools view -bS -f 4 ${HUMANFILTERDIR1}/${i}_sorted_bam > ${HUMANFILTERDIR1}/${i}_bam -@ ${THREADS}
 			# Salva os dados no formato .fastq
 			samtools fastq ${HUMANFILTERDIR}/${i}_bam > ${HUMANFILTERDIR}/${i}.fastq -@ ${THREADS}
 		done
 	else
 		echo "Usando dados HUMANFILTER analisados previamente..."
 	fi
-	IODIR=$HUMANFILTERDIR
+	IODIR=$HUMANFILTERDIR1
+}
+
+function human_filter2 () {
+	# Remoção das reads do genoma humano
+	if [ ! -d $HUMANFILTERDIR2 ]; then
+		mkdir $HUMANFILTERDIR
+		# [ ! -d "${HUMANFILTERDIR2}" ] && mkdir -vp ${HUMANFILTERDIR2}
+		echo -e "Executando gmap para filtrar as reads do genoma humano...\n"
+		# Loop para analisar todos barcodes, um de cada vez
+		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+			echo -e "\nCarregando os dados ${i}..."
+			# Filtra as reads não mapeados 
+			gmap -d GRCh38 "${IODIR}/${i}.fastq"
+		done
+	else
+		echo "Usando dados HUMANFILTER2 analisados previamente..."
+	fi
+	IODIR=$HUMANFILTERDIR2
 }
 
 function reads_polishing () {
@@ -416,9 +435,9 @@ function blastncontig_local () {
 workflowList=(
 	'sequencing_summary1 basecalling'
 	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter reads_polishing kraken_local spades'
-  	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter reads_polishing blastn_local'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter qc_filter1 qc_filter2 reads_polishing kraken_local'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local spades'
+  	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing blastn_local'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter1 qc_filter1 qc_filter2 reads_polishing kraken_local'
 	'assembly'
 )
 
