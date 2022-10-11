@@ -4,10 +4,10 @@
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
-# última atualização: 10 OUT 2022
-# versão 5: modulariza as etapas do workflow e permite criar diferentes wokflows executado cada etapa como uma função
+# última atualização: 11 OUT 2022
+# versão 5: modulariza e personaliza as workflows a partir do uso de funções
 
-# Descrição de cada etapa disponível para construção dos workflows
+# Descrição de cada função disponível para construção dos workflows
 # sequencing_summary1
 # sequencing_summary2
 # basecalling
@@ -17,12 +17,17 @@
 # qc_filter1
 # qc_filter2
 # human_filter
-# autocorrection
-# blastn_local
-  # blast_report
-# kraken_local
-  # kraken2_quick_report
-# assembly
+# reads_polishing (reads_level)
+	# coverage
+	# blastn_local
+		# blast_report
+	# kraken_local
+		# kraken2_quick_report
+# contifs_leves
+	# blastncontig_local
+		# blastn_report
+	# krakencontif_local
+		# kraken2_quick_report
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
@@ -33,6 +38,9 @@ if [[ $# -eq 0 ]]; then
 	echo "Sintáxe: ./metagenomics5.sh <LIBRARY> <MODELO: fast, hac, sup> <WF: 1, 2, 3,...>"
 	exit 0
 fi
+
+# Ativando pacotes Conda
+source activate ngs
 
 # Caminho de INPUT dos dados fast5
 RAWDIR="${HOME}/data/${RUNNAME}"
@@ -66,10 +74,10 @@ READSLEVELDIR="${RESULTSDIR}/READS_LEVEL"
 KRAKENDIR="${RESULTSDIR}/KRAKEN"
 QUERYDIR="${RESULTSDIR}/QUERY"
 BLASTDIR="${RESULTSDIR}/BLAST"
-ASSEMBLYDIR="${RESULTSDIR}/ASSEMBLY"
+COVERAGEDIR="${RESULTSDIR}/READS_LEVEL/COVERAGE"
 CONTIGSLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
-KRAKENCONTIGDIR="${RESULTSDIR}/KRAKEN_CONTIG"
-BLASTCONTIGDIR="${RESULTSDIR}/BLAST"
+KRAKENCONTIGDIR="${RESULTSDIR}/CONTIGS_LEVEL/KRAKEN"
+BLASTCONTIGDIR="${RESULTSDIR}/CONTIGS_LEVEL/BLAST"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -129,9 +137,11 @@ function basecalling () {
 	# Cria a pasta BASECALLDIR e faz o basecalling
 	if [ ! -d $BASECALLDIR ]; then
 		mkdir -vp $BASECALLDIR
-		echo -e "executando guppy_basecaller...\n"
+		echo -e "Executando guppy_basecaller...\n"
 		# Comando para guppy_basecaller usando GPU
 		guppy_basecaller -r -i ${RAWDIR} -s "${BASECALLDIR}" -c ${CONFIG} -x auto --min_qscore ${QSCORE} --gpu_runners_per_device ${GPUPERDEVICE} --chunk_size ${CHUNCKSIZE} --chunks_per_runner ${CHUNKPERRUNNER} --verbose_logs
+	else
+			echo "Usando dados BASECALL analisados previamente..."
 	fi
   IODIR=$BASECALLDIR
 }
@@ -146,7 +156,7 @@ function demux () {
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
 		mkdir -vp $DEMUXDIR
-		echo -e "executando guppy_barcoder em ${IODIR}...\n"
+		echo -e "Executando guppy_barcoder em ${IODIR}...\n"
 		guppy_barcoder -r -i "${IODIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
 		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
 		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
@@ -155,6 +165,8 @@ function demux () {
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 		done
+	else
+		echo "Usando dados DEMUX_CAT analisados previamente..."
 	fi
   IODIR=$DEMUXCATDIR  
 }
@@ -166,7 +178,7 @@ function demux_headcrop () {
 	ARRANGEMENTS="barcode_arrs_nb12.cfg barcode_arrs_nb24.cfg"
 	if [ ! -d $DEMUXDIR ]; then
 		mkdir -vp $DEMUXDIR
-		echo -e "executando guppy_barcoder+headcrop em ${IODIR}...\n"
+		echo -e "Executando guppy_barcoder para demux_headcrop em ${IODIR}...\n"
 		guppy_barcoder -r -i "${IODIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
 		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
@@ -175,6 +187,8 @@ function demux_headcrop () {
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 		done
+	else
+		echo "Usando dados DEMUX_CAT analisados previamente..."
 	fi
   IODIR=$DEMUXCATDIR
 }
@@ -183,82 +197,129 @@ function sequencing_summary2 () {
 	# pycoQC summary
 	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" ]; then
-		echo -e "executando pycoQC no sequencing summary com o parâmetro default QSCORE=9...\n"
+		echo -e "Executando pycoQC no sequencing summary com o parâmetro default QSCORE=9...\n"
 		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 	if [ ! -f "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" ]; then
-		echo -e "executando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9...\n"
+		echo -e "Executando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9...\n"
 		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
 
 function primer_removal () {
 	# Remoção dos primers
-	PRIMER="GTTTCCCACTGGAGGATA"
-	[ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}
-	echo -e "executando cutadapt em ${IODIR}...\n"
-	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
-		cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
-		echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
-	done
+	if [ ! -d $CUTADAPTDIR ]; then
+		mkdir -vp ${CUTADAPTDIR}
+		# [ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}	
+		PRIMER="GTTTCCCACTGGAGGATA"
+		echo -e "executando cutadapt em ${IODIR}...\n"
+		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
+			echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+		done
+	else
+		echo "Usando dados CUTADAPT analisados previamente..."
+	fi
   IODIR=$CUTADAPTDIR
 }
 
 function qc_filter1 () {
 	# Filtro por tamanho
-	source activate ngs
-	[ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
-	echo -e "executando NanoFilt em ${IODIR}...\n"
-	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
-		NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-	done
+	if [ ! -d $NANOFILTDIR ]; then
+		mkdir $NANOFILTDIR
+		# [ ! -d ${NANOFILTDIR} ] && mkdir -vp ${NANOFILTDIR}
+		echo -e "executando NanoFilt em ${IODIR}...\n"
+		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+			NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
+		done
+	else
+		echo "Usando dados NANOFILT analisados previamente..."
+	fi
 	IODIR=$NANOFILTDIR
 }
 
 function qc_filter2 () {
 	# Filtro de complexidade
-	# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
-	[ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
-	echo -e "executando prinseq-lite.pl...\n"
-	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
-		echo -e "\nResultados ${i}..."
-		prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
-		# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
-	done
+	if [ ! -d $PRINSEQDIR ]; then
+		mkdir $PRINSEQDIR
+		# [ ! -d ${PRINSEQDIR} ] && mkdir -vp ${PRINSEQDIR}
+		# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
+		echo -e "executando prinseq-lite.pl...\n"
+		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+			echo -e "\nResultados ${i}..."
+			prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
+			# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
+		done
+	else
+		echo "Usando dados PRINSEQ analisados previamente..."
+	fi
   IODIR=$PRINSEQDIR
 }
 
 function human_filter () {
 	# Remoção das reads do genoma humano
-	[ ! -d "${HUMANFILTERDIR}" ] && mkdir -vp ${HUMANFILTERDIR}
-	echo -e "Executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
-	# Loop para analisar todos barcodes, um de cada vez
-	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
-		echo -e "\nCarregando os dados ${i}..."
-	    	# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
-	    	minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTERDIR}/${i}_sorted_bam -
-	    	# Indexa o arquivo para acesso mais rápido
-	    	samtools index -@ ${THREADS} ${HUMANFILTERDIR}/${i}_sorted_bam
-	    	# Filtra os segmentos não mapeados Flag 4 (-f 4) para um novo arquivo filtered.sam 
-	    	samtools view -bS -f 4 ${HUMANFILTERDIR}/${i}_sorted_bam > ${HUMANFILTERDIR}/${i}_bam -@ ${THREADS}
-		# Salva os dados no formato .fastq
-		samtools fastq ${HUMANFILTERDIR}/${i}_bam > ${HUMANFILTERDIR}/${i}.fastq -@ ${THREADS}
-	done
+	if [ ! -d $HUMANFILTERDIR ]; then
+		mkdir $HUMANFILTERDIR
+		# [ ! -d "${HUMANFILTERDIR}" ] && mkdir -vp ${HUMANFILTERDIR}
+		echo -e "Executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
+		# Loop para analisar todos barcodes, um de cada vez
+		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+			echo -e "\nCarregando os dados ${i}..."
+				# Alinha as reads contra o arquivo indice do genoma humano e ordena os segmentos
+				minimap2 -ax map-ont -t ${THREADS} ${HUMANREFMMI} ${IODIR}/${i}.fastq | samtools sort -@ ${THREADS} -o ${HUMANFILTERDIR}/${i}_sorted_bam -
+				# Indexa o arquivo para acesso mais rápido
+				samtools index -@ ${THREADS} ${HUMANFILTERDIR}/${i}_sorted_bam
+				# Filtra os segmentos não mapeados Flag 4 (-f 4) para um novo arquivo filtered.sam 
+				samtools view -bS -f 4 ${HUMANFILTERDIR}/${i}_sorted_bam > ${HUMANFILTERDIR}/${i}_bam -@ ${THREADS}
+			# Salva os dados no formato .fastq
+			samtools fastq ${HUMANFILTERDIR}/${i}_bam > ${HUMANFILTERDIR}/${i}.fastq -@ ${THREADS}
+		done
+	else
+		echo "Usando dados HUMANFILTER analisados previamente..."
+	fi
 	IODIR=$HUMANFILTERDIR
 }
 
 function reads_polishing () {
 	# Autocorreção das reads
-	[ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
-	echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
-	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
-		echo -e "\nCarregando os dados ${i} para autocorreção...\n"
-		# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
-		minimap2 -ax ava-ont -t ${THREADS} ${IODIR}/${i}.fastq ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}_overlap.sam
-		# Correção de erros a partir das sequencias consenso
-	 	racon -t ${THREADS} -f -u ${IODIR}/${i}.fastq ${READSLEVELDIR}/${i}_overlap.sam ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}.fasta
-	done
+	if [ ! -d $READSLEVELDIR ]; then
+		mkdir $READSLEVELDIR
+		# [ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
+		echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
+		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+			echo -e "\nCarregando os dados ${i} para autocorreção...\n"
+			# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
+			minimap2 -ax ava-ont -t ${THREADS} ${IODIR}/${i}.fastq ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}_overlap.sam
+			# Correção de erros a partir das sequencias consenso
+			racon -t ${THREADS} -f -u ${IODIR}/${i}.fastq ${READSLEVELDIR}/${i}_overlap.sam ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}.fasta
+		done
+	else
+		echo "Usando dados READSLEVEL analisados previamente..."
+	fi
   IODIR=$READSLEVELDIR
+}
+
+function coverage () {
+	# Faz a análise de cobertura e montagem das reads em sequencias referências
+	[ ! -d "${COVERAGEDIR}" ] && mkdir -vp ${COVERAGEDIR}
+}
+
+function kraken_local () {
+	# Classificação taxonômica utilizando Kraken2
+	if [ ! -d $KRAKENDIR ]; then
+		mkdir $KRAKENDIR
+		# [ ! -d "${KRAKENDIR}" ] && mkdir -vp ${KRAKENDIR}
+		echo -e "Classificação das reads pelo Kraken2...\n"
+		for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
+			echo -e "\nCarregando os dados ${i}..."
+			# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
+			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.fasta
+			echo -e "\nGerando o ${i}_report.txt"
+			~/scripts/kraken2_quick_report.sh "${KRAKENDIR}/${i}_quick_report.txt"
+		done
+	else
+		echo "Relatórios KRAKEN2 já emitidos..."
+	fi
 }
 
 function blastn_local () {
@@ -270,57 +331,80 @@ function blastn_local () {
 		# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
 
 	# Busca as QUERIES no BLASTDB local e salva na pasta BLASTDIR
-	[ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
-	for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
-		blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-		# Busca remota
-		# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-		echo -e "\nResultados ${i}"
-		~/scripts/blast_report.sh "${BLASTDIR}/${i}.blastn"
-	done	
-}
-
-function kraken_local () {
-	# Classificação taxonômica utilizando Kraken2
-	[ ! -d "${KRAKENDIR}" ] && mkdir -vp ${KRAKENDIR}
-	echo -e "executando o Kraken2...\n"
-	for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
-		echo -e "\nCarregando os dados ${i}..."
-		# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
-		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.fasta
-		echo -e "\nGerando o ${i}_report.txt"
-		~/scripts/kraken2_quick_report.sh "${KRAKENDIR}/${i}_quick_report.txt"
-	done
+	if [ ! -d $BLASTDIR ]; then
+		mkdir $BLASTDIR
+		# [ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
+		echo -e "Classificação das reads pelo BLASTN...\n"
+		for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
+			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+			# Busca remota
+			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+			echo -e "\nResultados ${i}"
+			~/scripts/blast_report.sh "${BLASTDIR}/${i}.blastn"
+		done
+	else
+		echo "Relatórios BLASTN já emitidos..."
+	fi
 }
 
 function spades () {
-	# Faz a análise de cobertura e montagem das reads em sequencias referências
-	[ ! -d "${CONTIGSLEVELDIR}" ] && mkdir -vp ${CONTIGSLEVELDIR}
-	echo -e "Executando o pipeline Spades...\n"
-	for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
-		echo -e "\nCarregando os dados ${i} para monategm...\n"
-		# Pipeline Spades 
-		spades -s ${IODIR}/${i}.fastq - o ${CONTIGSLEVELDIR}/${i}		
-	done
+	# Pipeline Spades
+	if [ ! -d $CONTIGSLEVELDIR ]; then
+		mkdir $CONTIGSLEVELDIR
+		# [ ! -d "${CONTIGSLEVELDIR}" ] && mkdir -vp ${CONTIGSLEVELDIR}
+		echo -e "Executando o pipeline Spades...\n"
+		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+			echo -e "\nCarregando os dados ${i} para monategm...\n"
+			# Pipeline Spades 
+			spades -s ${IODIR}/${i}.fastq - o ${CONTIGSLEVELDIR}/${i}		
+		done
+	else
+		echo "Usando dados CONTIGSLEVEL analisados previamente..."
+	fi
 	IODIR=$CONTIGSLEVELDIR
 }
 
 function krakencontig_local () {
 	# Classificação taxonômica utilizando Kraken2
-	echo -e "Executando o Kraken2...\n"
-	for i in $(find ${IODIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
-		[ ! -d "${IODIR}/${i}" ] && continue
-		echo -e "\nCarregando os dados ${i}..."
-		kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGDIR}/${i}_report.txt --output ${KRAKENCONTIGDIR}/${i}_output.txt ${IODIR}/${i}/contigs.fasta
-		echo -e "\nGerando o ${i}_report.txt"
-		~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGDIR}/${i}_quick_report.txt"
-	done
+	if [ ! -d $KRAKENCONTIGDIR ]; then
+		mkdir $KRAKENCONTIGDIR
+		echo -e "Classificação das contigs pelo Kraken2...\n"
+		for i in $(find ${IODIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+			[ ! -d "${IODIR}/${i}" ] && continue
+			echo -e "\nCarregando os dados ${i}..."
+			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGDIR}/${i}_report.txt --output ${KRAKENCONTIGDIR}/${i}_output.txt ${IODIR}/${i}/contigs.fasta
+			echo -e "\nGerando o ${i}_report.txt"
+			~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGDIR}/${i}_quick_report.txt"
+		done
+	else
+		echo "Relatórios Kraken2 já emitidos..."
+	fi
 }
 
-function assembly () {
-	# Faz a análise de cobertura e montagem das reads em sequencias referências
-	[ ! -d "${ASSEMBLYDIR}" ] && mkdir -vp ${ASSEMBLYDIR}
-	
+function blastncontig_local () {
+	# Classificação taxonômica utilizando blastn
+	# Preparação do BLASTDB local
+	# Script: makeblastdb_refseq.sh
+		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
+		# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
+		# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
+	if [ ! -d $BLASTCONTIGDIR ]; then
+		mkdir $BLASTCONTIGDIR
+		# [ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
+		# Busca as QUERIES no BLASTDB local e salva na pasta BLASTDIR
+		# [ -z "$IODIR" ] && IODIR=$READSLEVELDIR
+		echo -e "Classificação das contigs pelo BLASTN...\n"
+		for i in $(find ${IODIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
+			echo -e "\nCarregando os dados ${i}..."
+			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTCONTIGDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+			# Busca remota
+			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+			echo -e "\nResultados ${i}"
+			~/scripts/blast_report.sh "${BLASTCONTIGDIR}/${i}.blastn"
+		done
+	else
+		echo "Relatórios BLASTN já emitidos..."
+	fi
 }
 
 #
@@ -328,6 +412,7 @@ function assembly () {
 #
 
 # Define as etapas de cada workflow
+# Etapas obrigatórios: basecalling, demux/primer_removal ou demux_headcrop, reads_polishing e algum método de classificação taxonômica
 workflowList=(
 	'sequencing_summary1 basecalling'
 	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local'
