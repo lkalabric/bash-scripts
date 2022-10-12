@@ -42,7 +42,7 @@ case $# in
 esac
 
 # Output filename
-OUTPUTFILENAME=${FILENAME/.blastn/_report.blastn}
+OUTPUTFILENAME=${FILENAME/.blastn/.blastnreport}
 
 # Lista os vírus pesquisados
 WIMPDIR="${HOME}/data/WIMP"
