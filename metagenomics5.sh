@@ -275,7 +275,7 @@ function qc_filter2 () {
 
 function human_filter1 () {
 	# Remoção das reads do genoma humano
-	if [ ! -d $HUMANFILTERDIR ]; then
+	if [ ! -d $HUMANFILTERDIR1 ]; then
 		mkdir $HUMANFILTERDIR1
 		# [ ! -d "${HUMANFILTERDIR1}" ] && mkdir -vp ${HUMANFILTERDIR1}
 		echo -e "Executando minimap2 & samtools para filtrar as reads do genoma humano...\n"
@@ -289,7 +289,7 @@ function human_filter1 () {
 				# Filtra as reads não mapeados Flag 4 (-f 4) para um novo arquivo filtered.sam 
 				samtools view -bS -f 4 ${HUMANFILTERDIR1}/${i}_sorted_bam > ${HUMANFILTERDIR1}/${i}_bam -@ ${THREADS}
 			# Salva os dados no formato .fastq
-			samtools fastq ${HUMANFILTERDIR}/${i}_bam > ${HUMANFILTERDIR}/${i}.fastq -@ ${THREADS}
+			samtools fastq ${HUMANFILTERDIR1}/${i}_bam > ${HUMANFILTERDIR1}/${i}.fastq -@ ${THREADS}
 		done
 	else
 		echo "Usando dados HUMANFILTER analisados previamente..."
@@ -300,7 +300,7 @@ function human_filter1 () {
 function human_filter2 () {
 	# Remoção das reads do genoma humano
 	if [ ! -d $HUMANFILTERDIR2 ]; then
-		mkdir $HUMANFILTERDIR
+		mkdir $HUMANFILTERDIR2
 		# [ ! -d "${HUMANFILTERDIR2}" ] && mkdir -vp ${HUMANFILTERDIR2}
 		echo -e "Executando gmap para filtrar as reads do genoma humano...\n"
 		# Loop para analisar todos barcodes, um de cada vez
