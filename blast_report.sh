@@ -42,7 +42,7 @@ case $# in
 esac
 
 # Output filename
-OUTPUTFILENAME=$(echo ${FILENAME} | replace ".blastn" "_report.blastn")
+OUTPUTFILENAME=${FILENAME/.blastn/_report.blastn}
 
 # Lista os vírus pesquisados
 WIMPDIR="${HOME}/data/WIMP"
