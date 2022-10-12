@@ -371,7 +371,7 @@ function blastn_local () {
 			# Busca remota
 			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTNREADSDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			echo -e "\nResultados ${i}"
-			~/scripts/blast_report.sh "${BLASTNREADSDIR}/${i}.blastn"
+			~/scripts/blastn_report.sh "${BLASTNREADSDIR}/${i}.blastn"
 		done
 	else
 		echo "Relatórios BLASTN já emitidos..."
