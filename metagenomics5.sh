@@ -39,8 +39,20 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-# Ativando pacotes Conda
-source activate ngs
+# Verifica se os ambientes conda ngs ou bioinfo foram criados e ativa um dos ambientes
+# Tipicamente, instalamos todos os pacotes em um destes ambientes, mas, recentemente, estamos
+# pensando em separa cada pacote em seu próprio ambiente por questões de compatibilidade
+# com o Python!
+if { conda env list | grep 'ngs'; } >/dev/null 2>&1; then
+	source activate ngs
+else
+	if { conda env list | grep 'bioinfo'; } >/dev/null 2>&1; then
+		source activate bioinfo
+	else
+		echo "Ambiente conda indisponível!"
+		exit 0
+	fi
+fi
 
 # Caminho de INPUT dos dados fast5
 RAWDIR="${HOME}/data/${RUNNAME}"
