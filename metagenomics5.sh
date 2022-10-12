@@ -66,18 +66,19 @@ RESULTSDIR="${RESULTSDIR}/wf${WF}"
 [[ ! -d "${RESULTSDIR}" ]] || mkdir -vp ${RESULTSDIR} && rm -r "${RESULTSDIR}"; mkdir -vp "${RESULTSDIR}"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
 DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
+QCFILTERSDIR="${RESULTSDIR}/QC_FILTERS"
 CUTADAPTDIR="${RESULTSDIR}/CUTADAPT"
 NANOFILTDIR="${RESULTSDIR}/NANOFILT"
 PRINSEQDIR="${RESULTSDIR}/PRINSEQ"
 HUMANFILTERDIR1="${RESULTSDIR}/HUMANFILTER1"
 HUMANFILTERDIR2="${RESULTSDIR}/HUMANFILTER2"
 READSLEVELDIR="${RESULTSDIR}/READS_LEVEL"
-KRAKENDIR="${RESULTSDIR}/READS_LEVEL/KRAKEN"
-BLASTDIR="${RESULTSDIR}/READS_LEVEL/BLAST"
+KRAKENREADSDIR="${READSLEVELDIR}/KRAKEN"
+BLASTNREADSDIR="${READSLEVELDIR}/BLASTN"
 COVERAGEDIR="${RESULTSDIR}/READS_LEVEL/COVERAGE"
 CONTIGSLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
-KRAKENCONTIGDIR="${RESULTSDIR}/CONTIGS_LEVEL/KRAKEN"
-BLASTCONTIGDIR="${RESULTSDIR}/CONTIGS_LEVEL/BLAST"
+KRAKENCONTIGSDIR="${CONTIGSLEVELDIR}/KRAKEN"
+BLASTNCONTIGSDIR="${CONTIGSLEVELDIR}/BLASTN"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -324,16 +325,16 @@ function coverage () {
 
 function kraken_local () {
 	# Classificação taxonômica utilizando Kraken2
-	if [ ! -d $KRAKENDIR ]; then
-		mkdir $KRAKENDIR
-		# [ ! -d "${KRAKENDIR}" ] && mkdir -vp ${KRAKENDIR}
+	if [ ! -d $KRAKENREADSDIR ]; then
+		mkdir $KRAKENREADSDIR
+		# [ ! -d "${KRAKENREADSDIR}" ] && mkdir -vp ${KRAKENREADSDIR}
 		echo -e "Classificação das reads pelo Kraken2...\n"
 		for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
 			echo -e "\nCarregando os dados ${i}..."
 			# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
-			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENDIR}/${i}_report.txt --output ${KRAKENDIR}/${i}_output.txt ${IODIR}/${i}.fasta
+			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENREADSDIR}/${i}_report.txt --output ${KRAKENREADSDIR}/${i}_output.txt ${IODIR}/${i}.fasta
 			echo -e "\nGerando o ${i}_report.txt"
-			~/scripts/kraken2_quick_report.sh "${KRAKENDIR}/${i}_quick_report.txt"
+			~/scripts/kraken2_quick_report.sh "${KRAKENREADSDIR}/${i}_quick_report.txt"
 		done
 	else
 		echo "Relatórios KRAKEN2 já emitidos..."
@@ -348,17 +349,17 @@ function blastn_local () {
 		# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
 		# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
 
-	# Busca as QUERIES no BLASTDB local e salva na pasta BLASTDIR
-	if [ ! -d $BLASTDIR ]; then
-		mkdir $BLASTDIR
-		# [ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
+	# Busca as QUERIES no BLASTDB local e salva na pasta BLASTNREADSDIR
+	if [ ! -d $BLASTNREADSDIR ]; then
+		mkdir $BLASTNREADSDIR
+		# [ ! -d ${BLASTNREADSDIR} ] && mkdir -vp ${BLASTNREADSDIR}
 		echo -e "Classificação das reads pelo BLASTN...\n"
 		for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
-			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTNREADSDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			# Busca remota
-			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTNREADSDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			echo -e "\nResultados ${i}"
-			~/scripts/blast_report.sh "${BLASTDIR}/${i}.blastn"
+			~/scripts/blast_report.sh "${BLASTNREADSDIR}/${i}.blastn"
 		done
 	else
 		echo "Relatórios BLASTN já emitidos..."
@@ -384,15 +385,15 @@ function spades () {
 
 function krakencontig_local () {
 	# Classificação taxonômica utilizando Kraken2
-	if [ ! -d $KRAKENCONTIGDIR ]; then
-		mkdir $KRAKENCONTIGDIR
+	if [ ! -d $KRAKENCONTIGSDIR ]; then
+		mkdir $KRAKENCONTIGSDIR
 		echo -e "Classificação das contigs pelo Kraken2...\n"
 		for i in $(find ${IODIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ ! -d "${IODIR}/${i}" ] && continue
 			echo -e "\nCarregando os dados ${i}..."
-			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGDIR}/${i}_report.txt --output ${KRAKENCONTIGDIR}/${i}_output.txt ${IODIR}/${i}/contigs.fasta
+			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGSDIR}/${i}_report.txt --output ${KRAKENCONTIGSDIR}/${i}_output.txt ${IODIR}/${i}/contigs.fasta
 			echo -e "\nGerando o ${i}_report.txt"
-			~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGDIR}/${i}_quick_report.txt"
+			~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGSDIR}/${i}_quick_report.txt"
 		done
 	else
 		echo "Relatórios Kraken2 já emitidos..."
@@ -406,19 +407,19 @@ function blastncontig_local () {
 		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
 		# Extrai do arquvio refseq.fasta a lista acesso refseq.acc
 		# Cria a partir do arquivo refseq.acc o arquivo refseq.map que mapeia os taxid (números que identificam as espécies taxonômica)
-	if [ ! -d $BLASTCONTIGDIR ]; then
-		mkdir $BLASTCONTIGDIR
+	if [ ! -d $BLASTNCONTIGSDIR ]; then
+		mkdir $BLASTNCONTIGSDIR
 		# [ ! -d ${BLASTDIR} ] && mkdir -vp ${BLASTDIR}
 		# Busca as QUERIES no BLASTDB local e salva na pasta BLASTDIR
 		# [ -z "$IODIR" ] && IODIR=$READSLEVELDIR
 		echo -e "Classificação das contigs pelo BLASTN...\n"
 		for i in $(find ${IODIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			echo -e "\nCarregando os dados ${i}..."
-			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTCONTIGDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTNCONTIGSDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			# Busca remota
 			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			echo -e "\nResultados ${i}"
-			~/scripts/blast_report.sh "${BLASTCONTIGDIR}/${i}.blastn"
+			~/scripts/blast_report.sh "${BLASTNCONTIGSDIR}/${i}.blastn"
 		done
 	else
 		echo "Relatórios BLASTN já emitidos..."
