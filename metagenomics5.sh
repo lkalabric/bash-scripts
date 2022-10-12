@@ -74,8 +74,12 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 [[ ! -d "${RESULTSDIR}" ]] || mkdir -vp ${RESULTSDIR}
 BASECALLDIR="${RESULTSDIR}/BASECALL"
 RESULTSDIR="${RESULTSDIR}/wf${WF}"
-# Reseta a pasta de resultados do worflow 
-[[ ! -d "${RESULTSDIR}" ]] || mkdir -vp ${RESULTSDIR} && rm -r "${RESULTSDIR}"; mkdir -vp "${RESULTSDIR}"
+read -p "Re-analisar os dados [S-apagar e re-analisa os dados / N-continua as análises de onde pararam]? " -n 1 -r
+if [[ $REPLY =~ ^[Ss]$ ]]; then
+	# Reseta a pasta de resultados do worflow
+	echo "Apagando as pastas e re-iniciando as análises..."
+	[[ ! -d "${RESULTSDIR}" ]] || mkdir -vp ${RESULTSDIR} && rm -r "${RESULTSDIR}"; mkdir -vp "${RESULTSDIR}"
+fi
 DEMUXDIR="${RESULTSDIR}/DEMUX"
 DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
 QCFILTERSDIR="${RESULTSDIR}/QC_FILTERS"
