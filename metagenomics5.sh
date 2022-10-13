@@ -307,7 +307,7 @@ function human_filter2 () {
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			echo -e "\nCarregando os dados ${i}..."
 			# Filtra as reads não mapeados 
-			gmap -d GRCh38 "${IODIR}/${i}.fastq"
+			gmapl -d GRCh38 "${IODIR}/${i}.fastq"
 		done
 	else
 		echo "Usando dados HUMANFILTER2 analisados previamente..."
@@ -388,10 +388,10 @@ function spades () {
 		mkdir $CONTIGSLEVELDIR
 		# [ ! -d "${CONTIGSLEVELDIR}" ] && mkdir -vp ${CONTIGSLEVELDIR}
 		echo -e "Executando o pipeline Spades...\n"
-		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+		for i in $(find "${IODIR}"/*.fasta -type f -exec basename {} .fasta \; | sort); do
 			echo -e "\nCarregando os dados ${i} para monategm...\n"
 			# Pipeline Spades 
-			spades -s ${IODIR}/${i}.fastq - o ${CONTIGSLEVELDIR}/${i}		
+			spades -s ${IODIR}/${i}.fasta - o ${CONTIGSLEVELDIR}/${i} --only-assembler		
 		done
 	else
 		echo "Usando dados CONTIGSLEVEL analisados previamente..."
@@ -431,7 +431,7 @@ function blastncontig_local () {
 		echo -e "Classificação das contigs pelo BLASTN...\n"
 		for i in $(find ${IODIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			echo -e "\nCarregando os dados ${i}..."
-			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTNCONTIGSDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
+			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}/contigs.fasta" -out "${BLASTNCONTIGSDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			# Busca remota
 			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			echo -e "\nResultados ${i}"
