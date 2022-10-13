@@ -382,10 +382,8 @@ function blastn_local () {
 	fi
 }
 
-function spades () {
+function assembly () {
 	# Pipeline Spades
-	echo $IODIR
-	echo $CONTIGSLEVELDIR
 	if [ ! -d $CONTIGSLEVELDIR ]; then
 		mkdir $CONTIGSLEVELDIR
 		# [ ! -d "${CONTIGSLEVELDIR}" ] && mkdir -vp ${CONTIGSLEVELDIR}
@@ -453,7 +451,7 @@ function blastncontig_local () {
 workflowList=(
 	'sequencing_summary1 basecalling'
 	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local blastn_local spades blastncontig_local'
+	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local blastn_local assembly blastncontig_local'
   	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing blastn_local'
 	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter1 qc_filter1 qc_filter2 reads_polishing kraken_local'
 	'assembly'
