@@ -384,6 +384,8 @@ function blastn_local () {
 
 function spades () {
 	# Pipeline Spades
+	echo $IODIR
+	echo $CONTIGSLEVELDIR
 	#if [ ! -d $CONTIGSLEVELDIR ]; then
 		mkdir $CONTIGSLEVELDIR
 		# [ ! -d "${CONTIGSLEVELDIR}" ] && mkdir -vp ${CONTIGSLEVELDIR}
