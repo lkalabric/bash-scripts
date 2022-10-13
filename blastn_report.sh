@@ -25,7 +25,7 @@ WIMPDIR="${HOME}/data/WIMP"
 # echo "Lista de vírus pesquisados"
 # ls ${WIMPDIR}
 
-echo "All reads: $(wc -l ${FILENAME})" | tee -a ${OUTPUTFILENAME} 
+echo "Classified reads/contigs: $(wc -l ${FILENAME})" | tee -a ${OUTPUTFILENAME} 
 echo "Número de reads por taxon"  | tee -a ${OUTPUTFILENAME} 
 echo "Flaviviridae"  | tee -a ${OUTPUTFILENAME} 
 printf '	%s		%s\n' "DENV1	" "$(grep -c -F -f ${WIMPDIR}/denv1.wimp ${FILENAME})"  | tee -a ${OUTPUTFILENAME} 
