@@ -391,7 +391,7 @@ function assembly () {
 		for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
 			echo -e "\nCarregando os dados ${i} para montagem...\n"
 			# Pipeline Spades 
-			spades -s ${IODIR}/${i}.fasta - o ${CONTIGSLEVELDIR}/${i} --only-assembler
+			spades -s ${IODIR}/${i}.fasta -o ${CONTIGSLEVELDIR}/${i} --only-assembler
 		done
 	else
 		echo "Usando dados CONTIGSLEVEL analisados previamente..."
