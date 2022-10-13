@@ -386,18 +386,18 @@ function spades () {
 	# Pipeline Spades
 	echo $IODIR
 	echo $CONTIGSLEVELDIR
-	#if [ ! -d $CONTIGSLEVELDIR ]; then
+	if [ ! -d $CONTIGSLEVELDIR ]; then
 		mkdir $CONTIGSLEVELDIR
 		# [ ! -d "${CONTIGSLEVELDIR}" ] && mkdir -vp ${CONTIGSLEVELDIR}
 		echo -e "Executando o pipeline Spades...\n"
-		for i in $(find "${IODIR}"/*.fasta -type f -exec basename {} .fasta \; | sort); do
+		for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
 			echo -e "\nCarregando os dados ${i} para montagem...\n"
 			# Pipeline Spades 
-			spades -s ${IODIR}/${i}.fasta - o ${CONTIGSLEVELDIR}/${i} --only-assembler		
+			spades -s ${IODIR}/${i}.fasta - o ${CONTIGSLEVELDIR}/${i} --only-assembler
 		done
-	#else
+	else
 		echo "Usando dados CONTIGSLEVEL analisados previamente..."
-	#fi
+	fi
 	IODIR=$CONTIGSLEVELDIR
 }
 
