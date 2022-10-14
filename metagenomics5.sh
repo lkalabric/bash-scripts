@@ -444,7 +444,7 @@ function blastncontig_local () {
 			# Busca remota
 			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			wc -l < ${BLASTNCONTIGSDIR}/${i}.blastn >> ${BLASTNCONTIGSDIR}/passed_reads.log
-			~/scripts/blast_report.sh "${BLASTNCONTIGSDIR}/${i}.blastn"
+			~/scripts/blastn_report.sh "${BLASTNCONTIGSDIR}/${i}.blastn"
 		done
 	else
 		echo "Relatórios BLASTN já emitidos..."
