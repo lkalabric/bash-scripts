@@ -181,6 +181,7 @@ function demux () {
 		[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
+			grep -c "runid" ${DEMUXCATDIR}/${i}.fastq >> ${DEMUXCATDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados DEMUX_CAT analisados previamente..."
@@ -203,6 +204,7 @@ function demux_headcrop () {
 		[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
+			grep -c "runid" ${DEMUXCATDIR}/${i}.fastq >> ${DEMUXCATDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados DEMUX_CAT analisados previamente..."
@@ -232,7 +234,8 @@ function primer_removal () {
 		echo -e "executando cutadapt em ${IODIR}...\n"
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
-			echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+			# echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+			grep -c "runid" ${CUTADAPTDIR}/${i}.fastq >> ${CUTADAPTDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados CUTADAPT analisados previamente..."
@@ -248,6 +251,7 @@ function qc_filter1 () {
 		echo -e "executando NanoFilt em ${IODIR}...\n"
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
+			grep -c "runid" ${NANOFILTDIR}/${i}.fastq >> ${NANOFILTDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados NANOFILT analisados previamente..."
@@ -264,8 +268,9 @@ function qc_filter2 () {
 		echo -e "executando prinseq-lite.pl...\n"
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			echo -e "\nResultados ${i}..."
+			# Em geral, os resultados do Prinseq são salvos com a extensão. good.fastq. Nós mantivemos apenas .fastq por conveniência do pipeline
 			prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
-			# Resultados disponíveis no report do Prinseq (Good sequences). Nós renomeamos para .corrected para compatibilizar com o readslevel
+			grep -c "runid" ${PRINSEQDIR}/${i}.fastq >> ${PRINSEQDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados PRINSEQ analisados previamente..."
@@ -290,6 +295,7 @@ function human_filter1 () {
 				samtools view -bS -f 4 ${HUMANFILTERDIR1}/${i}_sorted_bam > ${HUMANFILTERDIR1}/${i}_bam -@ ${THREADS}
 			# Salva os dados no formato .fastq
 			samtools fastq ${HUMANFILTERDIR1}/${i}_bam > ${HUMANFILTERDIR1}/${i}.fastq -@ ${THREADS}
+			grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq >> ${HUMANFILTERDIR1}/passed_reads.log
 		done
 	else
 		echo "Usando dados HUMANFILTER analisados previamente..."
@@ -308,6 +314,7 @@ function human_filter2 () {
 			echo -e "\nCarregando os dados ${i}..."
 			# Filtra as reads não mapeados 
 			gmapl -d GRCh38 "${IODIR}/${i}.fastq"
+			grep -c "runid" ${HUMANFILTERDIR2}/${i}.fastq >> ${HUMANFILTERDIR2}/passed_reads.log
 		done
 	else
 		echo "Usando dados HUMANFILTER2 analisados previamente..."
@@ -327,6 +334,7 @@ function reads_polishing () {
 			minimap2 -ax ava-ont -t ${THREADS} ${IODIR}/${i}.fastq ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}_overlap.sam
 			# Correção de erros a partir das sequencias consenso
 			racon -t ${THREADS} -f -u ${IODIR}/${i}.fastq ${READSLEVELDIR}/${i}_overlap.sam ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}.fasta
+			grep -c ">" ${READSLEVELDIR}/${i}.fasta >> ${READSLEVELDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados READSLEVEL analisados previamente..."
@@ -374,7 +382,7 @@ function blastn_local () {
 			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTNREADSDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			# Busca remota
 			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTNREADSDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-			echo -e "\nResultados ${i}"
+			wc -l ${BLASTNREADSDIR}/${i}.blastn >> ${BLASTNREADSDIR}/passed_reads.log
 			~/scripts/blastn_report.sh "${BLASTNREADSDIR}/${i}.blastn"
 		done
 	else
@@ -392,6 +400,7 @@ function assembly () {
 			echo -e "\nCarregando os dados ${i} para montagem...\n"
 			# Pipeline Spades 
 			spades -s ${IODIR}/${i}.fasta -o ${CONTIGSLEVELDIR}/${i} --only-assembler
+			grep -c ">" ${CONTIGSLEVELDIR}/${i}/contigs.fasta >> ${CONTIGSLEVELDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados CONTIGSLEVEL analisados previamente..."
@@ -434,7 +443,7 @@ function blastncontig_local () {
 			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}/contigs.fasta" -out "${BLASTNCONTIGSDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			# Busca remota
 			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-			echo -e "\nResultados ${i}"
+			wc -l ${BLASTNCONTIGSDIR}/${i}.blastn >> ${BLASTNCONTIGSDIR}/passed_reads.log
 			~/scripts/blast_report.sh "${BLASTNCONTIGSDIR}/${i}.blastn"
 		done
 	else
