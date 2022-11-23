@@ -399,7 +399,7 @@ function assembly () {
 			echo -e "\nCarregando os dados ${i} para montagem...\n"
 			# Pipeline Spades 
 			spades -s ${IODIR}/${i}.fasta -o ${CONTIGSLEVELDIR}/${i} --only-assembler
-			grep -c ">" ${CONTIGSLEVELDIR}/${i}/contigs.fasta >> ${CONTIGSLEVELDIR}/passed_reads.log
+			grep -c ">" ${CONTIGSLEVELDIR}/${i}/contigs.fasta >> ${CONTIGSLEVELDIR}/passed_contigs.log
 		done
 	else
 		echo "Usando dados CONTIGSLEVEL analisados previamente..."
