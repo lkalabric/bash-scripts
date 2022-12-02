@@ -245,7 +245,7 @@ function filter_by_start_time () {
       grep "${RUNNAME}" "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq" | wc -l
     done
   done
-}_
+}
 
 
 function sequencing_summary2 () {
