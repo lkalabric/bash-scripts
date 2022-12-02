@@ -12,7 +12,6 @@
 RUNNAME=$1 	# Nome do dado passado na linha de comando
 MODEL=$2	# Modelo de basecalling fast hac sup
 WF=$3		# Workflow de bioinformatica 1, 2 ou 3
-STAR_DATE=$4	# Data da corrida
 
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, modelo ou data da corrida!"
@@ -25,7 +24,7 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
 
 # Caminho de OUTPUT das análises
-FILTER_BY_START_TIMEDIR="${RESULTSDIR}/wf${WF}_filter/DEMUX_CAT"
+FILTER_BY_START_TIMEDIR="${RESULTSDIR}/wf${WF}_filter/DEMUX_CAT2"
 [ ! -d "${FILTER_BY_START_TIMEDIR}" ] && mkdir -vp "${FILTER_BY_START_TIMEDIR}"
 
 # Filter_by_start_time
@@ -37,7 +36,7 @@ for i in $(find ${DEMUXCATDIR} -type f -exec basename {} .fastq \; | sort); do
 	grep "${RUNNAME}" "${DEMUXCATDIR}/${i}.fastq" | wc -l
 	for ((j=0; j<=7; j++)); do
 		echo -e "\nExecutando filter_by_start_time ${START_TIME[${j}]}..."
-		egrep -A3 "(${START_DATE}+T+${REGEXP[${j}]})" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
+		egrep -A3 "start_time=..........T+${REGEXP[${j}]})" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
 		echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"..."
 		grep "${RUNNAME}" "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq" | wc -l
 	done
