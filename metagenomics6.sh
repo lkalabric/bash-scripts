@@ -240,7 +240,7 @@ function filter_by_starttime () {
     grep "${RUNNAME}" "${DEMUXCATDIR}/${i}.fastq" | wc -l
     for ((j=0; j<=7; j++)); do
       echo -e "\nExecutando filter_by_start_time ${START_TIME[${j}]}..."
-      egrep -A3 "start_time=..........T+${REGEXP[${j}]})" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
+      egrep -A3 "start_time=..........T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
       echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"..."
       grep "${RUNNAME}" "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq" | wc -l
     done
