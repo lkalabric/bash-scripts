@@ -224,13 +224,13 @@ function filter_by_start_time () {
 		declare -a REGEXP=("(0+[0-1])" "(0+[0-2])" "(0+[0-4])" "(0+[0-8])" "(0+[0-9]|1+[0-2])" "(0+[0-9]|1+[0-6])" "(0+[0-9]|1+[0-9]|2+[0-4])" "..")
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 	    		echo -e "\nContando as reads do arquivo ${DEMUXCATDIR}/${i}.fastq..."
-			total_reads="$(grep ${RUNNAME} ${DEMUXCATDIR}/${i}.fastq | wc -l)"; echo "Todos - ${total_reads}" >> ${FILTERBYSTARTTIMEDIR}/${i}_filterlog.txt
+			echo "Todos - $(grep ${RUNNAME} ${DEMUXCATDIR}/${i}.fastq | wc -l)" >> ${FILTERBYSTARTTIMEDIR}/${i}_filterlog.txt
 			for ((j=0; j<=7; j++)); do
 				echo -e "\nExecutando filter_by_start_time ${START_TIME[${j}]}..."
 				# Filtar as reads por start_time
 				egrep -A3 "start_time=..........T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
 				echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"..."
-				filter_reads="$(grep ${RUNNAME} ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq | wc -l)"; echo "${START_TIME[${j}]} - ${filter_reads}" >> ${FILTERBYSTARTTIMEDIR}/${i}_filterlog.txt
+				echo "${START_TIME[${j}]} - $(grep ${RUNNAME} ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq | wc -l)" >> ${FILTERBYSTARTTIMEDIR}/${i}_filterlog.txt
 			done
 		done
 	else
