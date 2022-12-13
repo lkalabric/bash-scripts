@@ -492,7 +492,7 @@ workflowList=(
   	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing kraken_local assembly krakencontig_local'
 	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal human_filter1 qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local'
 	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter1 qc_filter1 qc_filter2 reads_polishing kraken_local assembly krakencontig_local'
-	'sequencing_summary1 basecalling demux_headcrop filter_by_start_time'
+	'basecalling demux_headcrop filter_by_start_time qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local'
 )
 
 # Validação do WF
