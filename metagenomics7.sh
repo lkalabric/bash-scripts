@@ -212,7 +212,7 @@ function demux_headcrop () {
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 			# Gera o arquivo de log
-			grep -c "runid" ${DEMUXCATDIR}/${i}.fastq >> ${DEMUXCATDIR}/passed_reads.log
+			echo "${i} $(grep -c "runid" ${DEMUXCATDIR}/${i}.fastq)" >> ${DEMUXCATDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados DEMUX_CAT analisados previamente..."
