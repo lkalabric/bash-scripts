@@ -501,7 +501,8 @@ declare -A workflowList=(
 	)
 	
 # Validação do WF
-if [[ "${key}" =~ "${WF}" ]]; then
+keys="${!workflowList[@]}"
+if [[ "${keys}" =~ "${WF}" ]]; then
 	workflowSteps="${workflowList[${WF}]}"
 else
 	echo "Workflow ${WF} não definido!"
