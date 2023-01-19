@@ -209,6 +209,7 @@ function demux_headcrop () {
 		[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
+			# Gera o arquivo de log
 			grep -c "runid" ${DEMUXCATDIR}/${i}.fastq >> ${DEMUXCATDIR}/passed_reads.log
 		done
 	else
@@ -233,7 +234,8 @@ function filter_by_start_time () {
 				# Filtar as reads por start_time
 				egrep -A3 "start_time=..........T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
 				echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"..."
-				echo "${START_TIME[${j}]} - $(grep ${RUNNAME} ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq | wc -l)" >> ${FILTERBYSTARTTIMEDIR}/${i}_filterlog.txt
+				# Gera o arquivo de log
+				echo "${START_TIME[${j}]} - $(grep ${RUNNAME} ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq | wc -l)" >> ${FILTERBYSTARTTIMEDIR}/${i}_filter.log
 			done
 		done
 	else
@@ -266,6 +268,7 @@ function primer_removal () {
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 			# echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+			# Gera o arquivo de log
 			grep -c "runid" ${CUTADAPTDIR}/${i}.fastq >> ${CUTADAPTDIR}/passed_reads.log
 		done
 	else
