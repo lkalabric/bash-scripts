@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# script: metagenomics5.sh
+# script: metagenomics7.sh
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
