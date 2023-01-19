@@ -4,9 +4,10 @@
 # autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
-# última atualização: 02 DEZ 2022
+# última atualização: 19 JAN 2023
 # versão 5: modulariza e personaliza as workflows a partir do uso de funções
-# versão 6: inclui as funções filter_by_starttime e ...
+# versão 6: cria a função filter_by_starttime
+# versão 7: re-organiza o output das analises de cada workflows e remove redundâncias
 
 # Descrição de cada função disponível para construção dos workflows
 # sequencing_summary1
@@ -37,7 +38,7 @@ MODEL=$2	# Modelo de basecalling fast hac sup
 WF=$3		# Workflow de bioinformatica 1, 2 ou 3
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./metagenomics6.sh <LIBRARY> <MODELO: fast, hac, sup> <WF: 1, 2, 3,...>"
+	echo "Sintáxe: ./metagenomics7.sh <LIBRARY> <MODELO: fast, hac, sup> <WF: 1, 2, 3, 3_filter...>"
 	exit 0
 fi
 
@@ -59,7 +60,7 @@ fi
 # Caminho de INPUT dos dados fast5
 RAWDIR="${HOME}/data/${RUNNAME}"
 if [ ! -d $RAWDIR ]; then
-	echo "Pasta de dados não encontrada!"
+	echo "Pasta de dados ${RUNNAME} não encontrada!"
 	exit 0
 fi
 
