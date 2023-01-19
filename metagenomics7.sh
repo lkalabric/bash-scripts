@@ -88,8 +88,8 @@ else
 	fi
 fi
 BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/DEMUX"
-DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
+DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
+DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
 FILTERBYSTARTTIMEDIR="${RESULTSDIR}/wf${WF}/FILTERBYSTARTTIME"
 QCFILTERSDIR="${RESULTSDIR}/wf${WF}/QC_FILTERS"
 CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
@@ -520,13 +520,13 @@ else
 fi
 
 # Índice para o array workflowList 0..n
-indice=$(expr $WF - 1)
+#indice=$(expr $WF - 1)
 
 # Execução das análises propriamente ditas a partir do workflow selecionado
 echo "Executando o workflow $WF..."
-echo "Passos do workflow $WF: ${workflowSteps}"
+echo "Passos do workflow $WF: ${workflowSteps[@]}"
 # Separa cada etapa do workflow no vetor steps
-read -r -a steps <<< "${workflowSteps}"
+read -r -a steps <<< "${workflowSteps[@]}"
 for call_func in ${steps[@]}; do
 	echo -e "\nExecutando o passo $call_func... "
 	eval $call_func
