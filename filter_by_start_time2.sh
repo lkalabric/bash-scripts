@@ -5,7 +5,7 @@
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 13 ABR 2022
 # última atualização: 02 DEZ 2022
-# versão 2: 
+# versão 2: Sem start date!
 # link: https://www.biostars.org/p/389679/
 
 # Validação da entrada de dados na linha de comando
