@@ -76,12 +76,15 @@ RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 # Cria a pasta de resultados
 if [[ ! -d "${RESULTSDIR}" ]]; then
 	mkdir -vp ${RESULTSDIR}
+	mkdir -vp ${RESULTSDIR}/wf${WF}
 else
 	read -p "Re-analisar os dados [S-apagar e re-analisa os dados / N-continuar as análises de onde pararam]? " -n 1 -r
 	if [[ $REPLY =~ ^[Ss]$ ]]; then
 		# Reseta a pasta de resultados do worflow
 		echo "Apagando as pastas e re-iniciando as análises..."
-		[[ ! -d "${RESULTSDIR}" ]] || mkdir -vp ${RESULTSDIR} && rm -r "${RESULTSDIR}"; mkdir -vp "${RESULTSDIR}"
+		rm -r ${RESULTSDIR}
+		mkdir -vp ${RESULTSDIR}
+		mkdir -vp ${RESULTSDIR}/wf${WF}
 	fi
 fi
 BASECALLDIR="${RESULTSDIR}/BASECALL"
@@ -237,7 +240,7 @@ function filter_by_start_time () {
 				egrep -A3 "start_time=..........T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
 				echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"..."
 				# Gera o arquivo de log
-				echo "${START_TIME[${j}]} - $(grep ${RUNNAME} ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq | wc -l)" >> ${FILTERBYSTARTTIMEDIR}/${i}_filter.log
+				echo "${START_TIME[${j}]} $(grep ${RUNNAME} ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq | wc -l)" >> ${FILTERBYSTARTTIMEDIR}/${i}_filter.log
 			done
 		done
 	else
@@ -271,7 +274,7 @@ function primer_removal () {
 			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 			# echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 			# Gera o arquivo de log
-			grep -c "runid" ${CUTADAPTDIR}/${i}.fastq >> ${CUTADAPTDIR}/passed_reads.log
+			echo "${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq)" >> ${CUTADAPTDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados CUTADAPT analisados previamente..."
@@ -287,7 +290,8 @@ function qc_filter1 () {
 		echo -e "executando NanoFilt em ${IODIR}...\n"
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
-			grep -c "runid" ${NANOFILTDIR}/${i}.fastq >> ${NANOFILTDIR}/passed_reads.log
+			# Gera o arquivo de log
+			echo "${i} $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq)" >> ${NANOFILTDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados NANOFILT analisados previamente..."
@@ -306,7 +310,8 @@ function qc_filter2 () {
 			echo -e "\nResultados ${i}..."
 			# Em geral, os resultados do Prinseq são salvos com a extensão. good.fastq. Nós mantivemos apenas .fastq por conveniência do pipeline
 			prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
-			grep -c "runid" ${PRINSEQDIR}/${i}.fastq >> ${PRINSEQDIR}/passed_reads.log
+			# Gera o arquivo de log
+			echo "${i} $(grep -c "runid" ${PRINSEQDIR}/${i}.fastq)" >> ${PRINSEQDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados PRINSEQ analisados previamente..."
@@ -331,7 +336,8 @@ function human_filter1 () {
 				samtools view -bS -f 4 ${HUMANFILTERDIR1}/${i}_sorted_bam > ${HUMANFILTERDIR1}/${i}_bam -@ ${THREADS}
 			# Salva os dados no formato .fastq
 			samtools fastq ${HUMANFILTERDIR1}/${i}_bam > ${HUMANFILTERDIR1}/${i}.fastq -@ ${THREADS}
-			grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq >> ${HUMANFILTERDIR1}/passed_reads.log
+			# Gera o arquivo de log
+			echo "${i} $(grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq)" >> ${HUMANFILTERDIR1}/passed_reads.log
 		done
 	else
 		echo "Usando dados HUMANFILTER analisados previamente..."
@@ -350,7 +356,8 @@ function human_filter2 () {
 			echo -e "\nCarregando os dados ${i}..."
 			# Filtra as reads não mapeados 
 			gmapl -d GRCh38 "${IODIR}/${i}.fastq"
-			grep -c "runid" ${HUMANFILTERDIR2}/${i}.fastq >> ${HUMANFILTERDIR2}/passed_reads.log
+			# Gera o arquivo de log
+			echo "${i} $(grep -c "runid" ${HUMANFILTERDIR2}/${i}.fastq)" >> ${HUMANFILTERDIR2}/passed_reads.log
 		done
 	else
 		echo "Usando dados HUMANFILTER2 analisados previamente..."
@@ -370,7 +377,8 @@ function reads_polishing () {
 			minimap2 -ax ava-ont -t ${THREADS} ${IODIR}/${i}.fastq ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}_overlap.sam
 			# Correção de erros a partir das sequencias consenso
 			racon -t ${THREADS} -f -u ${IODIR}/${i}.fastq ${READSLEVELDIR}/${i}_overlap.sam ${IODIR}/${i}.fastq > ${READSLEVELDIR}/${i}.fasta
-			grep -c ">" ${READSLEVELDIR}/${i}.fasta >> ${READSLEVELDIR}/passed_reads.log
+			# Gera o arquivo de log
+			echo "${i} $(grep -c ">" ${READSLEVELDIR}/${i}.fasta)" >> ${READSLEVELDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados READSLEVEL analisados previamente..."
@@ -390,6 +398,7 @@ function kraken_local () {
 		# [ ! -d "${KRAKENREADSDIR}" ] && mkdir -vp ${KRAKENREADSDIR}
 		echo -e "Classificação das reads pelo Kraken2...\n"
 		for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
+			# Gera o arquivo de loglog
 			echo -e "\nCarregando os dados ${i}..."
 			# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
 			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENREADSDIR}/${i}_report.txt --output ${KRAKENREADSDIR}/${i}_output.txt ${IODIR}/${i}.fasta
@@ -436,7 +445,8 @@ function assembly () {
 			echo -e "\nCarregando os dados ${i} para montagem...\n"
 			# Pipeline Spades 
 			spades -s ${IODIR}/${i}.fasta -o ${CONTIGSLEVELDIR}/${i} --only-assembler
-			grep -c ">" ${CONTIGSLEVELDIR}/${i}/contigs.fasta >> ${CONTIGSLEVELDIR}/passed_contigs.log
+			# Gera o arquivo de log
+			echo "${i} $(grep -c ">" ${CONTIGSLEVELDIR}/${i}/contigs.fasta)" >> ${CONTIGSLEVELDIR}/passed_contigs.log
 		done
 	else
 		echo "Usando dados CONTIGSLEVEL analisados previamente..."
