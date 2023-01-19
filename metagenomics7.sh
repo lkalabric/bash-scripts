@@ -206,7 +206,7 @@ function demux_headcrop () {
 		echo -e "Executando guppy_barcoder para demux_headcrop em ${IODIR}...\n"
 		guppy_barcoder -r -i "${IODIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes --num_extra_bases_trim ${TRIMADAPTER}
 		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
-		[ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
+		# [ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
 		# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
 		[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
