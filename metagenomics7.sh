@@ -71,7 +71,7 @@ KRAKENDBDIR="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se 
 
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
-RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}/wf${WF}"
+RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
 # Cria a pasta de resultados
 if [[ ! -d "${RESULTSDIR}" ]]; then
 	mkdir -vp ${RESULTSDIR}
@@ -86,20 +86,20 @@ fi
 BASECALLDIR="${RESULTSDIR}/BASECALL"
 DEMUXDIR="${RESULTSDIR}/DEMUX"
 DEMUXCATDIR="${RESULTSDIR}/DEMUX_CAT"
-FILTERBYSTARTTIMEDIR="${RESULTSDIR}/FILTERBYSTARTTIME"
-QCFILTERSDIR="${RESULTSDIR}/QC_FILTERS"
-CUTADAPTDIR="${RESULTSDIR}/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/PRINSEQ"
-HUMANFILTERDIR1="${RESULTSDIR}/HUMANFILTER1"
-HUMANFILTERDIR2="${RESULTSDIR}/HUMANFILTER2"
-READSLEVELDIR="${RESULTSDIR}/READS_LEVEL"
-KRAKENREADSDIR="${READSLEVELDIR}/KRAKEN"
-BLASTNREADSDIR="${READSLEVELDIR}/BLASTN"
-COVERAGEDIR="${RESULTSDIR}/READS_LEVEL/COVERAGE"
-CONTIGSLEVELDIR="${RESULTSDIR}/CONTIGS_LEVEL"
-KRAKENCONTIGSDIR="${CONTIGSLEVELDIR}/KRAKEN"
-BLASTNCONTIGSDIR="${CONTIGSLEVELDIR}/BLASTN"
+FILTERBYSTARTTIMEDIR="${RESULTSDIR}/wf${WF}/FILTERBYSTARTTIME"
+QCFILTERSDIR="${RESULTSDIR}/wf${WF}/QC_FILTERS"
+CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
+NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
+PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
+HUMANFILTERDIR1="${RESULTSDIR}/wf${WF}/HUMANFILTER1"
+HUMANFILTERDIR2="${RESULTSDIR}/wf${WF}/HUMANFILTER2"
+READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
+KRAKENREADSDIR="${READSLEVELDIR}/wf${WF}/KRAKEN"
+BLASTNREADSDIR="${READSLEVELDIR}/wf${WF}/BLASTN"
+COVERAGEDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL/COVERAGE"
+CONTIGSLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
+KRAKENCONTIGSDIR="${CONTIGSLEVELDIR}/wf${WF}/KRAKEN"
+BLASTNCONTIGSDIR="${CONTIGSLEVELDIR}/wf${WF}/BLASTN"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -492,16 +492,19 @@ function blastncontig_local () {
 # Define as etapas de cada workflow
 # Etapas obrigatórios: basecalling, demux/primer_removal ou demux_headcrop, reads_polishing e algum método de classificação taxonômica
 workflowList=(
-	'sequencing_summary1 basecalling'
-	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local'
-  	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing kraken_local assembly krakencontig_local'
-	'sequencing_summary1 basecalling demux sequencing_summary2 primer_removal human_filter1 qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local'
-	'sequencing_summary1 basecalling demux_headcrop sequencing_summary2 human_filter1 qc_filter1 qc_filter2 reads_polishing kraken_local assembly krakencontig_local'
-	'basecalling demux_headcrop filter_by_start_time qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local'
-)
+	'1 sequencing_summary1 basecalling'
+	'2 sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local'
+	'3 sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local'
+  	'3_filter sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local'
+	)
 
 # Validação do WF
+if [[ " ${workflowList[1]} " =~ " ${WF} " ]]; then
+    # whatever you want to do when array contains value
+    echo "Achei a workflow"
+    exit 0
+fi
+
 if [[ $WF -gt ${#workflowList[@]} ]]; then
 	echo "Workflow não definido!"
 	exit 3
