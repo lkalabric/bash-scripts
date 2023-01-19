@@ -497,33 +497,25 @@ declare -A workflowList=(
 	[1]="sequencing_summary1 basecalling"
 	[2]="sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local"
 	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
-  	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
+	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
 	)
-
+	
 # Validação do WF
-IFS=" " read -r -a workflowName <<< "${workflowList[@]}"
-for i in ${workflowName[@]}; do
-	if [[ " ${i} " =~ " ${WF} " ]]; then
-	    # whatever you want to do when array contains value
-	    echo "Achei a workflow"
-	    exit 0
-	else
-		echo "Erro logico!"
-	fi
-done
-
-if [[ $WF -gt ${#workflowList[@]} ]]; then
-	echo "Workflow não definido!"
+if [[ "${key}" =~ "${WF}" ]]; then
+	workflowSteps="${workflowList[${WF}]}"
+else
+	echo "Workflow ${WF} não definido!"
 	exit 3
 fi
+
 # Índice para o array workflowList 0..n
 indice=$(expr $WF - 1)
 
 # Execução das análises propriamente ditas a partir do workflow selecionado
-echo "Executando o workflow WF$WF..."
-echo "Passos do WF$WF: ${workflowList[$indice]}"
+echo "Executando o workflow $WF..."
+echo "Passos do workflow $WF: ${workflowSteps}"
 # Separa cada etapa do workflow no vetor steps
-read -r -a steps <<< "${workflowList[$indice]}"
+read -r -a steps <<< "${workflowSteps}"
 for call_func in ${steps[@]}; do
 	echo -e "\nExecutando o passo $call_func... "
 	eval $call_func
