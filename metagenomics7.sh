@@ -491,19 +491,24 @@ function blastncontig_local () {
 
 # Define as etapas de cada workflow
 # Etapas obrigatórios: basecalling, demux/primer_removal ou demux_headcrop, reads_polishing e algum método de classificação taxonômica
-workflowList=(
-	'1 sequencing_summary1 basecalling'
-	'2 sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local'
-	'3 sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local'
-  	'3_filter sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local'
+declare -A workflowList=(
+	[1]="sequencing_summary1 basecalling"
+	[2]="sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local"
+	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
+  	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
 	)
 
 # Validação do WF
-if [[ " ${workflowList[1]} " =~ " ${WF} " ]]; then
-    # whatever you want to do when array contains value
-    echo "Achei a workflow"
-    exit 0
-fi
+IFS=" " read -r -a workflowName <<< "${workflowList[@]}"
+for i in ${workflowName[@]}; do
+	if [[ " ${i} " =~ " ${WF} " ]]; then
+	    # whatever you want to do when array contains value
+	    echo "Achei a workflow"
+	    exit 0
+	else
+		echo "Erro logico!"
+	fi
+done
 
 if [[ $WF -gt ${#workflowList[@]} ]]; then
 	echo "Workflow não definido!"
