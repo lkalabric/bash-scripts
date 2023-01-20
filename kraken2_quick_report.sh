@@ -42,7 +42,7 @@ case $# in
 esac
 
 # Define o nome do arquivo de output do relatório
-OUTPUTFILENAME=$(echo ${FILENAME} | replace "_report.txt" "_report.kraken")
+OUTPUTFILENAME=$(echo ${FILENAME} | replace "_report.txt" "_quick_report.txt")
 
 while read -r line ; do
 	count=$(agrep -q -w "$line" ${FILENAME} | cut -f 2)
