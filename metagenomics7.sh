@@ -407,7 +407,7 @@ function kraken_local () {
 			# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
 			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENREADSDIR}/${i}_report.txt --output ${KRAKENREADSDIR}/${i}_output.txt ${IODIR}/${i}.fasta
 			echo -e "\nGerando o ${i}_quick_report.txt"
-			~/scripts/kraken2_quick_report.sh "${KRAKENREADSDIR}/${i}_quick_report.txt"
+			~/scripts/kraken2_quick_report.sh "${KRAKENREADSDIR}/${i}_report.txt"
 		done
 	else
 		echo "Relatórios KRAKEN2 já emitidos..."
@@ -468,7 +468,7 @@ function krakencontig_local () {
 			echo -e "\nCarregando os dados ${i}..."
 			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGSDIR}/${i}_report.txt --output ${KRAKENCONTIGSDIR}/${i}_output.txt ${IODIR}/${i}/contigs.fasta
 			echo -e "\nGerando o ${i}_quick_report.txt"
-			~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGSDIR}/${i}_quick_report.txt"
+			~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGSDIR}/${i}_report.txt"
 		done
 	else
 		echo "Relatórios Kraken2 já emitidos..."
