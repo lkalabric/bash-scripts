@@ -10,27 +10,32 @@
 # versão 7: re-organiza o output das analises de cada workflows e remove redundâncias
 
 # Descrição de cada função disponível para construção dos workflows
-# sequencing_summary1
-# sequencing_summary2
-# basecalling
-# demux
-# demux_headcrop
-# filter_by_starttime
-# primer_removal
-# qc_filter1
-# qc_filter2
-# human_filter
-# reads_polishing (reads_level)
-	# coverage
-	# blastn_local
-		# blast_report
-	# kraken_local
-		# kraken2_quick_report
-# contifs_leves
-	# blastncontig_local
-		# blastn_report
-	# krakencontif_local
-		# kraken2_quick_report
+# IMPORTANTE: Antes de construir a árvore revificar se o I/O é compatível entre uma função e a outra
+# Neste momento, reads_polishing conecta os filtors às análises de classificação taxonômica
+# sequencing_summary1/GREP 			(input: .fast5; output: STDOUT)
+# basecalling/GUPPY_BASECALLER			(input: .fast5; output: sequencing_summary.txt, barcode_summary.txt, .fastq)
+# sequencing_summary2/PYCOQC			(input: sequencing_summary.txt, barcode_summary.txt; output: .html)
+# demux/GUPPY_BARCODER				(input: .fastq; output: .fastq, .log)
+	# primer_removal/CUTADAPT		(input: .fastq; output: .fastq, .log)
+# demux_headcrop/GUPPY_BARCODER			(input: .fastq; output: .fastq, .log)
+# filter_by_starttime/GREP			(input: .fastq; output: .fastq, .log)
+# qc_filter1/NANOFILT				(input: .fastq; output: .fastq, .log)
+# qc_filter2/PRINSEQ				(input: .fastq; output: .fastq, .log)
+# human_filter1/MINIMAP/SAMTOOLS		(input: .fastq; output: .fastq, .log)
+# human_filter2/GMAPL				(input: .fastq; output: .fastq, .log)
+# reads_polishing/MINIMAP/SAMTOOLS/RACON	(input: .fastq; output: .fasta, .log)
+# reads_level
+	# coverage/SAMTOOLS COVERAGE		Não implementado!
+	# blastn_local/BLASTN			(input: .fasta, output: .blastn, .log)
+		# blast_report.sh		(input: .blastn, outpu: .blastnreport)
+	# kraken_local/KRAKEN2			(input: .fasta, output: _report.txt, _output.txt)	
+		# kraken2_quick_report.sh	(input: _report.txt, _quick_report.txt)
+# assembly/SPADES				(input: .fasta; output: .fasta)
+# contifs_level
+	# blastncontig_local/BLASTN		(input: .fasta, output: .blastn, .log)
+		# blastn_report.sh		(input: .blastn, outpu: .blastnreport)
+	# krakencontif_local/KRAKEN2		(input: .fasta, output: _report.txt, _output.txt)	
+		# kraken2_quick_report.sh	(input: _report.txt, _quick_report.txt)
 
 # Validação da entrada de dados na linha de comando
 RUNNAME=$1 	# Nome do dado passado na linha de comando
@@ -98,12 +103,12 @@ PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
 HUMANFILTERDIR1="${RESULTSDIR}/wf${WF}/HUMANFILTER1"
 HUMANFILTERDIR2="${RESULTSDIR}/wf${WF}/HUMANFILTER2"
 READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
-KRAKENREADSDIR="${READSLEVELDIR}/wf${WF}/KRAKEN"
-BLASTNREADSDIR="${READSLEVELDIR}/wf${WF}/BLASTN"
-COVERAGEDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL/COVERAGE"
+KRAKENREADSDIR="${READSLEVELDIR}/KRAKEN"
+BLASTNREADSDIR="${READSLEVELDIR}/BLASTN"
+COVERAGEDIR="${READSLEVELDIR}/COVERAGE"
 CONTIGSLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
-KRAKENCONTIGSDIR="${CONTIGSLEVELDIR}/wf${WF}/KRAKEN"
-BLASTNCONTIGSDIR="${CONTIGSLEVELDIR}/wf${WF}/BLASTN"
+KRAKENCONTIGSDIR="${CONTIGSLEVELDIR}/KRAKEN"
+BLASTNCONTIGSDIR="${CONTIGSLEVELDIR}/BLASTN"
 
 # Pausa a execução para debug
 # read -p "Press [Enter] key to continue..."
@@ -199,6 +204,25 @@ function demux () {
   IODIR=$DEMUXCATDIR  
 }
 
+function primer_removal () {
+	# Remoção dos primers
+	if [ ! -d $CUTADAPTDIR ]; then
+		mkdir -vp ${CUTADAPTDIR}
+		# [ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}	
+		PRIMER="GTTTCCCACTGGAGGATA"
+		echo -e "executando cutadapt em ${IODIR}...\n"
+		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
+			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
+			# echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
+			# Gera o arquivo de log
+			echo "${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq)" >> ${CUTADAPTDIR}/passed_reads.log
+		done
+	else
+		echo "Usando dados CUTADAPT analisados previamente..."
+	fi
+  IODIR=$CUTADAPTDIR
+}
+
 function demux_headcrop () {
 	# Demultiplex, adapter removal com headcrop 18 sem uso do cutadapt
 	# Parâmetros Guppy barcoder (ONT)
@@ -222,7 +246,6 @@ function demux_headcrop () {
 	fi
   IODIR=$DEMUXCATDIR
 }
-
 
 function filter_by_start_time () {
 	if [ ! -d "${FILTERBYSTARTTIMEDIR}" ]; then
@@ -261,25 +284,6 @@ function sequencing_summary2 () {
 		echo -e "Executando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9...\n"
 		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
-}
-
-function primer_removal () {
-	# Remoção dos primers
-	if [ ! -d $CUTADAPTDIR ]; then
-		mkdir -vp ${CUTADAPTDIR}
-		# [ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}	
-		PRIMER="GTTTCCCACTGGAGGATA"
-		echo -e "executando cutadapt em ${IODIR}...\n"
-		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
-			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
-			# echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
-			# Gera o arquivo de log
-			echo "${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq)" >> ${CUTADAPTDIR}/passed_reads.log
-		done
-	else
-		echo "Usando dados CUTADAPT analisados previamente..."
-	fi
-  IODIR=$CUTADAPTDIR
 }
 
 function qc_filter1 () {
@@ -402,7 +406,7 @@ function kraken_local () {
 			echo -e "\nCarregando os dados ${i}..."
 			# kraken2 --db ${KRAKENDBDIR} --threads ${THREADS} --report ${IODIR}/${i}_report.txt --report-minimizer-data --output ${IODIR}/${i}_output.txt ${IODIR}/${i}.filtered.fasta
 			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENREADSDIR}/${i}_report.txt --output ${KRAKENREADSDIR}/${i}_output.txt ${IODIR}/${i}.fasta
-			echo -e "\nGerando o ${i}_report.txt"
+			echo -e "\nGerando o ${i}_quick_report.txt"
 			~/scripts/kraken2_quick_report.sh "${KRAKENREADSDIR}/${i}_quick_report.txt"
 		done
 	else
@@ -463,7 +467,7 @@ function krakencontig_local () {
 			[ ! -d "${IODIR}/${i}" ] && continue
 			echo -e "\nCarregando os dados ${i}..."
 			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENCONTIGSDIR}/${i}_report.txt --output ${KRAKENCONTIGSDIR}/${i}_output.txt ${IODIR}/${i}/contigs.fasta
-			echo -e "\nGerando o ${i}_report.txt"
+			echo -e "\nGerando o ${i}_quick_report.txt"
 			~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGSDIR}/${i}_quick_report.txt"
 		done
 	else
