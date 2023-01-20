@@ -30,8 +30,8 @@
 		# blast_report.sh		(input: .blastn, outpu: .blastnreport)
 	# kraken_local/KRAKEN2			(input: .fasta, output: _report.txt, _output.txt)	
 		# kraken2_quick_report.sh	(input: _report.txt, _quick_report.txt)
-# assembly/SPADES				(input: .fasta; output: .fasta)
-# contifs_level
+# assembly/SPADES.PY				(input: .fasta; output: .fasta)
+# contigs_level
 	# blastncontig_local/BLASTN		(input: .fasta, output: .blastn, .log)
 		# blastn_report.sh		(input: .blastn, outpu: .blastnreport)
 	# krakencontif_local/KRAKEN2		(input: .fasta, output: _report.txt, _output.txt)	
@@ -448,7 +448,7 @@ function assembly () {
 		for i in $(find ${IODIR}/*.fasta -type f -exec basename {} .fasta \; | sort); do
 			echo -e "\nCarregando os dados ${i} para montagem...\n"
 			# Pipeline Spades 
-			spades -s ${IODIR}/${i}.fasta -o ${CONTIGSLEVELDIR}/${i} --only-assembler
+			spades.py -s ${IODIR}/${i}.fasta -o ${CONTIGSLEVELDIR}/${i} --only-assembler
 			# Gera o arquivo de log
 			echo "${i} $(grep -c ">" ${CONTIGSLEVELDIR}/${i}/contigs.fasta)" >> ${CONTIGSLEVELDIR}/passed_contigs.log
 		done
