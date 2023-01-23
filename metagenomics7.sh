@@ -25,12 +25,12 @@
 # human_filter2/GMAPL				(input: .fastq; output: .fastq, .log)
 # reads_polishing/MINIMAP/SAMTOOLS/RACON	(input: .fastq; output: .fasta, .log)
 # reads_level
-	# coverage/SAMTOOLS COVERAGE		Não implementado!
 	# blastn_local/BLASTN			(input: .fasta, output: .blastn, .log)
 		# blast_report.sh		(input: .blastn, outpu: .blastnreport)
 	# kraken_local/KRAKEN2			(input: .fasta, output: _report.txt, _output.txt)	
 		# kraken2_quick_report.sh	(input: _report.txt, _quick_report.txt)
 # assembly/SPADES.PY				(input: .fasta; output: .fasta)
+	# coverage/SAMTOOLS COVERAGE		(input: .fasta; output: _fastcov.txt) Em teste!
 # contigs_level
 	# blastncontig_local/BLASTN		(input: .fasta, output: .blastn, .log)
 		# blastn_report.sh		(input: .blastn, outpu: .blastnreport)
@@ -62,7 +62,7 @@ else
 	fi
 fi
 
-# Caminho de INPUT dos dados fast5
+# Caminho de INPUT dos dados .fast5
 RAWDIR="${HOME}/data/${RUNNAME}"
 if [ ! -d $RAWDIR ]; then
 	echo "Pasta de dados ${RUNNAME} não encontrada!"
@@ -74,6 +74,7 @@ HUMANREFDIR="${HOME}/data/GRCh38"
 REFSEQDIR="${HOME}/data/REFSEQ"
 BLASTDBDIR="${HOME}/data/BLAST_DB"
 KRAKENDBDIR="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
+REFGENDIR="${HOME}/data/REFGEN"
 
 # Caminhos de OUTPUT das análises
 echo "Preparando pastas para (re-)análise dos dados..."
@@ -391,11 +392,6 @@ function reads_polishing () {
   IODIR=$READSLEVELDIR
 }
 
-function coverage () {
-	# Faz a análise de cobertura e montagem das reads em sequencias referências
-	[ ! -d "${COVERAGEDIR}" ] && mkdir -vp ${COVERAGEDIR}
-}
-
 function kraken_local () {
 	# Classificação taxonômica utilizando Kraken2
 	if [ ! -d $KRAKENREADSDIR ]; then
@@ -411,7 +407,7 @@ function kraken_local () {
 			~/scripts/kraken2_quick_report.sh "${KRAKENREADSDIR}/${i}_report.txt"
 		done
 	else
-		echo "Relatórios KRAKEN2 já emitidos..."
+		echo "Relatórios KRAKEN2 em nível de reads já emitidos!"
 	fi
 }
 
@@ -436,7 +432,7 @@ function blastn_local () {
 			~/scripts/blastn_report.sh "${BLASTNREADSDIR}/${i}.blastn"
 		done
 	else
-		echo "Relatórios BLASTN já emitidos..."
+		echo "Relatórios BLASTN em nível de reads já emitidos!"
 	fi
 }
 
@@ -459,6 +455,39 @@ function assembly () {
 	IODIR=$CONTIGSLEVELDIR
 }
 
+function coverage () {
+	# Faz a análise de cobertura e montagem das reads em sequencias referências
+	if [ ! -d "${COVERAGEDIR}" ]; then
+		mkdir -vp ${COVERAGEDIR}
+		# Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
+		echo "Gerando arquivos índices para os genomas referencia..."
+		for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+			REFGENFASTA="${REFGENDIR}/${j}.fasta"
+			REFGENMMI="${REFGENDIR}/${j}.mmi"
+			[ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
+		done  
+		# Análise de cobertura de todos os taxon
+		source activate ngs
+		for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+			for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+				echo "Analisando a cobertura ${READSLEVELDIR}/${i}.corrected.fasta..."
+				samtools coverage ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
+				samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
+				samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
+				fastcov.py ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.${j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.${j}_fastcov.txt
+			done
+		done
+		# Análise de cobertura da biblioteca por taxon
+		#for j in $(find ${REFGENDIR} -type f -name "$TAXON*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+		# echo "Determinando a cobertura da biblioteca para o taxon ${j}..."
+		# fastcov.py ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov.pdf
+		# fastcov.py -l ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov_logscale.pdf
+		#done
+	else
+		echo "Análise de cobertura já analisada!"
+	fi
+}
+
 function krakencontig_local () {
 	# Classificação taxonômica utilizando Kraken2
 	if [ ! -d $KRAKENCONTIGSDIR ]; then
@@ -472,7 +501,7 @@ function krakencontig_local () {
 			~/scripts/kraken2_quick_report.sh "${KRAKENCONTIGSDIR}/${i}_report.txt"
 		done
 	else
-		echo "Relatórios Kraken2 já emitidos..."
+		echo "Relatórios KRAKEN2 em nível de contig já emitidos!"
 	fi
 }
 
@@ -498,7 +527,7 @@ function blastncontig_local () {
 			~/scripts/blastn_report.sh "${BLASTNCONTIGSDIR}/${i}.blastn"
 		done
 	else
-		echo "Relatórios BLASTN já emitidos..."
+		echo "Relatórios BLASTN em nível de contig já emitidos!"
 	fi
 }
 
@@ -511,7 +540,7 @@ function blastncontig_local () {
 declare -A workflowList=(
 	[1]="sequencing_summary1 basecalling"
 	[2]="sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local"
-	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
+	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly coverage krakencontig_local"
 	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
 	)
 	
