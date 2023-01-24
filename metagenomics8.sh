@@ -49,27 +49,36 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Instalação dos softwares requeridos
+# Cria um ambiente para cada aplicação e atualiza os pacotes, se necessário
 # Em desenvolvimento...
 echo -e "Instalando softwares requeridos..."
 if { conda env list | grep 'cutadapt'; } >/dev/null 2>&1; then
 	source activate cutadapt
+	conda update --all
 else
 	conda create -n cutadapt
 	conda install -c bioconda cutadapt
+	cutadapt --version
 	conda deactivate
 fi
 if { conda env list | grep 'nanofilt'; } >/dev/null 2>&1; then
 	source activate nanofilt
+	conda update --all
 else
 	conda create -n nanofilt
 	conda install -c bioconda nanofilt
+	NanoFilt --version
 	conda deactivate
 fi
 if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
 	source activate minimap2
+	conda update --all
 else
 	conda create -n minimap2
 	conda install -c bioconda minimap2 samtools racon
+	minimap2 --version
+	samtools --version
+	racon --version
 	conda deactivate
 fi
 
@@ -79,9 +88,11 @@ fi
 # com o Python!
 if { conda env list | grep 'ngs'; } >/dev/null 2>&1; then
 	source activate ngs
+	conda update --all
 else
 	if { conda env list | grep 'bioinfo'; } >/dev/null 2>&1; then
 		source activate bioinfo
+		conda update --all
 	else
 		echo "Ambiente conda indisponível!"
 		exit 0
