@@ -8,6 +8,7 @@
 # versão 5: modulariza e personaliza as workflows a partir do uso de funções
 # versão 6: cria a função filter_by_starttime
 # versão 7: re-organiza o output das analises de cada workflows e remove redundâncias
+# versão 8: criação do módulo coverage
 
 # Descrição de cada função disponível para construção dos workflows
 # IMPORTANTE: Antes de construir a árvore revificar se o I/O é compatível entre uma função e a outra
@@ -29,8 +30,8 @@
 		# blast_report.sh		(input: .blastn, outpu: .blastnreport)
 	# kraken_local/KRAKEN2			(input: .fasta, output: _report.txt, _output.txt)	
 		# kraken2_quick_report.sh	(input: _report.txt, _quick_report.txt)
-# assembly/SPADES.PY				(input: .fasta; output: .fasta)
 	# coverage/SAMTOOLS COVERAGE		(input: .fasta; output: _fastcov.txt) Em teste!
+# assembly/SPADES.PY				(input: .fasta; output: .fasta)
 # contigs_level
 	# blastncontig_local/BLASTN		(input: .fasta, output: .blastn, .log)
 		# blastn_report.sh		(input: .blastn, outpu: .blastnreport)
@@ -436,6 +437,52 @@ function blastn_local () {
 	fi
 }
 
+function coverage () {
+	# Faz a análise de cobertura e montagem das reads em sequencias referências
+	if [ ! -d "${COVERAGEDIR}" ]; then
+		mkdir -vp ${COVERAGEDIR}
+		# Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
+		echo "Gerando arquivos índices para os genomas referencia..."
+		for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+			REFGENFASTA="${REFGENDIR}/${j}.fasta"
+			REFGENMMI="${REFGENDIR}/${j}.mmi"
+			[ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
+		done  
+		# Mapeamento das sequencias em genomas referência e análise de cobertura
+		source activate ngs
+		for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+			for i in $(find ${IODIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+				echo "Mapeando ${IODIR}/${i}.corrected.fasta..."
+				minimap2 -t ${THREADS} -ax map-ont ${REFGENDIR}/${j}.mmi ${IODIR}/${i}.corrected.fasta | samtools sort -@ ${THREADS} -o ${ASSEMBLYDIR}/${i}.${j}.sorted.bam -	
+				samtools view -@ ${THREADS} -h -F 4 -b ${COVERAGEDIR}/${i}.${j}.sorted.bam > ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam
+				samtools index -@ ${THREADS} ${COVERAGEDIR}/${i}.${j}.sorted.mapped.bam
+				samtools mpileup -A -d 0 -Q 0 ${COVERAGEDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${COVERAGEDIR}/${i}.${j}
+			done
+		done
+		
+		# Análise de cobertura de todos os taxon
+		source activate ngs
+		for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+			for i in $(find ${IODIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+				echo "Analisando a cobertura ${IODIR}/${i}.corrected.fasta..."
+				samtools coverage ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
+				samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
+				samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
+				fastcov.py ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.${j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.${j}_fastcov.txt
+			done
+		done
+		# Análise de cobertura da biblioteca por taxon
+		#for j in $(find ${REFGENDIR} -type f -name "$TAXON*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+		# echo "Determinando a cobertura da biblioteca para o taxon ${j}..."
+		# fastcov.py ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov.pdf
+		# fastcov.py -l ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov_logscale.pdf
+		#done
+	else
+		echo "Análise de cobertura já analisada!"
+	fi
+}
+
+
 function assembly () {
 	# Pipeline Spades
 	if [ ! -d $CONTIGSLEVELDIR ]; then
@@ -453,39 +500,6 @@ function assembly () {
 		echo "Usando dados CONTIGSLEVEL analisados previamente..."
 	fi
 	IODIR=$CONTIGSLEVELDIR
-}
-
-function coverage () {
-	# Faz a análise de cobertura e montagem das reads em sequencias referências
-	if [ ! -d "${COVERAGEDIR}" ]; then
-		mkdir -vp ${COVERAGEDIR}
-		# Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
-		echo "Gerando arquivos índices para os genomas referencia..."
-		for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-			REFGENFASTA="${REFGENDIR}/${j}.fasta"
-			REFGENMMI="${REFGENDIR}/${j}.mmi"
-			[ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
-		done  
-		# Análise de cobertura de todos os taxon
-		source activate ngs
-		for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-			for i in $(find ${READSLEVELDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-				echo "Analisando a cobertura ${READSLEVELDIR}/${i}.corrected.fasta..."
-				samtools coverage ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.coverage.txt
-				samtools coverage -A -w 32 ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.histogram.txt
-				samtools depth ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam > ${COVERAGEDIR}/${i}.${j}.depth.txt
-				fastcov.py ${ASSEMBLYDIR}/${i}.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${i}.${j}.fastcov.pdf -c ${COVERAGEDIR}/${i}.${j}_fastcov.txt
-			done
-		done
-		# Análise de cobertura da biblioteca por taxon
-		#for j in $(find ${REFGENDIR} -type f -name "$TAXON*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-		# echo "Determinando a cobertura da biblioteca para o taxon ${j}..."
-		# fastcov.py ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov.pdf
-		# fastcov.py -l ${ASSEMBLYDIR}/barcode*.${j}.sorted.mapped.bam -o ${COVERAGEDIR}/${RUNNAME}_${MODEL}_${j}.fastcov_logscale.pdf
-		#done
-	else
-		echo "Análise de cobertura já analisada!"
-	fi
 }
 
 function krakencontig_local () {
