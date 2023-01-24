@@ -135,7 +135,8 @@ BLASTNCONTIGSDIR="${CONTIGSLEVELDIR}/BLASTN"
 # read -p "Press [Enter] key to continue..."
 
 # Parâmetros de qualidade mínima
-QSCORE=9	# Default Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
+# Default Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
+QSCORE=9
 LENGTH=100
 
 # Parâmetro de otimização minimap2, samtools, racon e kraken2
@@ -311,12 +312,12 @@ function sequencing_summary2 () {
 	# pycoQC summary
 	# Comando para pycoQC version 2.5
 	if [ ! -f "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" ]; then
-		echo -e "Executando pycoQC no sequencing summary com o parâmetro default QSCORE=9...\n"
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual "${QSCORE}" --min_pass_len ${LENGTH}
+		echo -e "Executando pycoQC no sequencing summary utilizando os parâmetros QSCORE=${QSCORE} os LENGTH=${LENGTH}...\n"
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -o "${RESULTSDIR}/basecalling_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 	if [ ! -f "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" ]; then
-		echo -e "Executando pycoQC no sequencing e barecoder summaries utilizandos os LENGHT=100 e QSCORE=9...\n"
-		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual "${QSCORE}" --min_pass_len ${LENGTH}
+		echo -e "Executando pycoQC no sequencing e barcoder summaries utilizando os parâmetros QSCORE=${QSCORE} os LENGTH=${LENGTH}...\n"
+		pycoQC -q -f "${BASECALLDIR}/sequencing_summary.txt" -b "${DEMUXDIR}/barcoding_summary.txt" -o "${RESULTSDIR}/barcoding_wf${WF}_pycoqc.html" --report_title ${RESULTSDIR} --min_pass_qual ${QSCORE} --min_pass_len ${LENGTH}
 	fi
 }
 
