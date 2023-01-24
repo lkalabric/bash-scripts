@@ -351,7 +351,7 @@ function qc_filter1 () {
 			# Gera o arquivo de log
 			echo "${i} $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq)" >> ${NANOFILTDIR}/passed_reads.log
 		done
-		source deactivate
+		conda deactivate
 	else
 		echo "Usando dados NANOFILT analisados previamente..."
 	fi
