@@ -51,18 +51,25 @@ fi
 # Instalação dos softwares requeridos
 # Em desenvolvimento...
 echo -e "Instalando softwares requeridos..."
-if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
-	source activate minimap2
-else
-	conda create -n minimap2
-	conda install -c bioconda minimap2 samtools racon
-	conda deactivate
-fi
 if { conda env list | grep 'cutadapt'; } >/dev/null 2>&1; then
 	source activate cutadapt
 else
 	conda create -n cutadapt
 	conda install -c bioconda cutadapt
+	conda deactivate
+fi
+if { conda env list | grep 'nanofilt'; } >/dev/null 2>&1; then
+	source activate nanofilt
+else
+	conda create -n nanofilt
+	conda install -c bioconda nanofilt
+	conda deactivate
+fi
+if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
+	source activate minimap2
+else
+	conda create -n minimap2
+	conda install -c bioconda minimap2 samtools racon
 	conda deactivate
 fi
 
@@ -496,6 +503,8 @@ function coverage () {
 				done
 			done
 		fi
+		conda deactivate
+		source activate ngs
 		# Análise de cobertura propriamente dita de todos os taxon
 		for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
 			for i in $(find ${IODIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
