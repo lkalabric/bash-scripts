@@ -52,14 +52,14 @@ fi
 # Em desenvolvimento...
 echo -e "Instalando softwares requeridos..."
 if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
-	conda activate minimap2
+	source activate minimap2
 else
 	conda create -n minimap2
 	conda install -c bioconda minimap2 samtools racon
 	conda deactivate
 fi
 if { conda env list | grep 'cutadapt'; } >/dev/null 2>&1; then
-	conda activate cutadapt
+	source activate cutadapt
 else
 	conda create -n cutadapt
 	conda install -c bioconda cutadapt
@@ -147,7 +147,7 @@ THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
 echo "Gerando arquivos de índices para mapeamento no genoma humano..."
 HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
 HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
-conda activate minimap2
+source activate minimap2
 # Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
 if [ ! -f $HUMANREFMMI ]; then
 	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
@@ -244,7 +244,7 @@ function primer_removal () {
 		# [ ! -d ${CUTADAPTDIR} ] && mkdir -vp ${CUTADAPTDIR}	
 		PRIMER="GTTTCCCACTGGAGGATA"
 		echo -e "executando cutadapt em ${IODIR}...\n"
-		conda activate cutadapt
+		source activate cutadapt
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 			# echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
@@ -346,7 +346,7 @@ function qc_filter2 () {
 		mkdir $PRINSEQDIR
 		# Link: https://chipster.csc.fi/manual/prinseq-complexity-filter.html
 		echo -e "executando prinseq-lite.pl...\n"
-		conda activate prinseq
+		source activate prinseq
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			echo -e "\nResultados ${i}..."
 			# Em geral, os resultados do Prinseq são salvos com a extensão. good.fastq. Nós mantivemos apenas .fastq por conveniência do pipeline
@@ -382,7 +382,7 @@ function human_filter1 () {
 			# Gera o arquivo de log
 			echo "${i} $(grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq)" >> ${HUMANFILTERDIR1}/passed_reads.log
 		done
-		source deactivate
+		conda deactivate
 	else
 		echo "Usando dados HUMANFILTER analisados previamente..."
 	fi
@@ -417,7 +417,7 @@ function reads_polishing () {
 		mkdir $READSLEVELDIR
 		# [ ! -d "${READSLEVELDIR}" ] && mkdir -vp ${READSLEVELDIR}
 		echo -e "\nExecutando minimap2 & racon para autocorreção das reads contra a sequencia consenso..."
-		conda activate minimap2
+		source activate minimap2
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			echo -e "\nCarregando os dados ${i} para autocorreção...\n"
 			# Alinhar todas as reads com elas mesmas para produzir sequencias consenso a partir do overlap de reads
@@ -482,8 +482,8 @@ function coverage () {
 	# Faz a análise de cobertura e montagem das reads em sequencias referências
 	if [ ! -d "${COVERAGEDIR}" ]; then
 		mkdir -vp ${COVERAGEDIR}
-		# Mapeamento das sequencias em genomas virais de referência
-		conda activate minimap2
+		# Mapeamento das sequencias em todos os genomas virais de referência
+		source activate minimap2
 		if [ ! -d "${MAPPINGDIR}" ]; then
 			mkdir -vp ${MAPPINGDIR}
 			for j in $(find ${REFGENDIR} -type f -name "*.mmi" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
@@ -492,7 +492,7 @@ function coverage () {
 				  minimap2 -t ${THREADS} -ax map-ont ${REFGENDIR}/${j}.mmi ${IODIR}/${i}.fasta | samtools sort -@ ${THREADS} -o ${MAPPINGDIR}/${i}.${j}.sorted.bam -	
 				  samtools view -@ ${THREADS} -h -F 4 -b ${MAPPINGDIR}/${i}.${j}.sorted.bam > ${MAPPINGDIR}/${i}.${j}.sorted.mapped.bam
 				  samtools index -@ ${THREADS} ${MAPPINGDIR}/${i}.${j}.sorted.mapped.bam
-				  samtools mpileup -A -d 0 -Q 0 ${MAPPINGDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${MAPPINGDIR}/${i}.${j}
+				  samtools mpileup -A -d 0 -Q 0 ${MAPPINGDIR}/${i}.${j}.sorted.mapped.bam | ivar consensus -p ${MAPPINGDIR}/${i}.${j}.consensus
 				done
 			done
 		fi
@@ -590,7 +590,7 @@ function blastncontig_local () {
 declare -A workflowList=(
 	[1]="sequencing_summary1 basecalling"
 	[2]="sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local"
-	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly coverage krakencontig_local"
+	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local coverage assembly krakencontig_local"
 	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
 	)
 	
