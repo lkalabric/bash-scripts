@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # script: metagenomics8.sh
-# autores: Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
+# autores: Alessandra Gonzalez <alessandragonzalez13@hotmail.com>, Laise de Moraes <laisepaixao@live.com> & Luciano Kalabric <luciano.kalabric@fiocruz.br>
 # instituição: Oswaldo Cruz Foundation, Gonçalo Moniz Institute, Bahia, Brazil
 # criação: 09 JUN 2022
 # última atualização: 19 JAN 2023
@@ -48,39 +48,41 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-# Instalação dos softwares requeridos
-# Cria um ambiente para cada aplicação e atualiza os pacotes, se necessário
-# Em desenvolvimento...
-echo -e "Instalando softwares requeridos..."
-if { conda env list | grep 'cutadapt'; } >/dev/null 2>&1; then
-	source activate cutadapt
-	conda update --all
-else
-	conda create -n cutadapt
-	conda install -c bioconda cutadapt
-	cutadapt --version
-	conda deactivate
-fi
-if { conda env list | grep 'nanofilt'; } >/dev/null 2>&1; then
-	source activate nanofilt
-	conda update --all
-else
-	conda create -n nanofilt
-	conda install -c bioconda nanofilt
-	NanoFilt --version
-	conda deactivate
-fi
-if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
-	source activate minimap2
-	conda update --all
-else
-	conda create -n minimap2
-	conda install -c bioconda minimap2 samtools racon
-	minimap2 --version
-	samtools --version
-	racon --version
-	conda deactivate
-fi
+function instalacao () {
+	# Instalação dos softwares requeridos
+	# Cria um ambiente para cada aplicação e atualiza os pacotes, se necessário
+	# Em desenvolvimento...
+	echo -e "Instalando softwares requeridos..."
+	if { conda env list | grep 'cutadapt'; } >/dev/null 2>&1; then
+		source activate cutadapt
+		conda update --all
+	else
+		conda create -n cutadapt
+		conda install -c bioconda cutadapt
+		cutadapt --version
+		conda deactivate
+	fi
+	if { conda env list | grep 'nanofilt'; } >/dev/null 2>&1; then
+		source activate nanofilt
+		conda update --all
+	else
+		conda create -n nanofilt
+		conda install -c bioconda nanofilt
+		NanoFilt --version
+		conda deactivate
+	fi
+	if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
+		source activate minimap2
+		conda update --all
+	else
+		conda create -n minimap2
+		conda install -c bioconda minimap2 samtools racon
+		minimap2 --version
+		samtools --version
+		racon --version
+		conda deactivate
+	fi
+}
 
 # Verifica se os ambientes conda ngs ou bioinfo foram criados e ativa um dos ambientes
 # Tipicamente, instalamos todos os pacotes em um destes ambientes, mas, recentemente, estamos
@@ -325,7 +327,6 @@ function filter_by_start_time () {
 	fi
 	IODIR=$FILTERBYSTARTTIMEDIR
 }
-
 
 function sequencing_summary2 () {
 	# pycoQC summary
@@ -613,6 +614,7 @@ declare -A workflowList=(
 	[2]="sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local"
 	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local coverage assembly krakencontig_local"
 	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
+	[instalacao]="instalacao"
 	)
 	
 # Validação do WF
