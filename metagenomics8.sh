@@ -248,9 +248,10 @@ function demux () {
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 			# Gera o arquivo de log
-			# echo "${i} $($(cat ${DEMUXDIR}/${i}/*.fastq|wc -l)/4|bc)"  >> ${DEMUXDIR}/passed_reads.log
-			echo "${i} $(grep -c "runid" ${DEMUXDIR}/${i}/*.fastq)" >> ${DEMUXDIR}/passed_reads.log
-			echo "${i} $(grep -c "runid" ${DEMUXCATDIR}/${i}.fastq)" >> ${DEMUXCATDIR}/passed_reads.log
+			# echo "${i} $(grep -c "runid" ${DEMUXDIR}/${i}/*.fastq)" >> ${DEMUXDIR}/passed_reads.log
+			echo "${i} $($(cat ${DEMUXDIR}/${i}/*.fastq|wc -l)/4|bc)"  >> ${DEMUXDIR}/passed_reads.log
+			# echo "${i} $(grep -c "runid" ${DEMUXCATDIR}/${i}.fastq)" >> ${DEMUXCATDIR}/passed_reads.log
+			echo "${i} $($(cat ${DEMUXCATDIR}/${i}/*.fastq|wc -l)/4|bc)"  >> ${DEMUXCATDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados DEMUX_CAT analisados previamente..."
@@ -270,7 +271,8 @@ function primer_removal () {
 			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 			# echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 			# Gera o arquivo de log
-			echo "${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq)" >> ${CUTADAPTDIR}/passed_reads.log
+			echo "${i} $($(cat ${CUTADAPTDIR}/${i}/*.fastq|wc -l)/4|bc)"  >> ${CUTADAPTDIR}/passed_reads.log
+			# echo "${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq)" >> ${CUTADAPTDIR}/passed_reads.log
 		done
 		conda deactivate
 	else
@@ -295,7 +297,8 @@ function demux_headcrop () {
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 			# Gera o arquivo de log
-			echo "${i} $(grep -c "runid" ${DEMUXCATDIR}/${i}.fastq)" >> ${DEMUXCATDIR}/passed_reads.log
+			echo "${i} $($(cat ${DEMUXCATDIR}/${i}/*.fastq|wc -l)/4|bc)"  >> ${DEMUXCATDIR}/passed_reads.log
+			# echo "${i} $(grep -c "runid" ${DEMUXCATDIR}/${i}.fastq)" >> ${DEMUXCATDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados DEMUX_CAT analisados previamente..."
@@ -319,7 +322,8 @@ function filter_by_start_time () {
 				egrep -A3 "start_time=..........T${REGEXP[${j}]}" "${DEMUXCATDIR}/${i}.fastq" > "${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq"
 				echo -e "\nContando as reads do arquivo "${FILTER_BY_START_TIMEDIR}/${i}_${START_TIME[${j}]}.fastq"..."
 				# Gera o arquivo de log
-				echo "${START_TIME[${j}]} $(grep ${RUNNAME} ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq | wc -l)" >> ${FILTERBYSTARTTIMEDIR}/${i}_filter.log
+				echo "${START_TIME[${j}]} $($(cat ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq|wc -l)/4|bc)"  >> ${FILTERBYSTARTTIMEDIR}/${i}_filter.log
+				# echo "${START_TIME[${j}]} $(grep ${RUNNAME} ${FILTERBYSTARTTIMEDIR}/${i}_${START_TIME[${j}]}.fastq | wc -l)" >> ${FILTERBYSTARTTIMEDIR}/${i}_filter.log
 			done
 		done
 	else
@@ -351,7 +355,8 @@ function qc_filter1 () {
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 			# Gera o arquivo de log
-			echo "${i} $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq)" >> ${NANOFILTDIR}/passed_reads.log
+			echo "${i} $($(cat ${NANOFILTDIR}/${i}/*.fastq|wc -l)/4|bc)"  >> ${NANOFILTDIR}/passed_reads.log
+			# echo "${i} $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq)" >> ${NANOFILTDIR}/passed_reads.log
 		done
 		conda deactivate
 	else
@@ -372,7 +377,8 @@ function qc_filter2 () {
 			# Em geral, os resultados do Prinseq são salvos com a extensão. good.fastq. Nós mantivemos apenas .fastq por conveniência do pipeline
 			prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 			# Gera o arquivo de log
-			echo "${i} $(grep -c "runid" ${PRINSEQDIR}/${i}.fastq)" >> ${PRINSEQDIR}/passed_reads.log
+			echo "${i} $($(cat ${PRINSEQDIR}/${i}/*.fastq|wc -l)/4|bc)"  >> ${PRINSEQDIR}/passed_reads.log
+			# echo "${i} $(grep -c "runid" ${PRINSEQDIR}/${i}.fastq)" >> ${PRINSEQDIR}/passed_reads.log
 		done
 		conda deactivate
 	else
@@ -400,7 +406,8 @@ function human_filter1 () {
 			# Salva os dados no formato .fastq
 			samtools fastq ${HUMANFILTERDIR1}/${i}_bam > ${HUMANFILTERDIR1}/${i}.fastq -@ ${THREADS}
 			# Gera o arquivo de log
-			echo "${i} $(grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq)" >> ${HUMANFILTERDIR1}/passed_reads.log
+			echo "${i} $($(cat ${HUMANFILTERDIR1}/${i}/*.fastq|wc -l)/4|bc)"  >> ${HUMANFILTERDIR1}/passed_reads.log
+			# echo "${i} $(grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq)" >> ${HUMANFILTERDIR1}/passed_reads.log
 		done
 		conda deactivate
 	else
@@ -423,7 +430,8 @@ function human_filter2 () {
 			# Source code: http://research-pub.gene.com/gmap
 			gmapl -d GRCh38 "${IODIR}/${i}.fastq"
 			# Gera o arquivo de log
-			echo "${i} $(grep -c "runid" ${HUMANFILTERDIR2}/${i}.fastq)" >> ${HUMANFILTERDIR2}/passed_reads.log
+			echo "${i} $($(cat ${HUMANFILTERDIR2}/${i}/*.fastq|wc -l)/4|bc)"  >> ${HUMANFILTERDIR2}/passed_reads.log
+			# echo "${i} $(grep -c "runid" ${HUMANFILTERDIR2}/${i}.fastq)" >> ${HUMANFILTERDIR2}/passed_reads.log
 		done
 	else
 		echo "Usando dados HUMANFILTER2 analisados previamente..."
