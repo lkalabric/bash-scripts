@@ -407,7 +407,8 @@ function human_filter1 () {
 			# Salva os dados no formato .fastq
 			samtools fastq ${HUMANFILTERDIR1}/${i}_bam > ${HUMANFILTERDIR1}/${i}.fastq -@ ${THREADS}
 			# Gera o arquivo de log
-			echo "${i} echo `$(cat ${HUMANFILTERDIR1}/${i}.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR1}/passed_reads.log
+			# Gera o arquivo de log
+			echo "${i} echo `$(cat ${HUMANFILTERDIR1}/${i}/*.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR1}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq)" >> ${HUMANFILTERDIR1}/passed_reads.log
 		done
 		conda deactivate
