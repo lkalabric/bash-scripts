@@ -39,12 +39,13 @@
 		# kraken2_quick_report.sh	(input: _report.txt, _quick_report.txt)
 
 # Validação da entrada de dados na linha de comando
-RUNNAME=$1 	# Nome do dado passado na linha de comando
+WF=$1		# Workflow de bioinformatica 1, 2 ou 3
 MODEL=$2	# Modelo de basecalling fast hac sup
-WF=$3		# Workflow de bioinformatica 1, 2 ou 3
+RUNNAME=$3 	# Nome do dado passado na linha de comando
+
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
-	echo "Sintáxe: ./metagenomics7.sh <LIBRARY> <MODELO: fast, hac, sup> <WF: 1, 2, 3, 3_filter...>"
+	echo "Sintáxe: ./metagenomics8.sh <WF: 1, 2, 3, 3_filter...> <MODELO: fast, hac, sup> <LIBRARY>"
 	exit 0
 fi
 
@@ -406,7 +407,7 @@ function human_filter1 () {
 			# Salva os dados no formato .fastq
 			samtools fastq ${HUMANFILTERDIR1}/${i}_bam > ${HUMANFILTERDIR1}/${i}.fastq -@ ${THREADS}
 			# Gera o arquivo de log
-			echo "${i} echo `$(cat ${HUMANFILTERDIR1}/${i}/*.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR1}/passed_reads.log
+			echo "${i} echo `$(cat ${HUMANFILTERDIR1}/${i}.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR1}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq)" >> ${HUMANFILTERDIR1}/passed_reads.log
 		done
 		conda deactivate
