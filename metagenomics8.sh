@@ -272,7 +272,7 @@ function primer_removal () {
 			cutadapt -g ${PRIMER} -e 0.2 --discard-untrimmed -o "${CUTADAPTDIR}/${i}.fastq" "${DEMUXCATDIR}/${i}.fastq"
 			# echo -e "\nResultados ${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq | cut -d : -f 2 | awk '{s+=$1} END {printf "%.0f\n",s}')"
 			# Gera o arquivo de log
-			echo "${i} echo `$(cat ${CUTADAPTDIR}/${i}/*.fastq|wc -l)/4|bc`"  >> ${CUTADAPTDIR}/passed_reads.log
+			echo "${i} echo `$(cat ${CUTADAPTDIR}/${i}.fastq|wc -l)/4|bc`"  >> ${CUTADAPTDIR}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${CUTADAPTDIR}/${i}.fastq)" >> ${CUTADAPTDIR}/passed_reads.log
 		done
 		conda deactivate
@@ -408,7 +408,7 @@ function human_filter1 () {
 			samtools fastq ${HUMANFILTERDIR1}/${i}_bam > ${HUMANFILTERDIR1}/${i}.fastq -@ ${THREADS}
 			# Gera o arquivo de log
 			# Gera o arquivo de log
-			echo "${i} echo `$(cat ${HUMANFILTERDIR1}/${i}/*.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR1}/passed_reads.log
+			echo "${i} echo `$(cat ${HUMANFILTERDIR1}/${i}.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR1}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq)" >> ${HUMANFILTERDIR1}/passed_reads.log
 		done
 		conda deactivate
@@ -432,7 +432,7 @@ function human_filter2 () {
 			# Source code: http://research-pub.gene.com/gmap
 			gmapl -d GRCh38 "${IODIR}/${i}.fastq"
 			# Gera o arquivo de log
-			echo "${i} echo `$(cat ${HUMANFILTERDIR2}/${i}/*.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR2}/passed_reads.log
+			echo "${i} echo `$(cat ${HUMANFILTERDIR2}/${i}.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR2}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${HUMANFILTERDIR2}/${i}.fastq)" >> ${HUMANFILTERDIR2}/passed_reads.log
 		done
 	else
