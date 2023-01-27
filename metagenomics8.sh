@@ -463,7 +463,7 @@ function reads_polishing () {
   IODIR=$READSLEVELDIR
 }
 
-function kraken_local () {
+function kraken_reads () {
 	# Classificação taxonômica das reads utilizando Kraken2
 	if [ ! -d $KRAKENREADSDIR ]; then
 		mkdir $KRAKENREADSDIR
@@ -475,14 +475,14 @@ function kraken_local () {
 			kraken2 --db ${KRAKENDBDIR} --quick --threads ${THREADS} --report ${KRAKENREADSDIR}/${i}_report.txt --output ${KRAKENREADSDIR}/${i}_output.txt ${IODIR}/${i}.fasta
 			echo -e "\nGerando o ${i}_quick_report.txt"
 			~/scripts/kraken2_quick_report.sh "${KRAKENREADSDIR}/${i}_report.txt"
-			echo "Resultados KRAKEN2 em nível de reads obtidos com sucesso!"
 		done
+		echo "Resultados KRAKEN2 em nível de reads obtidos com sucesso!"
 	else
 		echo "Resultados KRAKEN2 em nível de reads obtidos previamente!"
 	fi
 }
 
-function blastn_local () {
+function blastn_reads () {
 	# Preparação do BLASTDB local
 		# Script: makeblastdb_refseq.sh
 		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
@@ -498,7 +498,8 @@ function blastn_local () {
 			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}.fasta" -out "${BLASTNREADSDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			# Busca em banco de sequencias remota
 			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTNREADSDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-			wc -l < ${BLASTNREADSDIR}/${i}.blastn >> ${BLASTNREADSDIR}/passed_reads.log
+			# Gera o arquivo de log
+			echo "${i} $(wc -l < ${BLASTNREADSDIR}/${i}.blastn)" >> ${BLASTNREADSDIR}/passed_reads.log
 			~/scripts/blastn_report.sh "${BLASTNREADSDIR}/${i}.blastn"
 		done
 		echo "Resultados BLASTN em nível de reads obtidos com sucesso!"
@@ -569,7 +570,7 @@ function assembly () {
 	IODIR=$CONTIGSLEVELDIR
 }
 
-function krakencontig_local () {
+function kraken_contigs () {
 	# Classificação taxonômica das contigs utilizando Kraken2
 	if [ ! -d $KRAKENCONTIGSDIR ]; then
 		mkdir $KRAKENCONTIGSDIR
@@ -587,7 +588,7 @@ function krakencontig_local () {
 	fi
 }
 
-function blastncontig_local () {
+function blastn_contigs () {
 	# Preparação do BLASTDB local
 		# Script: makeblastdb_refseq.sh
 		# Concatena todas as REFSEQs num arquivo refseq.fasta único e cria o BLASTDB
@@ -603,7 +604,8 @@ function blastncontig_local () {
 			blastn -db "${BLASTDBDIR}/refseq" -query "${IODIR}/${i}/contigs.fasta" -out "${BLASTNCONTIGSDIR}/${i}.blastn" -outfmt "6 sacc staxid" -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
 			# Busca remota
 			# blastn -db nt -remote -query ${IODIR}/${i}.fasta -out ${BLASTDIR}/${i}.blastn -outfmt "6 qacc saccver pident sscinames length mismatch gapopen evalue bitscore"  -evalue 0.000001 -qcov_hsp_perc 90 -max_target_seqs 1
-			wc -l < ${BLASTNCONTIGSDIR}/${i}.blastn >> ${BLASTNCONTIGSDIR}/passed_reads.log
+			# Gera o arquivo de log
+			echo "${i} $(wc -l < ${BLASTNCONTIGSDIR}/${i}.blastn)" >> ${BLASTNCONTIGSDIR}/passed_reads.log
 			~/scripts/blastn_report.sh "${BLASTNCONTIGSDIR}/${i}.blastn"
 		done
 		echo "Resultados BLASTN em nível de contigs obtidos com sucesso!"
@@ -620,9 +622,9 @@ function blastncontig_local () {
 # Etapas obrigatórios: basecalling, demux/primer_removal ou demux_headcrop, reads_polishing e algum método de classificação taxonômica
 declare -A workflowList=(
 	[1]="sequencing_summary1 basecalling"
-	[2]="sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_local assembly blastncontig_local"
-	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local coverage assembly krakencontig_local"
-	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_local assembly krakencontig_local"
+	[2]="sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_reads assembly blastn_contigs"
+	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_reads coverage assembly kraken_contigs"
+	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_reads assembly kraken_contigs"
 	[instalacao]="instalacao"
 	)
 	
