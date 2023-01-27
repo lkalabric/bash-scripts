@@ -356,7 +356,7 @@ function qc_filter1 () {
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 			# Gera o arquivo de log
-			echo "${i} echo `$(cat ${NANOFILTDIR}/${i}/*.fastq|wc -l)/4|bc`"  >> ${NANOFILTDIR}/passed_reads.log
+			echo "${i} echo `$(cat ${NANOFILTDIR}/${i}.fastq|wc -l)/4|bc`"  >> ${NANOFILTDIR}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq)" >> ${NANOFILTDIR}/passed_reads.log
 		done
 		conda deactivate
@@ -378,7 +378,7 @@ function qc_filter2 () {
 			# Em geral, os resultados do Prinseq são salvos com a extensão. good.fastq. Nós mantivemos apenas .fastq por conveniência do pipeline
 			prinseq-lite.pl -fastq "${IODIR}/${i}.fastq" -out_good "${PRINSEQDIR}/${i}" -graph_data "${PRINSEQDIR}/${i}.gd" -no_qual_header -lc_method dust -lc_threshold 40
 			# Gera o arquivo de log
-			echo "${i} echo `$(cat ${PRINSEQDIR}/${i}/*.fastq|wc -l)/4|bc`"  >> ${PRINSEQDIR}/passed_reads.log
+			echo "${i} echo `$(cat ${PRINSEQDIR}/${i}.fastq|wc -l)/4|bc`"  >> ${PRINSEQDIR}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${PRINSEQDIR}/${i}.fastq)" >> ${PRINSEQDIR}/passed_reads.log
 		done
 		conda deactivate
@@ -406,7 +406,6 @@ function human_filter1 () {
 				samtools view -bS -f 4 ${HUMANFILTERDIR1}/${i}_sorted_bam > ${HUMANFILTERDIR1}/${i}_bam -@ ${THREADS}
 			# Salva os dados no formato .fastq
 			samtools fastq ${HUMANFILTERDIR1}/${i}_bam > ${HUMANFILTERDIR1}/${i}.fastq -@ ${THREADS}
-			# Gera o arquivo de log
 			# Gera o arquivo de log
 			echo "${i} echo `$(cat ${HUMANFILTERDIR1}/${i}.fastq|wc -l)/4|bc`"  >> ${HUMANFILTERDIR1}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${HUMANFILTERDIR1}/${i}.fastq)" >> ${HUMANFILTERDIR1}/passed_reads.log
