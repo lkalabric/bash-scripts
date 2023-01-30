@@ -70,24 +70,26 @@ function exists_in_list () {
 # Testa se o workflow existe
 LIST_OF_WFS="1 2 3 3_filter instalacao"
 if ! exists_in_list "$LIST_OF_WFS" " " $WF; then
-	echo -e "WF não disponível para análise. Consultar o manual do software!\n"
+	echo -e "WF não indisponível. Usar: $LIST_OF_WFS!\n"
 	exit 0
-fi
-
-
-# Testa se o modelo para guppy_basecalling usado existe
-LIST_OF_MODELS="fast hac sup"
-if ! exists_in_list "$LIST_OF_MODELS" " " $MODEL; then
-	echo -e "Modelos disponíveis: fast, hac ou sup.\n"
-	exit 0
-fi
-
-# Caminho de INPUT dos dados .fast5
-RAWDIR="${HOME}/data/${RUNNAME}"
-# Teste se os dados existem
-if [ ! -d $RAWDIR ]; then
-	echo "Pasta de dados ${RUNNAME} não encontrada!"
-	exit 0
+else
+	# Testa se o modelo para guppy_basecalling usado existe
+	if $MODEL != "instalacao"; then
+		LIST_OF_MODELS="fast hac sup"
+		if ! exists_in_list "$LIST_OF_MODELS" " " $MODEL; then
+			echo -e "Modelo $MODEL indisponível. Usar: LIST_OF_MODELS.\n"
+			exit 0
+		fi
+		# Caminho de INPUT dos dados .fast5
+		RAWDIR="${HOME}/data/${RUNNAME}"
+		# Teste se os dados existem
+		if [ ! -d $RAWDIR ]; then
+			echo "Pasta de dados ${RUNNAME} não encontrada!"
+			exit 0
+		fi
+	else
+		echo -e "Instalando/atualiando os softwares necessários para análise!\n"
+	fi
 fi
 
 function setup_env () {
