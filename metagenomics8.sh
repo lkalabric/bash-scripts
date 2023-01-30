@@ -15,6 +15,7 @@
 #
 # IMPORTANTE: Antes de construir a workflow revificar se o I/O é compatível entre a função anterior e a seguinte
 # Neste momento, reads_polishing deve conectar a saída dos filtros à análise de classificação taxonômica
+# setup_env
 # sequencing_summary1/GREP 			(input: .fast5; output: STDOUT)
 # basecalling/GUPPY_BASECALLER			(input: .fast5; output: sequencing_summary.txt, barcode_summary.txt, .fastq)
 # sequencing_summary2/PYCOQC			(input: sequencing_summary.txt, barcode_summary.txt; output: .html)
@@ -39,6 +40,7 @@
 		# blastn_report.sh		(input: .blastn, outpu: .blastnreport)
 	# krakencontif_local/KRAKEN2		(input: .fasta, output: _report.txt, _output.txt)	
 		# kraken2_quick_report.sh	(input: _report.txt, _quick_report.txt)
+# instalacao
 
 #
 # Validação da entrada de dados na linha de comando
@@ -52,32 +54,44 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-# Verifica se os ambientes conda ngs ou bioinfo foram criados e ativa um dos ambientes
-# Tipicamente, instalamos todos os pacotes em um destes ambientes, mas, recentemente, estamos
-# mudando isso para ter cada pacote em seu próprio ambiente conda por questões de compatibilidade
-# com o Python!
-if { conda env list | grep 'ngs'; } >/dev/null 2>&1; then
-	source activate ngs
-	conda update --all
-else
-	if { conda env list | grep 'bioinfo'; } >/dev/null 2>&1; then
-		source activate bioinfo
-		conda update --all
-	else
-		echo "Ambiente conda indisponível!"
-		exit 0
-	fi
-fi
-
-#
-# Preparacao do ambiente
-#
 # Caminho de INPUT dos dados .fast5
 RAWDIR="${HOME}/data/${RUNNAME}"
-if [ ! -d $RAWDIR ] || [ -z $RAWDIR ]; then
+if [ $WF != "instalacao" ] && [ ! -d $RAWDIR ]; then
 	echo "Pasta de dados ${RUNNAME} não encontrada!"
 	exit 0
 else
+
+LIST_OF_MODELS="fast hac sup"
+if ! exist_in_list "$LIST_OF_MODELS" " " $MODEL; then
+	echo -e "Modelos disponíveis: fast, hac ou sup.\n"
+fi
+
+LIST_OF_WFS="1 2 3 3_filter instalacao"
+if ! exist_in_list "$LIST_OF_WFS" " " $WF; then
+	echo -e "WF não disponível para análise. Consultar o manual do software!\n"
+fi
+
+function setup_env () {
+	# Verifica se os ambientes conda ngs ou bioinfo foram criados e ativa um dos ambientes
+	
+	# Tipicamente, instalamos todos os pacotes em um destes ambientes, mas, recentemente, estamos
+	# mudando isso para ter cada pacote em seu próprio ambiente conda por questões de compatibilidade
+	# com o Python!
+	if { conda env list | grep 'ngs'; } >/dev/null 2>&1; then
+		source activate ngs
+		conda update --all
+	else
+		if { conda env list | grep 'bioinfo'; } >/dev/null 2>&1; then
+			source activate bioinfo
+			conda update --all
+		else
+			echo "Ambiente conda indisponível!"
+			exit 0
+		fi
+	fi
+
+	# Declaração das variáveis
+	
 	# Caminho de INPUT dos bancos de dados
 	HUMANREFDIR="${HOME}/data/GRCh38"
 	REFSEQDIR="${HOME}/data/REFSEQ"
@@ -149,7 +163,7 @@ else
 		REFGENMMI="${REFGENDIR}/${j}.mmi"
 		[ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
 	done  
-fi
+}
 
 #
 # Funções que constituem os passos do pipeline
@@ -628,10 +642,10 @@ function instalacao () {
 # Define as etapas de cada workflow
 # Etapas obrigatórios: basecalling, demux/primer_removal ou demux_headcrop, reads_polishing e algum método de classificação taxonômica
 declare -A workflowList=(
-	[1]="sequencing_summary1 basecalling"
-	[2]="sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_reads assembly blastn_contigs"
-	[3]="sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_reads coverage assembly kraken_contigs"
-	[3_filter]="sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_reads assembly kraken_contigs"
+	[1]="setup_env sequencing_summary1 basecalling"
+	[2]="setup_env sequencing_summary1 basecalling demux sequencing_summary2 primer_removal qc_filter1 qc_filter2 reads_polishing blastn_reads assembly blastn_contigs"
+	[3]="setup_env sequencing_summary1 basecalling demux_headcrop sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_reads coverage assembly kraken_contigs"
+	[3_filter]="setup_env sequencing_summary1 basecalling demux_headcrop filter_by_start_time sequencing_summary2 qc_filter1 qc_filter2 human_filter1 reads_polishing kraken_reads assembly kraken_contigs"
 	[instalacao]="instalacao"
 	)
 	
