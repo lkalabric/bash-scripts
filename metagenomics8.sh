@@ -356,7 +356,7 @@ function qc_filter1 () {
 		for i in $(find "${IODIR}"/*.fastq -type f -exec basename {} .fastq \; | sort); do
 			NanoFilt -l ${LENGTH} < "${IODIR}/${i}.fastq" > "${NANOFILTDIR}/${i}.fastq" 
 			# Gera o arquivo de log
-			echo "${i} echo `$(cat ${NANOFILTDIR}/${i}.fastq|wc -l)/4|bc`"  >> ${NANOFILTDIR}/passed_reads.log
+			echo "${i} `echo $(cat ${NANOFILTDIR}/${i}.fastq|wc -l)/4|bc`"  >> ${NANOFILTDIR}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${NANOFILTDIR}/${i}.fastq)" >> ${NANOFILTDIR}/passed_reads.log
 		done
 		conda deactivate
