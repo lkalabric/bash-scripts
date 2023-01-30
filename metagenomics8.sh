@@ -625,7 +625,7 @@ function instalacao () {
 	# Instalação dos softwares requeridos
 	# Cria um ambiente para cada aplicação e atualiza os pacotes, se necessário
 	# Em desenvolvimento...
-	echo -e "Instalando softwares requeridos..."
+	echo -e "Instalando/atualizando CUTADAPT..."
 	if { conda env list | grep 'cutadapt'; } >/dev/null 2>&1; then
 		source activate cutadapt
 		conda update --all
@@ -635,6 +635,7 @@ function instalacao () {
 		cutadapt --version
 		conda deactivate
 	fi
+	echo -e "Instalando/atualizando NANOFILT..."
 	if { conda env list | grep 'nanofilt'; } >/dev/null 2>&1; then
 		source activate nanofilt
 		conda update --all
@@ -644,6 +645,7 @@ function instalacao () {
 		NanoFilt --version
 		conda deactivate
 	fi
+	echo -e "Instalando/atualizando MINIMAP2, SAMTOOLS & RACON..."
 	if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
 		source activate minimap2
 		conda update --all
