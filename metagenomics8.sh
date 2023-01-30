@@ -257,9 +257,9 @@ function demux () {
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 			# Gera o arquivo de log
 			# echo "${i} $(grep -c "runid" ${DEMUXDIR}/${i}/*.fastq)" >> ${DEMUXDIR}/passed_reads.log
-			echo "${i} echo `$(cat ${DEMUXDIR}/${i}/*.fastq|wc -l)/4|bc`"  >> ${DEMUXDIR}/passed_reads.log
+			echo "${i} `echo $(cat ${DEMUXDIR}/${i}/*.fastq|wc -l)/4|bc`"  >> ${DEMUXDIR}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${DEMUXCATDIR}/${i}.fastq)" >> ${DEMUXCATDIR}/passed_reads.log
-			echo "${i} `echo $(cat ${DEMUXCATDIR}/${i}/*.fastq|wc -l)/4|bc`"  >> ${DEMUXCATDIR}/passed_reads.log
+			echo "${i} `echo $(cat ${DEMUXCATDIR}/${i}.fastq|wc -l)/4|bc`"  >> ${DEMUXCATDIR}/passed_reads.log
 		done
 	else
 		echo "Usando dados DEMUX_CAT analisados previamente..."
