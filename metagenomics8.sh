@@ -74,7 +74,7 @@ fi
 #
 # Caminho de INPUT dos dados .fast5
 RAWDIR="${HOME}/data/${RUNNAME}"
-if [ ! -d $RAWDIR ]; then
+if [ ! -d $RAWDIR ] || [ -z $RAWDIR ]; then
 	echo "Pasta de dados ${RUNNAME} não encontrada!"
 	exit 0
 else
