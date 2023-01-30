@@ -10,9 +10,11 @@
 # versão 7: re-organiza o output das analises de cada workflows e remove redundâncias
 # versão 8: criação do módulo coverage
 
+#
 # Descrição de cada função disponível para construção dos workflows
-# IMPORTANTE: Antes de construir a árvore revificar se o I/O é compatível entre uma função e a outra
-# Neste momento, reads_polishing conecta os filtors às análises de classificação taxonômica
+#
+# IMPORTANTE: Antes de construir a workflow revificar se o I/O é compatível entre a função anterior e a seguinte
+# Neste momento, reads_polishing deve conectar a saída dos filtros à análise de classificação taxonômica
 # sequencing_summary1/GREP 			(input: .fast5; output: STDOUT)
 # basecalling/GUPPY_BASECALLER			(input: .fast5; output: sequencing_summary.txt, barcode_summary.txt, .fastq)
 # sequencing_summary2/PYCOQC			(input: sequencing_summary.txt, barcode_summary.txt; output: .html)
@@ -38,57 +40,21 @@
 	# krakencontif_local/KRAKEN2		(input: .fasta, output: _report.txt, _output.txt)	
 		# kraken2_quick_report.sh	(input: _report.txt, _quick_report.txt)
 
+#
 # Validação da entrada de dados na linha de comando
+#
 WF=$1		# Workflow de bioinformatica 1, 2 ou 3
 MODEL=$2	# Modelo de basecalling fast hac sup
 RUNNAME=$3 	# Nome do dado passado na linha de comando
-
 if [[ $# -eq 0 ]]; then
 	echo "Falta o nome dos dados, número do worflow ou modelo Guppy Basecaller!"
 	echo "Sintáxe: ./metagenomics8.sh <WF: 1, 2, 3, 3_filter...> <MODELO: fast, hac, sup> <LIBRARY>"
 	exit 0
 fi
 
-function instalacao () {
-	# Instalação dos softwares requeridos
-	# Cria um ambiente para cada aplicação e atualiza os pacotes, se necessário
-	# Em desenvolvimento...
-	echo -e "Instalando softwares requeridos..."
-	if { conda env list | grep 'cutadapt'; } >/dev/null 2>&1; then
-		source activate cutadapt
-		conda update --all
-	else
-		conda create -n cutadapt
-		conda install -c bioconda cutadapt
-		cutadapt --version
-		conda deactivate
-	fi
-	if { conda env list | grep 'nanofilt'; } >/dev/null 2>&1; then
-		source activate nanofilt
-		conda update --all
-	else
-		conda create -n nanofilt
-		conda install -c bioconda nanofilt
-		NanoFilt --version
-		conda deactivate
-	fi
-	if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
-		source activate minimap2
-		conda update --all
-	else
-		conda create -n minimap2
-		conda install -c bioconda minimap2 samtools racon
-		minimap2 --version
-		samtools --version
-		racon --version
-		conda deactivate
-	fi
-	exit 0
-}
-
 # Verifica se os ambientes conda ngs ou bioinfo foram criados e ativa um dos ambientes
 # Tipicamente, instalamos todos os pacotes em um destes ambientes, mas, recentemente, estamos
-# pensando em separa cada pacote em seu próprio ambiente por questões de compatibilidade
+# mudando isso para ter cada pacote em seu próprio ambiente conda por questões de compatibilidade
 # com o Python!
 if { conda env list | grep 'ngs'; } >/dev/null 2>&1; then
 	source activate ngs
@@ -103,86 +69,91 @@ else
 	fi
 fi
 
+#
+# Preparacao do ambiente
+#
 # Caminho de INPUT dos dados .fast5
 RAWDIR="${HOME}/data/${RUNNAME}"
 if [ ! -d $RAWDIR ]; then
 	echo "Pasta de dados ${RUNNAME} não encontrada!"
 	exit 0
-fi
-
-# Caminho de INPUT dos bancos de dados
-HUMANREFDIR="${HOME}/data/GRCh38"
-REFSEQDIR="${HOME}/data/REFSEQ"
-BLASTDBDIR="${HOME}/data/BLAST_DB"
-KRAKENDBDIR="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
-REFGENDIR="${HOME}/data/REFGEN"
-
-# Caminhos de OUTPUT das análises
-echo "Preparando pastas para (re-)análise dos dados..."
-RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
-# Cria a pasta de resultados
-if [[ ! -d "${RESULTSDIR}" ]]; then
-	mkdir -vp ${RESULTSDIR}
-	mkdir -vp ${RESULTSDIR}/wf${WF}
 else
-	read -p "Re-analisar os dados [S-apagar e re-analisa os dados / N-continuar as análises de onde pararam]? " -n 1 -r
-	if [[ $REPLY =~ ^[Ss]$ ]]; then
-		# Reseta a pasta de resultados do worflow
-		echo "Apagando as pastas e re-iniciando as análises..."
-		rm -r ${RESULTSDIR}
+	# Caminho de INPUT dos bancos de dados
+	HUMANREFDIR="${HOME}/data/GRCh38"
+	REFSEQDIR="${HOME}/data/REFSEQ"
+	BLASTDBDIR="${HOME}/data/BLAST_DB"
+	KRAKENDBDIR="${HOME}/data/KRAKEN2_DB" # Substituir pelo nosso banco de dados se necessário KRAKEN2_USER_DB
+	REFGENDIR="${HOME}/data/REFGEN"
+
+	# Caminhos de OUTPUT das análises
+	echo "Preparando pastas para (re-)análise dos dados..."
+	RESULTSDIR="${HOME}/ngs-analysis/${RUNNAME}_${MODEL}"
+	# Cria a pasta de resultados
+	if [[ ! -d "${RESULTSDIR}" ]]; then
 		mkdir -vp ${RESULTSDIR}
 		mkdir -vp ${RESULTSDIR}/wf${WF}
+	else
+		read -p "Re-analisar os dados [S-apagar e re-analisa os dados / N-continuar as análises de onde pararam]? " -n 1 -r
+		if [[ $REPLY =~ ^[Ss]$ ]]; then
+			# Reseta a pasta de resultados do worflow
+			echo "Apagando as pastas e re-iniciando as análises..."
+			rm -r ${RESULTSDIR}
+			mkdir -vp ${RESULTSDIR}
+			mkdir -vp ${RESULTSDIR}/wf${WF}
+		fi
 	fi
+	BASECALLDIR="${RESULTSDIR}/BASECALL"
+	DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
+	DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
+	FILTERBYSTARTTIMEDIR="${RESULTSDIR}/wf${WF}/FILTERBYSTARTTIME"
+	QCFILTERSDIR="${RESULTSDIR}/wf${WF}/QC_FILTERS"
+	CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
+	NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
+	PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
+	HUMANFILTERDIR1="${RESULTSDIR}/wf${WF}/HUMANFILTER1"
+	HUMANFILTERDIR2="${RESULTSDIR}/wf${WF}/HUMANFILTER2"
+	READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
+	KRAKENREADSDIR="${READSLEVELDIR}/KRAKEN"
+	BLASTNREADSDIR="${READSLEVELDIR}/BLASTN"
+	COVERAGEDIR="${READSLEVELDIR}/COVERAGE"
+	MAPPINGDIR="${READSLEVELDIR}/MAPPING"
+	CONTIGSLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
+	KRAKENCONTIGSDIR="${CONTIGSLEVELDIR}/KRAKEN"
+	BLASTNCONTIGSDIR="${CONTIGSLEVELDIR}/BLASTN"
+
+	# Pausa a execução para debug
+	# read -p "Press [Enter] key to continue..."
+
+	# Parâmetros de qualidade mínima
+	# Default Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
+	QSCORE=9
+	LENGTH=100
+
+	# Parâmetro de otimização minimap2, samtools, racon e kraken2
+	THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
+
+	# Parâmetros minimap2 
+	# wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
+	echo "Gerando arquivos de índices para mapeamento no genoma humano..."
+	HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
+	HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
+	source activate minimap2
+	# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
+	if [ ! -f $HUMANREFMMI ]; then
+		minimap2 -d $HUMANREFMMI $HUMANREFSEQ
+	fi
+	# Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
+	echo "Gerando arquivos de índices para mapeamento em genomas virais de referencia..."
+	for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
+		REFGENFASTA="${REFGENDIR}/${j}.fasta"
+		REFGENMMI="${REFGENDIR}/${j}.mmi"
+		[ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
+	done  
 fi
-BASECALLDIR="${RESULTSDIR}/BASECALL"
-DEMUXDIR="${RESULTSDIR}/wf${WF}/DEMUX"
-DEMUXCATDIR="${RESULTSDIR}/wf${WF}/DEMUX_CAT"
-FILTERBYSTARTTIMEDIR="${RESULTSDIR}/wf${WF}/FILTERBYSTARTTIME"
-QCFILTERSDIR="${RESULTSDIR}/wf${WF}/QC_FILTERS"
-CUTADAPTDIR="${RESULTSDIR}/wf${WF}/CUTADAPT"
-NANOFILTDIR="${RESULTSDIR}/wf${WF}/NANOFILT"
-PRINSEQDIR="${RESULTSDIR}/wf${WF}/PRINSEQ"
-HUMANFILTERDIR1="${RESULTSDIR}/wf${WF}/HUMANFILTER1"
-HUMANFILTERDIR2="${RESULTSDIR}/wf${WF}/HUMANFILTER2"
-READSLEVELDIR="${RESULTSDIR}/wf${WF}/READS_LEVEL"
-KRAKENREADSDIR="${READSLEVELDIR}/KRAKEN"
-BLASTNREADSDIR="${READSLEVELDIR}/BLASTN"
-COVERAGEDIR="${READSLEVELDIR}/COVERAGE"
-MAPPINGDIR="${READSLEVELDIR}/MAPPING"
-CONTIGSLEVELDIR="${RESULTSDIR}/wf${WF}/CONTIGS_LEVEL"
-KRAKENCONTIGSDIR="${CONTIGSLEVELDIR}/KRAKEN"
-BLASTNCONTIGSDIR="${CONTIGSLEVELDIR}/BLASTN"
 
-# Pausa a execução para debug
-# read -p "Press [Enter] key to continue..."
-
-# Parâmetros de qualidade mínima
-# Default Fast min_qscore=8; Hac min_qscore=9; Sup min_qscore=10
-QSCORE=9
-LENGTH=100
-
-# Parâmetro de otimização minimap2, samtools, racon e kraken2
-THREADS="$(lscpu | grep 'CPU(s):' | awk '{print $2}' | sed -n '1p')"
-
-# Parâmetros minimap2 
-# wget http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.p13.genome.fa.gz -P ${HUMANREFDIR}
-echo "Gerando arquivos de índices para mapeamento no genoma humano..."
-HUMANREFSEQ="${HUMANREFDIR}/GRCh38.p13.genome.fa.gz"
-HUMANREFMMI="${HUMANREFDIR}/GRCh38.p13.genome.mmi"
-source activate minimap2
-# Cria o arquivo índice do genoma humano para reduzir o tempo de alinhamento
-if [ ! -f $HUMANREFMMI ]; then
-	minimap2 -d $HUMANREFMMI $HUMANREFSEQ
-fi
-# Cria o arquivo índice das sequencias referencias para mapeamento das reads pelo minimap2
-echo "Gerando arquivos de índices para mapeamento em genomas virais de referencia..."
-for j in $(find ${REFGENDIR} -type f -name "*.fasta" | while read o; do basename $o | cut -d. -f1; done | sort | uniq); do
-	REFGENFASTA="${REFGENDIR}/${j}.fasta"
-	REFGENMMI="${REFGENDIR}/${j}.mmi"
-	[ ! -f $REFGENMMI ] && minimap2 -d $REFGENMMI $REFGENFASTA
-done  
-conda deactivate
-
+#
+# Funções que constituem os passos do pipeline
+#
 function sequencing_summary1 () {
 	# Sumario do sequenciamento (dados disponíveis no arquivo report*.pdf)
 	echo "Sumário da corrida"
@@ -615,10 +586,45 @@ function blastn_contigs () {
 	fi
 }
 
+function instalacao () {
+	# Instalação dos softwares requeridos
+	# Cria um ambiente para cada aplicação e atualiza os pacotes, se necessário
+	# Em desenvolvimento...
+	echo -e "Instalando softwares requeridos..."
+	if { conda env list | grep 'cutadapt'; } >/dev/null 2>&1; then
+		source activate cutadapt
+		conda update --all
+	else
+		conda create -n cutadapt
+		conda install -c bioconda cutadapt
+		cutadapt --version
+		conda deactivate
+	fi
+	if { conda env list | grep 'nanofilt'; } >/dev/null 2>&1; then
+		source activate nanofilt
+		conda update --all
+	else
+		conda create -n nanofilt
+		conda install -c bioconda nanofilt
+		NanoFilt --version
+		conda deactivate
+	fi
+	if { conda env list | grep 'minimap2'; } >/dev/null 2>&1; then
+		source activate minimap2
+		conda update --all
+	else
+		conda create -n minimap2
+		conda install -c bioconda minimap2 samtools racon
+		minimap2 --version
+		samtools --version
+		racon --version
+		conda deactivate
+	fi
+}
+
 #
 # Main do script
 #
-
 # Define as etapas de cada workflow
 # Etapas obrigatórios: basecalling, demux/primer_removal ou demux_headcrop, reads_polishing e algum método de classificação taxonômica
 declare -A workflowList=(
