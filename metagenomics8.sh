@@ -54,21 +54,27 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-# Caminho de INPUT dos dados .fast5
-RAWDIR="${HOME}/data/${RUNNAME}"
-if [ $WF != "instalacao" ] && [ ! -d $RAWDIR ]; then
-	echo "Pasta de dados ${RUNNAME} não encontrada!"
+# Testa se o workflow existe
+LIST_OF_WFS="1 2 3 3_filter instalacao"
+if [ ! exist_in_list "$LIST_OF_WFS" " " $WF ]; then
+	echo -e "WF não disponível para análise. Consultar o manual do software!\n"
 	exit 0
-else
-
-LIST_OF_MODELS="fast hac sup"
-if ! exist_in_list "$LIST_OF_MODELS" " " $MODEL; then
-	echo -e "Modelos disponíveis: fast, hac ou sup.\n"
 fi
 
-LIST_OF_WFS="1 2 3 3_filter instalacao"
-if ! exist_in_list "$LIST_OF_WFS" " " $WF; then
-	echo -e "WF não disponível para análise. Consultar o manual do software!\n"
+
+# Testa se o modelo para guppy_basecalling usado existe
+LIST_OF_MODELS="fast hac sup"
+if [ ! exist_in_list "$LIST_OF_MODELS" " " $MODEL ]; then
+	echo -e "Modelos disponíveis: fast, hac ou sup.\n"
+	exit 0
+fi
+
+# Caminho de INPUT dos dados .fast5
+RAWDIR="${HOME}/data/${RUNNAME}"
+# Teste se os dados existem
+if [ ! -d $RAWDIR ]; then
+	echo "Pasta de dados ${RUNNAME} não encontrada!"
+	exit 0
 fi
 
 function setup_env () {
