@@ -54,6 +54,19 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
+$ function exists_in_list() {
+    LIST=$1
+    DELIMITER=$2
+    VALUE=$3
+    LIST_WHITESPACES=`echo $LIST | tr "$DELIMITER" " "`
+    for x in $LIST_WHITESPACES; do
+        if [ "$x" = "$VALUE" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Testa se o workflow existe
 LIST_OF_WFS="1 2 3 3_filter instalacao"
 if [[ ! exist_in_list "$LIST_OF_WFS" " " $WF ]]; then
