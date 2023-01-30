@@ -83,6 +83,7 @@ function instalacao () {
 		racon --version
 		conda deactivate
 	fi
+	exit 0
 }
 
 # Verifica se os ambientes conda ngs ou bioinfo foram criados e ativa um dos ambientes
