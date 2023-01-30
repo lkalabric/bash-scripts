@@ -54,7 +54,7 @@ if [[ $# -eq 0 ]]; then
 	exit 0
 fi
 
-$ function exists_in_list () {
+function exists_in_list () {
     LIST=$1
     DELIMITER=$2
     VALUE=$3
