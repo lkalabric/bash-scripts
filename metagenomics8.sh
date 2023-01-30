@@ -74,10 +74,10 @@ if ! exists_in_list "$LIST_OF_WFS" " " $WF; then
 	exit 0
 else
 	# Testa se o modelo para guppy_basecalling usado existe
-	if [ "$MODEL" != "instalacao" ]; then
+	if [ ${MODEL} != "instalacao" ]; then
 		LIST_OF_MODELS="fast hac sup"
 		if ! exists_in_list "$LIST_OF_MODELS" " " $MODEL; then
-			echo -e "Modelo $MODEL indisponível. Usar: LIST_OF_MODELS.\n"
+			echo -e "Modelo $MODEL indisponível. Usar: $LIST_OF_MODELS.\n"
 			exit 0
 		fi
 		# Caminho de INPUT dos dados .fast5
