@@ -249,7 +249,7 @@ function demux () {
 		mkdir -vp $DEMUXDIR
 		echo -e "Executando guppy_barcoder em ${IODIR}...\n"
 		guppy_barcoder -r -i "${IODIR}/pass" -s ${DEMUXDIR} --arrangements_files ${ARRANGEMENTS} --require_barcodes_both_ends  --detect_mid_strand_barcodes --trim_barcodes  
-		# Renomeia a pasta contendo as reads unclassified para barcode00 para análise
+		# Renomeei a pasta contendo as reads unclassified para barcode00 para análise
 		# [ -d "${DEMUXDIR}/unclassified" ] && mv "${DEMUXDIR}/unclassified" "${DEMUXDIR}/barcode00"
 		# Concatena todos arquivos .fastq de cada barcode em um arquivo .fastq único
 		[ ! -d ${DEMUXCATDIR} ] && mkdir -vp ${DEMUXCATDIR}
@@ -305,7 +305,8 @@ function demux_headcrop () {
 		for i in $(find ${DEMUXDIR} -mindepth 1 -type d -name "barcode*" -exec basename {} \; | sort); do
 			[ -d "${DEMUXDIR}/${i}" ] && cat ${DEMUXDIR}/${i}/*.fastq > "${DEMUXCATDIR}/${i}.fastq"
 			# Gera o arquivo de log
-			echo "${i} `echo $(cat ${DEMUXCATDIR}/${i}/*.fastq|wc -l)/4|bc`"  >> ${DEMUXCATDIR}/passed_reads.log
+			echo "${i} `echo $(cat ${DEMUXDIR}/${i}/*.fastq|wc -l)/4|bc`"  >> ${DEMUXDIR}/passed_reads.log
+			echo "${i} `echo $(cat ${DEMUXCATDIR}/${i}.fastq|wc -l)/4|bc`"  >> ${DEMUXCATDIR}/passed_reads.log
 			# echo "${i} $(grep -c "runid" ${DEMUXCATDIR}/${i}.fastq)" >> ${DEMUXCATDIR}/passed_reads.log
 		done
 	else
